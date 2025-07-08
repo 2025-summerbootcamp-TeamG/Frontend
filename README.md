@@ -60,10 +60,6 @@ npm install
 
 #### NativeWind (Tailwind 스타일)
 
-```bash
-npm install nativewind
-npx nativewind init
-```
 
 #### React Navigation
 
