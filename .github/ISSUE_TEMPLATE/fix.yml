@@ -1,0 +1,13 @@
+name: 🛠 Fix
+description: 버그 수정
+labels: ["🛠 Fix"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 😥 오류 내용
+        에러로그 함께 입력  
+        <br>
+
+        ## ⚠ 에러 캡쳐  
+        <br>

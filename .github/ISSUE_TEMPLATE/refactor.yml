@@ -1,0 +1,9 @@
+name: 🧹 Refactor
+description: 코드 리팩토링
+labels: ["🧹 Refactor"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## ✨ 리팩토링 할 부분  
+        <br>

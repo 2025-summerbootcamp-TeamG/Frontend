@@ -1,0 +1,16 @@
+name: 🎨 Design
+description: 퍼블리싱 작업
+labels: ["🎨 Design"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## ✨ 퍼블리싱 할 내용
+        - [ ]
+        - [ ]
+        - [ ]
+
+        <br>
+
+        ### 📕 레퍼런스
+        <br>

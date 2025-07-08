@@ -1,0 +1,16 @@
+name: 🚀 Feat
+description: 기능 구현 및 수정
+labels: ["🚀 Feat"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## ✨ 구현 할 기능
+        - [ ]
+        - [ ]
+        - [ ]
+
+        <br>
+
+        ### 📕 레퍼런스
+        <br>

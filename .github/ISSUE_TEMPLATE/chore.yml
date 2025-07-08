@@ -1,0 +1,12 @@
+name: 🧭 Chore
+description: 개발 세팅
+labels: ["🧭 Chore"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## ✨ 세팅할 환경  
+        <br>
+
+        ### 📕 레퍼런스  
+        <br>
