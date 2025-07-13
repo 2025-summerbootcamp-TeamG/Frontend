@@ -24,6 +24,12 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "fonts": [
+      {
+        "asset": "./assets/fonts/Roboto-VariableFont_wdth,wght.ttf",
+        "family": "Roboto"
+      }
+    ]
   }
 }
