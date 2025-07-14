@@ -1,54 +1,107 @@
 import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { View, Text } from "react-native";
+import HomeActive from "../assets/common/HomeIcon_active.svg";
+import HomeInactive from "../assets/common/HomeIcon_inactive.svg";
+import TicketActive from "../assets/common/TicketIcon_active.svg";
+import TicketInactive from "../assets/common/TicketIcon_inactive.svg";
+import MyActive from "../assets/common/MyIcon_active.svg";
+import MyInactive from "../assets/common/MyIcon_inactive.svg";
 
-// 스택 네비게이터 타입 정의
-export type RootStackParamList = {
-  Home: undefined;
-  Login: undefined;
-  Register: undefined;
-  // 추가 화면들...
-};
-
-const Stack = createNativeStackNavigator<RootStackParamList>();
-
-// 임시 홈 화면 컴포넌트
+// 임시 컴포넌트들
 const HomeScreen = () => (
   <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
     <Text>홈 화면</Text>
   </View>
 );
+const TicketScreen = () => (
+  <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+    <Text>티켓 화면</Text>
+  </View>
+);
+const MyScreen = () => (
+  <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+    <Text>마이 화면</Text>
+  </View>
+);
+
+const Tab = createBottomTabNavigator();
 
 export const AppNavigator = () => {
   return (
     <NavigationContainer>
-      <Stack.Navigator
-        initialRouteName="Home"
+      <Tab.Navigator
         screenOptions={{
-          headerShown: true,
-          headerStyle: {
-            backgroundColor: "#007AFF",
-          },
-          headerTintColor: "#fff",
-          headerTitleStyle: {
-            fontWeight: "bold",
-          },
+          headerShown: false,
+          tabBarActiveTintColor: "#E53E3E",
+          tabBarInactiveTintColor: "#6B7280",
         }}
       >
-        <Stack.Screen
-          name="Home"
+        <Tab.Screen
+          name="홈"
           component={HomeScreen}
-          options={{ title: "홈" }}
+          options={{
+            tabBarIcon: ({
+              focused,
+              size,
+            }: {
+              focused: boolean;
+              size: number;
+            }) =>
+              focused ? (
+                <HomeActive width={size} height={size} />
+              ) : (
+                <HomeInactive width={size} height={size} />
+              ),
+            tabBarLabel: ({ color }: { color: string }) => (
+              <Text style={{ color, fontSize: 12 }}>홈</Text>
+            ),
+          }}
         />
-        {/* 추가 화면들:
-        <Stack.Screen 
-          name="Login" 
-          component={LoginScreen} 
-          options={{ title: '로그인' }}
+        <Tab.Screen
+          name="내 티켓"
+          component={TicketScreen}
+          options={{
+            tabBarIcon: ({
+              focused,
+              size,
+            }: {
+              focused: boolean;
+              size: number;
+            }) =>
+              focused ? (
+                <TicketActive width={size} height={size} />
+              ) : (
+                <TicketInactive width={size} height={size} />
+              ),
+            tabBarLabel: ({ color }: { color: string }) => (
+              <Text style={{ color, fontSize: 12 }}>티켓</Text>
+            ),
+          }}
         />
-        */}
-      </Stack.Navigator>
+        <Tab.Screen
+          name="마이페이지"
+          component={MyScreen}
+          options={{
+            tabBarIcon: ({
+              focused,
+              size,
+            }: {
+              focused: boolean;
+              size: number;
+            }) =>
+              focused ? (
+                <MyActive width={size} height={size} />
+              ) : (
+                <MyInactive width={size} height={size} />
+              ),
+            tabBarLabel: ({ color }: { color: string }) => (
+              <Text style={{ color, fontSize: 12 }}>마이</Text>
+            ),
+          }}
+        />
+      </Tab.Navigator>
     </NavigationContainer>
   );
 };
