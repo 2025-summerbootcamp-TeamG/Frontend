@@ -47,7 +47,7 @@ export default function AppNavigator() {
       />
       <Tab.Screen
         name="내 티켓"
-        component={TicketStackNavigator}
+        component={TicketScreen} //얼굴 인증 페이지를 보려면 TicketStackNavigator로 TicketScreen 변경
         options={{
           tabBarIcon: ({ focused, size }: { focused: boolean; size: number }) =>
             focused ? (
