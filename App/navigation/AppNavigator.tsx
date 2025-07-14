@@ -74,11 +74,6 @@ export default function AppNavigator() {
           ),
         }}
       />
-      <Tab.Screen
-        name="CompanionRegisterScreen"
-        component={CompanionRegisterScreen}
-        options={{ headerShown: false }}
-      />
     </Tab.Navigator>
   );
 }
