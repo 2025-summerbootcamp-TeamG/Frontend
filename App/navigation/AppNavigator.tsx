@@ -8,6 +8,7 @@ import TicketActive from "../assets/common/TicketIcon_active.svg";
 import TicketInactive from "../assets/common/TicketIcon_inactive.svg";
 import MyActive from "../assets/common/MyIcon_active.svg";
 import MyInactive from "../assets/common/MyIcon_inactive.svg";
+import MyPage from "../pages/user/MyPage";
 
 // 임시 컴포넌트들
 const HomeScreen = () => (
@@ -18,11 +19,6 @@ const HomeScreen = () => (
 const TicketScreen = () => (
   <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
     <Text>티켓 화면</Text>
-  </View>
-);
-const MyScreen = () => (
-  <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-    <Text>마이 화면</Text>
   </View>
 );
 
@@ -82,7 +78,7 @@ export const AppNavigator = () => {
         />
         <Tab.Screen
           name="마이페이지"
-          component={MyScreen}
+          component={MyPage}
           options={{
             tabBarIcon: ({
               focused,
