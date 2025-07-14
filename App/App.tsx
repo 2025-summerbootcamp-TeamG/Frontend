@@ -1,15 +1,11 @@
 import React from "react";
-import { View } from "react-native";
-import { AppNavigator } from "./navigation/AppNavigator";
-import MainHeader from "./components/common/MainHeader";
+import { NavigationContainer } from "@react-navigation/native";
+import AppNavigator from "./navigation/AppNavigator";
 
 export default function App() {
   return (
-    <View style={{ flex: 1 }}>
-      <MainHeader />
-      <View style={{ flex: 1 }}>
-        <AppNavigator />
-      </View>
-    </View>
+    <NavigationContainer>
+      <AppNavigator />
+    </NavigationContainer>
   );
 }

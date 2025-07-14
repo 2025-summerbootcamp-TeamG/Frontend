@@ -1,25 +1,36 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import EventCard, { Event } from "../../components/events/EventCard_home";
-import { events } from "../../assets/events/EventsMock";
+import { useNavigation } from "@react-navigation/native";
 
 interface Props {
   title: string;
   events: Event[];
+  type: "popular" | "new";
 }
 
-export default function EventCardGrid({ title, events }: Props) {
+export default function EventCardGrid({ title, events, type }: Props) {
+  const navigation = useNavigation();
+
   return (
     <View style={styles.section}>
       <View style={styles.headerRow}>
         <Text style={styles.sectionTitle}>{title}</Text>
-        <View style={styles.moreRow}>
-          <Text style={styles.moreText}>더보기</Text>
-        </View>
+        <TouchableOpacity
+          onPress={() =>
+            (navigation as any).navigate("홈" as never, {
+              screen: type === "popular" ? "PopularEvents" : "NewEvents",
+            })
+          }
+        >
+          <View style={styles.moreRow}>
+            <Text style={styles.moreText}>더보기</Text>
+          </View>
+        </TouchableOpacity>
       </View>
       <View style={styles.grid}>
-        {events.map((event) => (
-          <EventCard key={event.id} event={event} />
+        {events.map((event: Event, idx) => (
+          <EventCard key={event.id || idx} event={event} />
         ))}
       </View>
     </View>
