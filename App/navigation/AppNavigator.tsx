@@ -8,13 +8,8 @@ import TicketActive from "../assets/common/TicketIcon_active.svg";
 import TicketInactive from "../assets/common/TicketIcon_inactive.svg";
 import MyActive from "../assets/common/MyIcon_active.svg";
 import MyInactive from "../assets/common/MyIcon_inactive.svg";
+import HomeScreen from "../pages/events/HomeScreen";
 
-// 임시 컴포넌트들
-const HomeScreen = () => (
-  <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-    <Text>홈 화면</Text>
-  </View>
-);
 const TicketScreen = () => (
   <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
     <Text>티켓 화면</Text>
