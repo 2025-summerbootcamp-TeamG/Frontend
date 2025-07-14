@@ -1,17 +1,25 @@
 // Frontend/App/pages/user/FaceAuthScreen.tsx
 
 import React, { useState, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Modal } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Modal, ScrollView, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Camera from 'expo-camera'; // 추가!
+import { useNavigation } from '@react-navigation/native';
+import CompanionRegisterScreen from '../pages/tickets/CompanionRegisterScreen';
 
 export default function FaceAuthScreen({ navigation }) {
   const [modalVisible, setModalVisible] = useState(false);
   const [isSuccess, setIsSuccess] = useState(true);
+  const [showCompanion, setShowCompanion] = useState(false); // 동행자 추가 UI 표시 여부
   const [type, setType] = useState('front'); // 'front' 또는 'back'
   const cameraRef = useRef(null);
   const [permission, requestPermission] = useCameraPermissions();
+  const [ticketCount] = useState(3); // 예시: 티켓 3장 구매
+  const companionCount = ticketCount - 1; // 동행자 수 = 티켓 수 - 1
+  const [companions, setCompanions] = useState(Array(companionCount).fill(''));
+  const [error, setError] = useState('');
+  const nav = navigation || useNavigation();
 
   if (!permission) return <View />;
   if (!permission.granted) {
@@ -23,6 +31,20 @@ export default function FaceAuthScreen({ navigation }) {
         </TouchableOpacity>
       </View>
     );
+  }
+
+  function handleAddCompanion() {
+    // 예시: 이름 입력 없이 자리만 추가
+    setCompanions(prev => [...prev, `동행자 ${prev.length + 1}`]);
+  }
+
+  function handleComplete() {
+    if (companions.some(name => !name.trim())) {
+      setError('모든 동행자 이름을 입력해 주세요.');
+      return;
+    }
+    setError('');
+    navigation.navigate('TicketScreen');
   }
 
   return (
@@ -61,30 +83,16 @@ export default function FaceAuthScreen({ navigation }) {
         </View>
       </View>
 
-      {/* 안내 박스 */}
-      <View style={styles.infoBox}>
-        <Ionicons name="alert-circle-outline" size={20} color="#EAB308" style={{ marginRight: 8 }} />
-        <View>
-          <Text style={styles.infoTitle}>얼굴 인증 후 동행자 등록</Text>
-          <Text style={styles.infoDesc}>얼굴 인증 완료 후, 동행자를 등록할 수 있습니다.</Text>
+      {/* 안내 박스 (얼굴 인증 완료 전만 표시) */}
+      {!showCompanion && (
+        <View style={styles.infoBox}>
+          <Ionicons name="alert-circle-outline" size={20} color="#EAB308" style={{ marginRight: 8 }} />
+          <View>
+            <Text style={styles.infoTitle}>얼굴 인증 후 동행자 등록</Text>
+            <Text style={styles.infoDesc}>얼굴 인증 완료 후, 동행자를 등록할 수 있습니다.</Text>
+          </View>
         </View>
-      </View>
-
-      {/* 인증 완료 버튼 */}
-      <TouchableOpacity style={styles.button} onPress={() => {
-        setIsSuccess(true); // 성공
-        setModalVisible(true);
-      }}>
-        <Text style={styles.buttonText}>인증 완료(성공)</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={[styles.button, { marginTop: 8, backgroundColor: '#EF4444' }]}
-        onPress={() => {
-          setIsSuccess(false); // 실패
-          setModalVisible(true);
-        }}>
-        <Text style={styles.buttonText}>인증 완료(실패)</Text>
-      </TouchableOpacity>
+      )}
 
       {/* 인증 성공/실패 모달 */}
       <Modal
@@ -105,18 +113,46 @@ export default function FaceAuthScreen({ navigation }) {
                 <Ionicons name="close" size={40} color="#EF4444" />
               )}
             </View>
-            <Text style={styles.modalTitle}>인증 완료</Text>
+            <Text style={styles.modalTitle}>{isSuccess ? '등록 완료' : '인증 실패'}</Text>
             <Text style={styles.modalDesc}>
               {isSuccess
                 ? '얼굴 인증이 성공적으로 완료되었습니다.'
                 : '얼굴을 가이드라인에 맞추어 다시 촬영해주세요.'}
             </Text>
-            <TouchableOpacity style={styles.modalButton} onPress={() => setModalVisible(false)}>
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={() => {
+                setModalVisible(false);
+                if (isSuccess) {
+                  setShowCompanion(true);
+                  if (ticketCount >= 2) {
+                    nav.navigate('CompanionRegisterScreen', { companionCount: ticketCount - 1 });
+                  } else {
+                    nav.navigate('홈'); // ← 이렇게!
+                  }
+                }
+              }}>
               <Text style={styles.modalButtonText}>확인</Text>
             </TouchableOpacity>
           </View>
         </View>
       </Modal>
+
+      {/* 동행자 추가 UI (인증 성공 후에만 보임) */}
+      {showCompanion === false && (
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => {
+            // 실제 인증 로직에 따라 성공/실패 결정
+            // 예시: 랜덤 성공/실패
+            const success = Math.random() > 0.5;
+            setIsSuccess(success);
+            setModalVisible(true);
+          }}
+        >
+          <Text style={styles.buttonText}>등록 완료</Text>
+        </TouchableOpacity>
+      )}
     </SafeAreaView>
   );
 }
@@ -207,5 +243,101 @@ const styles = StyleSheet.create({
   },
   modalButtonText: {
     color: '#fff', fontWeight: '500', fontSize: 16,
+  },
+  companionBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 24,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
+    padding: 16,
+  },
+  companionBoxLarge: {
+    minHeight: 64, // 기존보다 더 크게
+    paddingVertical: 20,
+  },
+  companionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#222',
+    marginRight: 8,
+  },
+  companionAddButton: {
+    width: 28, // 더 작게
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#F3F4F6', // 연한 회색 (tailwind gray-100)
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 'auto', // 오른쪽 정렬
+  },
+  companionAddText: {
+    color: '#222', // 검은색 + 아이콘
+    fontSize: 18,     // 더 작게
+    fontWeight: 'bold',
+  },
+  registerButton: {
+    marginLeft: 'auto',
+    backgroundColor: '#E53E3E',
+    borderRadius: 10,
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    minWidth: 80,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  registerButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  companionInfoBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: '#FEFCE8',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+    padding: 16,
+    marginTop: 16,
+    marginBottom: 16,
+  },
+  companionInfoTitle: {
+    color: '#A16207',
+    fontWeight: 'bold',
+    fontSize: 15,
+    marginBottom: 2,
+  },
+  companionInfoDesc: {
+    color: '#CA8A04',
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  companionInputCard: {
+    backgroundColor: '#F7F8FA',
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 16,
+  },
+  companionInputHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  companionInputLabel: {
+    color: '#222',
+    fontWeight: 'bold',
+    fontSize: 15,
+  },
+  companionInput: {
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 8,
+    backgroundColor: '#F7F8FA',
+    padding: 12,
+    fontSize: 14,
+    color: '#222',
   },
 });

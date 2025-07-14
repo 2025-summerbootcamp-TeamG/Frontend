@@ -10,6 +10,7 @@ import MyInactive from "../assets/common/MyIcon_inactive.svg";
 import FaceAuthScreen from '../pages/tickets/FaceAuthScreen';
 import HomeStackNavigator from "./HomeStackNavigator";
 import MyPage from "../pages/user/MyPage"; 
+import CompanionRegisterScreen from '../pages/tickets/CompanionRegisterScreen';
 
 const TicketScreen = () => (
   <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
@@ -45,7 +46,7 @@ export default function AppNavigator() {
       />
       <Tab.Screen
         name="내 티켓"
-        component={TicketScreen}
+        component={FaceAuthScreen}
         options={{
           tabBarIcon: ({ focused, size }: { focused: boolean; size: number }) =>
             focused ? (
@@ -72,6 +73,11 @@ export default function AppNavigator() {
             <Text style={{ color, fontSize: 12 }}>마이</Text>
           ),
         }}
+      />
+      <Tab.Screen
+        name="CompanionRegisterScreen"
+        component={CompanionRegisterScreen}
+        options={{ headerShown: false }}
       />
     </Tab.Navigator>
   );
