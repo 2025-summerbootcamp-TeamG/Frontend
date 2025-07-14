@@ -10,24 +10,26 @@ export default function HomeScreen() {
   const popularEvents = events.filter((e) => e.type === "popular");
   const newEvents = events.filter((e) => e.type === "new");
   return (
-    <ScrollView
-      style={{ backgroundColor: "#fff" }}
-      stickyHeaderIndices={[0]}
-      contentContainerStyle={{ paddingBottom: 32 }}
-    >
+    <>
       <MainHeader />
-      <View style={{ padding: 16, backgroundColor: "#fff" }}>
-        <SearchBar />
-      </View>
-      <CategoryList />
-      <View style={{ padding: 16 }}>
-        <EventCardGrid
-          title="인기 티켓"
-          events={popularEvents}
-          type="popular"
-        />
-        <EventCardGrid title="신규 티켓" events={newEvents} type="new" />
-      </View>
-    </ScrollView>
+      <ScrollView
+        style={{ backgroundColor: "#fff" }}
+        stickyHeaderIndices={[0]}
+        contentContainerStyle={{ paddingBottom: 32 }}
+      >
+        <View style={{ padding: 16, backgroundColor: "#fff" }}>
+          <SearchBar />
+        </View>
+        <CategoryList />
+        <View style={{ padding: 16 }}>
+          <EventCardGrid
+            title="인기 티켓"
+            events={popularEvents}
+            type="popular"
+          />
+          <EventCardGrid title="신규 티켓" events={newEvents} type="new" />
+        </View>
+      </ScrollView>
+    </>
   );
 }

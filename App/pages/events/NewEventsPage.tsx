@@ -7,7 +7,12 @@ export default function NewEventsPage() {
   const newEvents = events.filter((e) => e.type === "new");
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
-      <EventCardGrid title="신규 티켓 전체" events={newEvents} type="new" />
+      <EventCardGrid
+        title="신규 티켓 전체"
+        events={newEvents}
+        type="new"
+        hideMoreButton={true}
+      />
     </View>
   );
 }

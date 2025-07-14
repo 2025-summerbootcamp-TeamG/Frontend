@@ -7,26 +7,34 @@ interface Props {
   title: string;
   events: Event[];
   type: "popular" | "new";
+  hideMoreButton?: boolean;
 }
 
-export default function EventCardGrid({ title, events, type }: Props) {
+export default function EventCardGrid({
+  title,
+  events,
+  type,
+  hideMoreButton,
+}: Props) {
   const navigation = useNavigation();
 
   return (
     <View style={styles.section}>
       <View style={styles.headerRow}>
         <Text style={styles.sectionTitle}>{title}</Text>
-        <TouchableOpacity
-          onPress={() =>
-            (navigation as any).navigate("홈" as never, {
-              screen: type === "popular" ? "PopularEvents" : "NewEvents",
-            })
-          }
-        >
-          <View style={styles.moreRow}>
-            <Text style={styles.moreText}>더보기</Text>
-          </View>
-        </TouchableOpacity>
+        {!hideMoreButton && (
+          <TouchableOpacity
+            onPress={() =>
+              (navigation as any).navigate("홈", {
+                screen: type === "popular" ? "PopularEvents" : "NewEvents",
+              })
+            }
+          >
+            <View style={styles.moreRow}>
+              <Text style={styles.moreText}>더보기</Text>
+            </View>
+          </TouchableOpacity>
+        )}
       </View>
       <View style={styles.grid}>
         {events.map((event: Event, idx) => (

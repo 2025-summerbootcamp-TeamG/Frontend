@@ -12,6 +12,7 @@ export default function PopularEventsPage() {
         title="인기 티켓 전체"
         events={popularEvents}
         type="popular"
+        hideMoreButton={true}
       />
     </View>
   );
