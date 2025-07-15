@@ -29,13 +29,6 @@ export default function CompanionRegisterScreen({ route, navigation }: any) {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* 상단 바 */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack?.()}>
-          <Ionicons name="chevron-back" size={28} color="#222" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>동행자 등록</Text>
-      </View>
 
       {/* 중앙 아이콘 */}
       <View style={styles.iconCircle}>
@@ -99,15 +92,19 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: 16,
     paddingTop: 16,
     paddingBottom: 8,
+    backgroundColor: "#fff",
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: "bold",
     color: "#222",
-    marginLeft: 8,
+    textAlign: "center",
+    flex: 1,
+    marginLeft: -28, // 아이콘과 타이틀이 정확히 중앙에 오도록 조정
   },
   iconCircle: {
     alignSelf: "center",

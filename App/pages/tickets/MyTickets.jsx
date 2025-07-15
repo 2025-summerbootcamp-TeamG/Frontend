@@ -87,9 +87,7 @@ const TicketCard = ({ ticket, navigation }) => {
     ticket.status === "verified" ? { color: "#16a34a" } : { color: "#eab308" };
 
   const handlePrimaryButtonPress = () => {
-    if (ticket.primaryButtonAction === "verify") {
-      navigation.navigate("FaceAuthScreen");
-    }
+    // '얼굴 인증하기' 버튼을 눌러도 아무 동작하지 않음 (FaceAuthScreen 이동 제거)
     // QR 등 다른 액션은 기존대로
   };
 

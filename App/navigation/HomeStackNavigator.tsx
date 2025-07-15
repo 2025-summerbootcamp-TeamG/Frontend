@@ -15,7 +15,7 @@ import FaceAuthScreen from "../pages/tickets/FaceAuthScreen";
 
 const Stack = createNativeStackNavigator();
 
-function CustomHeaderLeftWithTitle({ title }: { title: string }) {
+export function CustomHeaderLeftWithTitle({ title }: { title: string }) {
   const navigation = useNavigation();
   return (
     <View
@@ -59,7 +59,8 @@ function CustomHeaderLeftWithTitle({ title }: { title: string }) {
       >
         <View
           style={{
-            width: 70.73,
+            minWidth: 70, // 최소 너비만 지정
+            maxWidth: 180, // 너무 길어지지 않게 최대값도 지정 가능
             height: 28,
             justifyContent: "flex-start",
             alignItems: "center",
@@ -73,7 +74,10 @@ function CustomHeaderLeftWithTitle({ title }: { title: string }) {
               fontFamily: "Roboto",
               fontWeight: "700",
               lineHeight: 28,
+              textAlign: "center",
             }}
+            numberOfLines={1}
+            ellipsizeMode="tail"
           >
             {title}
           </Text>
@@ -157,7 +161,15 @@ export default function HomeStackNavigator() {
           headerTitle: "",
         }}
       />
-      <Stack.Screen name="FaceAuthScreen" component={FaceAuthScreen} />
+      <Stack.Screen
+        name="FaceAuthScreen"
+        component={FaceAuthScreen}
+        options={{
+          headerTitle: "",
+          headerLeft: () => <CustomHeaderLeftWithTitle title="얼굴 인증" />,
+          headerBackVisible: false,
+        }}
+      />
     </Stack.Navigator>
   );
 }
