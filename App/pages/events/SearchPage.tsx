@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { View, Text, FlatList, StyleSheet, SafeAreaView } from "react-native";
 import { events } from "../../assets/events/EventsMock";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
-import { CustomBackButton } from "../../navigation/HomeStackNavigator";
 import SearchBar from "../../components/common/SearchBar";
 import EventCardSearch from "../../components/events/EventCard_search";
 
@@ -32,12 +31,7 @@ export default function SearchPage() {
 
   return (
     <View style={{ flex: 1, backgroundColor: "#F7F7F7" }}>
-      <SafeAreaView style={{ backgroundColor: "#fff" }}>
-        <View style={{ flexDirection: "row", alignItems: "center", paddingTop: 16, paddingBottom: 12, paddingHorizontal: 8, backgroundColor: "#fff", borderBottomWidth: 1, borderBottomColor: "#eee" }}>
-          <CustomBackButton />
-          <Text style={{ fontSize: 18, fontWeight: "bold", flex: 1, textAlign: "center", marginRight: 32 }}>검색 결과</Text>
-        </View>
-      </SafeAreaView>
+      {/* 상단 헤더는 Stack.Navigator에서 커스텀 헤더로 처리 */}
       <View style={{ padding: 16, backgroundColor: "#fff" }}>
         <SearchBar
           value={searchText}
