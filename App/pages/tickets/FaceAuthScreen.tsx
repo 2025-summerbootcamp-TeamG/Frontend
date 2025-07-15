@@ -13,9 +13,9 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";
+import { Camera } from "expo-camera";
 import { useNavigation } from "@react-navigation/native";
 import CompanionRegisterScreen from "../../pages/tickets/CompanionRegisterScreen";
-import * as Camera from 'expo-camera'; // 추가!
 
 type CameraFacing = "user" | "environment";
 
@@ -23,14 +23,14 @@ export default function FaceAuthScreen({ navigation }: any) {
   const [modalVisible, setModalVisible] = useState(false);
   const [isSuccess, setIsSuccess] = useState(true);
   const [showCompanion, setShowCompanion] = useState(false); // 동행자 추가 UI 표시 여부
-  const [type, setType] = useState<CameraFacing>("user");
+  // 전면 카메라 고정, type 상태값 불필요
   const cameraRef = useRef(null);
   const [permission, requestPermission] = useCameraPermissions();
   const [ticketCount] = useState(3); // 예시: 티켓 3장 구매
   const companionCount = ticketCount - 1; // 동행자 수 = 티켓 수 - 1
   const [companions, setCompanions] = useState(Array(companionCount).fill(""));
   const [error, setError] = useState("");
-  const nav = navigation || useNavigation();
+  // nav 변수 없이 그냥 navigation 사용
 
   if (!permission) return <View />;
   if (!permission.granted) {
@@ -60,14 +60,6 @@ export default function FaceAuthScreen({ navigation }: any) {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* 상단 바 */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack?.()}>
-          <Ionicons name="chevron-back" size={28} color="#222" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>얼굴 인증</Text>
-      </View>
-
       {/* 설명 */}
       <Text style={styles.desc1}>
         티켓 리셀 방지를 위한 본인 인증 절차입니다.
@@ -79,10 +71,9 @@ export default function FaceAuthScreen({ navigation }: any) {
       {/* 얼굴 가이드라인 박스 */}
       <View style={styles.guideBox}>
         <View style={styles.dottedRect}>
-          {/* 카메라 프리뷰 */}
           <CameraView
             style={styles.camera}
-            facing={type as any}
+            facing="front"
             ref={cameraRef}
           />
           {/* 빨간 타원 오버레이 */}
@@ -150,11 +141,12 @@ export default function FaceAuthScreen({ navigation }: any) {
                 if (isSuccess) {
                   setShowCompanion(true);
                   if (ticketCount >= 2) {
-                    nav.navigate("CompanionRegisterScreen", {
-                      companionCount: ticketCount - 1,
+                    navigation.navigate('내 티켓', {
+                      screen: 'CompanionRegisterScreen',
+                      params: { companionCount: ticketCount - 1 }
                     });
                   } else {
-                    nav.navigate("홈"); // ← 이렇게!
+                    navigation.navigate('홈');
                   }
                 }
               }}
@@ -186,19 +178,6 @@ export default function FaceAuthScreen({ navigation }: any) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 8,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#222",
-    marginLeft: 8,
-  },
   desc1: {
     color: "#4B5563",
     fontSize: 14,

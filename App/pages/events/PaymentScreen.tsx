@@ -182,7 +182,9 @@ export default function PaymentScreen() {
         <TouchableOpacity
           style={styles.payBtn}
           disabled={!agree}
-          onPress={() => navigation.navigate("FaceAuthScreen")}
+          onPress={() => {
+            navigation.navigate('내 티켓', { screen: 'FaceAuthScreen' });
+          }}
         >
           <Text style={styles.payBtnText}>결제 완료하기</Text>
         </TouchableOpacity>
