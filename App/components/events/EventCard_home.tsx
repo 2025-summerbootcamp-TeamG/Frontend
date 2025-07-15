@@ -1,5 +1,6 @@
 import React from "react";
-import { View, Text, Image, StyleSheet } from "react-native";
+import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 
 export type Event = {
   id: number;
@@ -13,42 +14,48 @@ export type Event = {
 };
 
 export default function EventCard({ event }: { event: Event }) {
+  const navigation = useNavigation();
   return (
-    <View style={styles.card}>
-      <View style={styles.imageWrap}>
-        <Image source={{ uri: event.image_url }} style={styles.image} />
-      </View>
-      <View style={styles.infoWrap}>
-        <Text style={styles.title} numberOfLines={1}>
-          {event.artist}
-        </Text>
-        <Text style={styles.desc} numberOfLines={1}>
-          {event.date} - {event.location}
-        </Text>
-        <View style={styles.bottomRow}>
-          <Text style={styles.price}>₩{event.price.toLocaleString()}</Text>
-          <View
-            style={[
-              styles.badge,
-              event.status === "인기" && styles.badgeHot,
-              event.status === "마감임박" && styles.badgeHot,
-              event.status === "예매중" && styles.badgeNormal,
-            ]}
-          >
-            <Text
+    <TouchableOpacity
+      onPress={() => (navigation as any).navigate("EventDetail", { event })}
+      activeOpacity={0.8}
+    >
+      <View style={styles.card}>
+        <View style={styles.imageWrap}>
+          <Image source={{ uri: event.image_url }} style={styles.image} />
+        </View>
+        <View style={styles.infoWrap}>
+          <Text style={styles.title} numberOfLines={1}>
+            {event.artist}
+          </Text>
+          <Text style={styles.desc} numberOfLines={1}>
+            {event.date} - {event.location}
+          </Text>
+          <View style={styles.bottomRow}>
+            <Text style={styles.price}>₩{event.price.toLocaleString()}</Text>
+            <View
               style={[
-                styles.badgeText,
-                event.status === "인기" && styles.badgeTextHot,
-                event.status === "마감임박" && styles.badgeTextHot,
-                event.status === "예매중" && styles.badgeTextNormal,
+                styles.badge,
+                event.status === "인기" && styles.badgeHot,
+                event.status === "마감임박" && styles.badgeHot,
+                event.status === "예매중" && styles.badgeNormal,
               ]}
             >
-              {event.status}
-            </Text>
+              <Text
+                style={[
+                  styles.badgeText,
+                  event.status === "인기" && styles.badgeTextHot,
+                  event.status === "마감임박" && styles.badgeTextHot,
+                  event.status === "예매중" && styles.badgeTextNormal,
+                ]}
+              >
+                {event.status}
+              </Text>
+            </View>
           </View>
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }
 
