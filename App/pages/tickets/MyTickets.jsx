@@ -78,13 +78,20 @@ const filterOptions = [
   { label: "지난", value: "지난" },
 ];
 
-const TicketCard = ({ ticket }) => {
+const TicketCard = ({ ticket, navigation }) => {
   const statusStyle =
     ticket.status === "verified"
       ? [styles.statusBadge, { backgroundColor: "#dcfce7" }]
       : [styles.statusBadge, { backgroundColor: "#fef9c2" }];
   const statusTextColor =
     ticket.status === "verified" ? { color: "#16a34a" } : { color: "#eab308" };
+
+  const handlePrimaryButtonPress = () => {
+    if (ticket.primaryButtonAction === "verify") {
+      navigation.navigate("FaceAuthScreen");
+    }
+    // QR 등 다른 액션은 기존대로
+  };
 
   return (
     <View style={styles.card}>
@@ -118,7 +125,7 @@ const TicketCard = ({ ticket }) => {
         </View>
         <View style={styles.marginWrap3}>
           <View style={styles.div39}>
-            <TouchableOpacity style={styles.showqrcode140}>
+            <TouchableOpacity style={styles.showqrcode140} onPress={handlePrimaryButtonPress}>
               <Text style={styles.qr42}>{ticket.primaryButton}</Text>
             </TouchableOpacity>
             <View style={styles.marginWrap4}>
@@ -133,7 +140,7 @@ const TicketCard = ({ ticket }) => {
   );
 };
 
-export default function MyTickets() {
+export default function MyTickets({ navigation }) {
   const [activeFilter, setActiveFilter] = useState("전체");
 
   // 필터링 로직(예시, 실제로는 날짜/상태에 따라 분기)
@@ -179,7 +186,7 @@ export default function MyTickets() {
         </View>
         {/* 티켓 리스트 */}
         {filteredTickets.map((ticket) => (
-          <TicketCard key={ticket.id} ticket={ticket} />
+          <TicketCard key={ticket.id} ticket={ticket} navigation={navigation} />
         ))}
       </ScrollView>
     </>
