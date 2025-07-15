@@ -7,7 +7,6 @@ import TicketActive from "../assets/common/TicketIcon_active.svg";
 import TicketInactive from "../assets/common/TicketIcon_inactive.svg";
 import MyActive from "../assets/common/MyIcon_active.svg";
 import MyInactive from "../assets/common/MyIcon_inactive.svg";
-import FaceAuthScreen from '../pages/tickets/FaceAuthScreen';
 import HomeStackNavigator from "./HomeStackNavigator";
 
 const TicketScreen = () => (
