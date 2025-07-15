@@ -4,13 +4,14 @@ import HomeScreen from "../pages/events/HomeScreen";
 import PopularEventsPage from "../pages/events/PopularEventsPage";
 import NewEventsPage from "../pages/events/NewEventsPage";
 import CategoryPage from "../pages/events/CategoryPage";
+import SearchPage from "../pages/events/SearchPage";
 import { TouchableOpacity } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import BackIcon from "../assets/events/backIcon.svg";
 
 const Stack = createNativeStackNavigator();
 
-function CustomBackButton() {
+export function CustomBackButton() {
   const navigation = useNavigation();
   return (
     <TouchableOpacity
@@ -53,6 +54,11 @@ export default function HomeStackNavigator() {
           title: route.params?.categoryName || "카테고리",
           headerLeft: () => <CustomBackButton />,
         })}
+      />
+      <Stack.Screen
+        name="SearchPage"
+        component={SearchPage}
+        options={{ headerShown: false }}
       />
     </Stack.Navigator>
   );
