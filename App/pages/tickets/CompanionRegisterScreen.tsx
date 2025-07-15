@@ -44,11 +44,6 @@ export default function CompanionRegisterScreen({ route, navigation }) {
           <View key={idx} style={styles.companionInputCard}>
             <View style={styles.companionInputHeader}>
               <Text style={styles.companionInputLabel}>동행자 {idx + 1}</Text>
-              {companions.length < maxCompanions && idx === companions.length - 1 && (
-                <TouchableOpacity style={styles.companionInputAddBtn} onPress={handleAddCompanion}>
-                  <Ionicons name="add" size={18} color="#EF4444" />
-                </TouchableOpacity>
-              )}
             </View>
             <TextInput
               style={styles.companionInput}

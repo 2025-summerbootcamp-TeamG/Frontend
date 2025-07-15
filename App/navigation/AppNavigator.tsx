@@ -11,6 +11,7 @@ import FaceAuthScreen from '../pages/tickets/FaceAuthScreen';
 import HomeStackNavigator from "./HomeStackNavigator";
 import MyPage from "../pages/user/MyPage"; 
 import CompanionRegisterScreen from '../pages/tickets/CompanionRegisterScreen';
+import TicketStackNavigator from "./TicketStackNavigator";
 
 const TicketScreen = () => (
   <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
@@ -46,7 +47,7 @@ export default function AppNavigator() {
       />
       <Tab.Screen
         name="내 티켓"
-        component={FaceAuthScreen}
+        component={TicketScreen} //얼굴 인증 페이지를 보려면 TicketStackNavigator로 TicketScreen 변경
         options={{
           tabBarIcon: ({ focused, size }: { focused: boolean; size: number }) =>
             focused ? (
