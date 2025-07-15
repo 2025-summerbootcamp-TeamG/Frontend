@@ -5,10 +5,14 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
+  Modal,
 } from "react-native";
 import MainHeader from "../../components/common/MainHeader";
+import QRCodeModal from "./QRCodeModal";
+import { events } from "../../assets/events/EventsMock";
 // 이미지 import (require 사용) + 지금은 null로 대체
 const ticketsData = [
+  // 티켓 더미 데이터 (실제 데이터 연동 시 이 부분을 API로 대체)
   {
     id: 1,
     image: null,
@@ -78,13 +82,17 @@ const filterOptions = [
   { label: "지난", value: "지난" },
 ];
 
-const TicketCard = ({ ticket }) => {
+// 티켓 카드 컴포넌트 (각 티켓 정보를 카드 형태로 렌더링)
+const TicketCard = ({ ticket, onQrPress }) => {
+  // 상태 뱃지 색상 및 텍스트 색상 분기
   const statusStyle =
-    ticket.status === "verified"
+    ticket.ticket_statusText === "인증완료"
       ? [styles.statusBadge, { backgroundColor: "#dcfce7" }]
       : [styles.statusBadge, { backgroundColor: "#fef9c2" }];
   const statusTextColor =
-    ticket.status === "verified" ? { color: "#16a34a" } : { color: "#eab308" };
+    ticket.ticket_statusText === "인증완료"
+      ? { color: "#16a34a" }
+      : { color: "#eab308" };
 
   return (
     <View style={styles.card}>
@@ -95,31 +103,47 @@ const TicketCard = ({ ticket }) => {
       <View style={styles.cardContent}>
         <View style={styles.cardHeader}>
           <View style={styles.h324}>
-            <Text style={styles.cardTitle}>{ticket.title}</Text>
+            {/* 제목은 artist만 사용 */}
+            <Text style={styles.cardTitle}>{ticket.artist}</Text>
           </View>
           <View style={[styles.statusBadge, statusStyle]}>
             <Text style={[styles.statusText, statusTextColor]}>
-              {ticket.statusText}
+              {ticket.ticket_statusText !== "null"
+                ? ticket.ticket_statusText
+                : ""}
             </Text>
           </View>
         </View>
         <View style={styles.marginWrap1}>
           <View style={styles.p30}>
-            <Text style={styles.cardInfo}>{ticket.date}</Text>
+            <Text style={styles.cardInfo}>
+              {ticket.ticket_date !== "null" ? ticket.ticket_date : ticket.date}
+            </Text>
           </View>
         </View>
         <View style={styles.p30}>
-          <Text style={styles.cardInfo}>{ticket.venue}</Text>
+          <Text style={styles.cardInfo}>{ticket.location}</Text>
         </View>
         <View style={styles.marginWrap1}>
           <View style={styles.p30}>
-            <Text style={styles.cardInfo}>{ticket.seat}</Text>
+            <Text style={styles.cardInfo}>
+              {ticket.ticket_seat !== "null" ? ticket.ticket_seat : ""}
+            </Text>
           </View>
         </View>
         <View style={styles.marginWrap3}>
           <View style={styles.div39}>
-            <TouchableOpacity style={styles.showqrcode140}>
-              <Text style={styles.qr42}>{ticket.primaryButton}</Text>
+            <TouchableOpacity
+              style={styles.showqrcode140}
+              onPress={() => {
+                if (ticket.primaryButtonAction === "qr") {
+                  onQrPress(ticket);
+                }
+              }}
+            >
+              <Text style={styles.qr42}>
+                {ticket.primaryButton !== "null" ? ticket.primaryButton : ""}
+              </Text>
             </TouchableOpacity>
             <View style={styles.marginWrap4}>
               <TouchableOpacity style={styles.showdetails143}>
@@ -134,14 +158,32 @@ const TicketCard = ({ ticket }) => {
 };
 
 export default function MyTickets() {
+  // 필터 상태
   const [activeFilter, setActiveFilter] = useState("전체");
+  // QR코드 모달 표시 여부
+  const [qrModalVisible, setQrModalVisible] = useState(false);
+  // 선택된 티켓 정보(모달에 전달)
+  const [selectedTicket, setSelectedTicket] = useState(null);
 
-  // 필터링 로직(예시, 실제로는 날짜/상태에 따라 분기)
-  const filteredTickets = ticketsData; // 실제 필터링 필요시 구현
+  // 티켓 정보가 없는(필드가 'null'인) 데이터는 리스트에서 제외
+  const filteredTickets = events.filter(
+    (ticket) =>
+      ticket.ticket_status !== "null" &&
+      ticket.ticket_seat !== "null" &&
+      ticket.primaryButton !== "null"
+  );
+
+  // QR코드 보기 버튼 클릭 시 모달 오픈
+  const handleQrPress = (ticket) => {
+    setSelectedTicket(ticket);
+    setQrModalVisible(true);
+  };
 
   return (
     <>
+      {/* 상단 메인헤더 */}
       <MainHeader />
+      {/* 티켓 리스트 스크롤뷰 */}
       <ScrollView
         style={{ backgroundColor: "#fff", flex: 1 }}
         contentContainerStyle={{
@@ -150,6 +192,7 @@ export default function MyTickets() {
           paddingTop: 0,
         }}
       >
+        {/* 헤더(타이틀+필터) */}
         <View style={{ width: "100%", padding: 16, backgroundColor: "#fff" }}>
           <View style={styles.headerRow}>
             <Text style={styles.headerTitle}>내 티켓</Text>
@@ -177,17 +220,34 @@ export default function MyTickets() {
             </View>
           </View>
         </View>
-        {/* 티켓 리스트 */}
+        {/* 티켓 리스트 렌더링 */}
         {filteredTickets.map((ticket) => (
-          <TicketCard key={ticket.id} ticket={ticket} />
+          <TicketCard
+            key={ticket.id}
+            ticket={ticket}
+            onQrPress={handleQrPress}
+          />
         ))}
       </ScrollView>
+      {/* QR코드 모달 (선택된 티켓 정보 전달) */}
+      <Modal
+        visible={qrModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setQrModalVisible(false)}
+      >
+        <QRCodeModal
+          ticket={selectedTicket}
+          onClose={() => setQrModalVisible(false)}
+        />
+      </Modal>
     </>
   );
 }
 
 const styles = StyleSheet.create({
   customHeader: {
+    //헤더 적용이 안되서 직접 커스텀으로 만들음
     width: "100%",
     height: 52,
     paddingHorizontal: 16,
