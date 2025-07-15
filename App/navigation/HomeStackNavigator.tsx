@@ -7,6 +7,8 @@ import EventDetailPage from "../pages/events/EventDetailPage";
 import { TouchableOpacity, Text, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import BackIcon from "../assets/events/backIcon.svg";
+import SeatSelectPage from "../pages/events/SeatSelectPage";
+import PaymentScreen from "../pages/events/PaymentScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -112,6 +114,24 @@ export default function HomeStackNavigator() {
           headerLeft: () => <CustomHeaderLeftWithTitle title="상세 정보" />,
           headerBackVisible: false,
           headerTransparent: true,
+        }}
+      />
+      <Stack.Screen
+        name="SeatSelect"
+        component={SeatSelectPage}
+        options={{
+          headerTitle: "",
+          headerLeft: () => <CustomHeaderLeftWithTitle title="좌석 선택" />,
+          headerBackVisible: false,
+        }}
+      />
+      <Stack.Screen
+        name="Payment"
+        component={PaymentScreen}
+        options={{
+          headerTitle: "",
+          headerLeft: () => <CustomHeaderLeftWithTitle title="결제하기" />,
+          headerBackVisible: false,
         }}
       />
     </Stack.Navigator>

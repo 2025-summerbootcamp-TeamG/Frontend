@@ -6,16 +6,39 @@ import {
   ScrollView,
   TouchableOpacity,
   Dimensions,
+  BackHandler, // 추가
+  Platform, // 추가
 } from "react-native";
-import { useRoute } from "@react-navigation/native";
+import { useRoute, useNavigation } from "@react-navigation/native";
 import LocationIcon from "../../assets/events/locationIcon.svg";
 import PriceIcon from "../../assets/events/priceIcon.svg";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+
+type RootStackParamList = {
+  EventDetail: { event: any };
+  SeatSelect: { event: any };
+};
 
 export default function EventDetailPage() {
   const route = useRoute();
   const { event } = route.params as any;
   const screenWidth = Dimensions.get("window").width;
   const imageHeight = (screenWidth * 3) / 4; // 4:3 비율
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+
+  React.useEffect(() => {
+    if (Platform.OS === "android") {
+      const backHandler = BackHandler.addEventListener(
+        "hardwareBackPress",
+        () => {
+          // true를 반환하면 뒤로가기를 막음
+          return true;
+        }
+      );
+      return () => backHandler.remove();
+    }
+  }, []);
 
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
@@ -205,9 +228,7 @@ export default function EventDetailPage() {
             justifyContent: "center",
             alignItems: "center",
           }}
-          onPress={() => {
-            /* 예매 로직 */
-          }}
+          onPress={() => navigation.navigate("SeatSelect", { event })}
         >
           <Text
             style={{

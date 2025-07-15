@@ -38,7 +38,11 @@ export default function EventCardGrid({
       </View>
       <View style={styles.grid}>
         {events.map((event: Event, idx) => (
-          <EventCard key={event.id || idx} event={event} />
+          <EventCard
+            key={event.id || idx}
+            event={event}
+            navigation={navigation}
+          />
         ))}
       </View>
     </View>

@@ -13,11 +13,18 @@ export type Event = {
   type: string;
 };
 
-export default function EventCard({ event }: { event: Event }) {
-  const navigation = useNavigation();
+interface EventCardProps {
+  event: Event;
+  navigation: any;
+}
+
+export default function EventCard({ event, navigation }: EventCardProps) {
   return (
     <TouchableOpacity
-      onPress={() => (navigation as any).navigate("EventDetail", { event })}
+      onPress={() => {
+        console.log("카드 클릭됨");
+        navigation.navigate("EventDetail", { event });
+      }}
       activeOpacity={0.8}
     >
       <View style={styles.card}>
