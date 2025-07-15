@@ -12,6 +12,7 @@ import HomeStackNavigator from "./HomeStackNavigator";
 import MyPage from "../pages/user/MyPage"; 
 import CompanionRegisterScreen from '../pages/tickets/CompanionRegisterScreen';
 import TicketStackNavigator from "./TicketStackNavigator";
+import PaymentScreen from '../pages/payment/PaymentScreen';
 
 const TicketScreen = () => (
   <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
