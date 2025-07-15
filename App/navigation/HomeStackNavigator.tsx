@@ -5,6 +5,8 @@ import PopularEventsPage from "../pages/events/PopularEventsPage";
 import NewEventsPage from "../pages/events/NewEventsPage";
 import CategoryPage from "../pages/events/CategoryPage";
 import { TouchableOpacity } from "react-native";
+import EventDetailPage from "../pages/events/EventDetailPage";
+import { TouchableOpacity, Text, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import BackIcon from "../assets/events/backIcon.svg";
 import { View, Text } from "react-native";
@@ -92,32 +94,28 @@ export default function HomeStackNavigator() {
         name="PopularEvents"
         component={PopularEventsPage}
         options={{
-          title: "인기 티켓",
+          headerTitle: () => null,
           headerLeft: () => <CustomHeaderLeftWithTitle title="인기 티켓" />,
+          headerBackVisible: false,
         }}
       />
       <Stack.Screen
         name="NewEvents"
         component={NewEventsPage}
         options={{
-          title: "신규 티켓",
+          headerTitle: () => null,
           headerLeft: () => <CustomHeaderLeftWithTitle title="신규 티켓" />,
+          headerBackVisible: false,
         }}
       />
       <Stack.Screen
-        name="CategoryPage"
-        component={CategoryPage}
-        options={({ route }: { route: any }) => ({
-          title: route.params?.categoryName || "카테고리",
-          headerLeft: () => <CustomHeaderLeftWithTitle title={route.params?.categoryName || "카테고리"} />,
-        })}
-      />
-      <Stack.Screen
-        name="SearchPage"
-        component={SearchPage}
+        name="EventDetail"
+        component={EventDetailPage}
         options={{
-          headerLeft: () => <CustomHeaderLeftWithTitle title="검색 결과" />,
           headerTitle: "",
+          headerLeft: () => <CustomHeaderLeftWithTitle title="상세 정보" />,
+          headerBackVisible: false,
+          headerTransparent: true,
         }}
       />
     </Stack.Navigator>
