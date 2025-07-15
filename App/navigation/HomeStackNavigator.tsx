@@ -9,6 +9,8 @@ import SearchPage from "../pages/events/SearchPage";
 import { TouchableOpacity, Text, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import BackIcon from "../assets/events/backIcon.svg";
+import SeatSelectPage from "../pages/events/SeatSelectPage";
+import PaymentScreen from "../pages/events/PaymentScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -117,13 +119,31 @@ export default function HomeStackNavigator() {
         }}
       />
       <Stack.Screen
-        name="CategoryPage"
-        component={CategoryPage}
-        options={({ route }: { route: any }) => ({
-          headerLeft: () => <CustomHeaderLeftWithTitle title={route.params?.categoryName || "카테고리"} />,
+        name="SeatSelect"
+        component={SeatSelectPage}
+        options={{
           headerTitle: "",
-        })}
+          headerLeft: () => <CustomHeaderLeftWithTitle title="좌석 선택" />,
+          headerBackVisible: false,
+        }}
       />
+      <Stack.Screen
+         name="Payment"
+         component={PaymentScreen}
+         options={{
+           headerTitle: "",
+           headerLeft: () => <CustomHeaderLeftWithTitle title="결제하기" />,
+           headerBackVisible: false,
+         }}
+       />
+       <Stack.Screen
+          name="CategoryPage"
+          component={CategoryPage}
+          options={({ route }: { route: any }) => ({
+            headerLeft: () => <CustomHeaderLeftWithTitle title={route.params?.categoryName || "카테고리"} />,
+            headerTitle: "",
+          })}
+        />
       <Stack.Screen
         name="SearchPage"
         component={SearchPage}
