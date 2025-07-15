@@ -9,7 +9,7 @@ import MyActive from "../assets/common/MyIcon_active.svg";
 import MyInactive from "../assets/common/MyIcon_inactive.svg";
 import HomeStackNavigator from "./HomeStackNavigator";
 import MyTickets from "../pages/tickets/MyTickets";
-import MyPage from "../pages/user/MyPage";
+import MyPageStackNavigator from "./MyPageStackNavigator";
 import CompanionRegisterScreen from "../pages/tickets/CompanionRegisterScreen";
 import TicketStackNavigator from "./TicketStackNavigator";
 import PaymentScreen from "../pages/events/PaymentScreen";
@@ -63,7 +63,7 @@ export default function AppNavigator() {
       />
       <Tab.Screen
         name="마이페이지"
-        component={MyPage}
+        component={MyPageStackNavigator}
         options={{
           tabBarIcon: ({ focused, size }: { focused: boolean; size: number }) =>
             focused ? (

@@ -20,7 +20,7 @@ import { AuthHistoryModal } from "./AuthHistoryModal";
 import MainHeader from "../../components/common/MainHeader";
 
 export default function MyPageLogin() {
-  const navigation = useNavigation();
+  const navigation = useNavigation() as any;
   const [isLoggedIn, setIsLoggedIn] = React.useState(false);
   const [loginModalVisible, setLoginModalVisible] = React.useState(false);
   const [signupModalVisible, setSignupModalVisible] = React.useState(false);
@@ -116,7 +116,7 @@ export default function MyPageLogin() {
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.cardRow, { borderBottomWidth: 0 }]}
-              onPress={() => setAuthHistoryVisible(true)}
+              onPress={() => navigation.navigate("AuthHistoryModal")}
             >
               <AntDesign name="idcard" size={22} color="#888" />
               <View style={styles.cardTextWrapper}>
@@ -187,30 +187,6 @@ export default function MyPageLogin() {
         onClose={() => setSignupModalVisible(false)}
         onSignup={handleSignupSuccess}
       />
-
-      {/* 인증 내역 모달 */}
-      <Modal
-        visible={authHistoryVisible}
-        animationType="slide"
-        onRequestClose={() => setAuthHistoryVisible(false)}
-      >
-        <AuthHistoryModal onClose={() => setAuthHistoryVisible(false)} />
-        {/*<TouchableOpacity
-          style={{
-            position: "absolute",
-            top: 40,
-            right: 20,
-            zIndex: 10,
-            backgroundColor: "#fff",
-            borderRadius: 20,
-            padding: 8,
-            elevation: 2,
-          }}
-          onPress={() => setAuthHistoryVisible(false)}
-        >
-          <Text style={{ fontSize: 16 }}>닫기</Text>
-        </TouchableOpacity>*/}
-      </Modal>
     </View>
   );
 }
