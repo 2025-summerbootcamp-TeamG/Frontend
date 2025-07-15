@@ -1,7 +1,7 @@
 // Frontend/App/pages/user/FaceAuthScreen.tsx
 
 import React, { useState, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Modal, ScrollView, TextInput } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Modal, ScrollView, TextInput, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Camera from 'expo-camera'; // 추가!
