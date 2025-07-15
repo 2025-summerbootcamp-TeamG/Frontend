@@ -3,10 +3,14 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import HomeScreen from "../pages/events/HomeScreen";
 import PopularEventsPage from "../pages/events/PopularEventsPage";
 import NewEventsPage from "../pages/events/NewEventsPage";
+import CategoryPage from "../pages/events/CategoryPage";
+import { TouchableOpacity } from "react-native";
 import EventDetailPage from "../pages/events/EventDetailPage";
 import { TouchableOpacity, Text, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import BackIcon from "../assets/events/backIcon.svg";
+import { View, Text } from "react-native";
+import SearchPage from "../pages/events/SearchPage";
 
 const Stack = createNativeStackNavigator();
 
