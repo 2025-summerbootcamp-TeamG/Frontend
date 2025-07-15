@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import HomeScreen from "../pages/events/HomeScreen";
 import PopularEventsPage from "../pages/events/PopularEventsPage";
 import NewEventsPage from "../pages/events/NewEventsPage";
+import CategoryPage from "../pages/events/CategoryPage";
 import { TouchableOpacity } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import BackIcon from "../assets/events/backIcon.svg";
@@ -44,6 +45,14 @@ export default function HomeStackNavigator() {
           title: "신규 티켓",
           headerLeft: () => <CustomBackButton />,
         }}
+      />
+      <Stack.Screen
+        name="CategoryPage"
+        component={CategoryPage}
+        options={({ route }: { route: any }) => ({
+          title: route.params?.categoryName || "카테고리",
+          headerLeft: () => <CustomBackButton />,
+        })}
       />
     </Stack.Navigator>
   );
