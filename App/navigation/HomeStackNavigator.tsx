@@ -11,6 +11,7 @@ import { useNavigation } from "@react-navigation/native";
 import BackIcon from "../assets/events/backIcon.svg";
 import SeatSelectPage from "../pages/events/SeatSelectPage";
 import PaymentScreen from "../pages/events/PaymentScreen";
+import FaceAuthScreen from "../pages/tickets/FaceAuthScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -128,22 +129,26 @@ export default function HomeStackNavigator() {
         }}
       />
       <Stack.Screen
-         name="Payment"
-         component={PaymentScreen}
-         options={{
-           headerTitle: "",
-           headerLeft: () => <CustomHeaderLeftWithTitle title="결제하기" />,
-           headerBackVisible: false,
-         }}
-       />
-       <Stack.Screen
-          name="CategoryPage"
-          component={CategoryPage}
-          options={({ route }: { route: any }) => ({
-            headerLeft: () => <CustomHeaderLeftWithTitle title={route.params?.categoryName || "카테고리"} />,
-            headerTitle: "",
-          })}
-        />
+        name="Payment"
+        component={PaymentScreen}
+        options={{
+          headerTitle: "",
+          headerLeft: () => <CustomHeaderLeftWithTitle title="결제하기" />,
+          headerBackVisible: false,
+        }}
+      />
+      <Stack.Screen
+        name="CategoryPage"
+        component={CategoryPage}
+        options={({ route }: { route: any }) => ({
+          headerLeft: () => (
+            <CustomHeaderLeftWithTitle
+              title={route.params?.categoryName || "카테고리"}
+            />
+          ),
+          headerTitle: "",
+        })}
+      />
       <Stack.Screen
         name="SearchPage"
         component={SearchPage}
@@ -152,6 +157,7 @@ export default function HomeStackNavigator() {
           headerTitle: "",
         }}
       />
+      <Stack.Screen name="FaceAuthScreen" component={FaceAuthScreen} />
     </Stack.Navigator>
   );
 }
