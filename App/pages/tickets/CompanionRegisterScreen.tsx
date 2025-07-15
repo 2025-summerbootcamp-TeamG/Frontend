@@ -80,7 +80,10 @@ export default function CompanionRegisterScreen({ route, navigation }: any) {
       </View>
 
       {/* 등록 완료 버튼 */}
-      <TouchableOpacity style={styles.button}>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => navigation.navigate('MyTickets')}
+      >
         <Text style={styles.buttonText}>등록 완료</Text>
       </TouchableOpacity>
     </SafeAreaView>
