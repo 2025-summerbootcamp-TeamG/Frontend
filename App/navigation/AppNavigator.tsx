@@ -8,10 +8,11 @@ import TicketInactive from "../assets/common/TicketIcon_inactive.svg";
 import MyActive from "../assets/common/MyIcon_active.svg";
 import MyInactive from "../assets/common/MyIcon_inactive.svg";
 import HomeStackNavigator from "./HomeStackNavigator";
-import MyPage from "../pages/user/MyPage"; 
-import CompanionRegisterScreen from '../pages/tickets/CompanionRegisterScreen';
+import MyTickets from "../pages/tickets/MyTickets";
+import MyPage from "../pages/user/MyPage";
+import CompanionRegisterScreen from "../pages/tickets/CompanionRegisterScreen";
 import TicketStackNavigator from "./TicketStackNavigator";
-import PaymentScreen from '../pages/events/PaymentScreen';
+import PaymentScreen from "../pages/events/PaymentScreen";
 
 const TicketScreen = () => (
   <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
@@ -47,7 +48,7 @@ export default function AppNavigator() {
       />
       <Tab.Screen
         name="내 티켓"
-        component={TicketScreen} //얼굴 인증 페이지를 보려면 TicketStackNavigator로 TicketScreen 변경
+        component={TicketStackNavigator} //얼굴 인증 페이지를 보려면 TicketStackNavigator로 TicketScreen 변경
         options={{
           tabBarIcon: ({ focused, size }: { focused: boolean; size: number }) =>
             focused ? (
@@ -62,7 +63,7 @@ export default function AppNavigator() {
       />
       <Tab.Screen
         name="마이페이지"
-        component={MyPage}   
+        component={MyPage}
         options={{
           tabBarIcon: ({ focused, size }: { focused: boolean; size: number }) =>
             focused ? (

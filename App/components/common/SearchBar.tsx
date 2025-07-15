@@ -1,16 +1,28 @@
 import React from "react";
-import { View, TextInput, StyleSheet } from "react-native";
+import { View, TextInput, StyleSheet, TouchableOpacity, NativeSyntheticEvent, TextInputSubmitEditingEventData } from "react-native";
 import SearchIcon from "../../assets/events/SearchIcon.svg";
 
-const SearchBar = () => {
+type Props = {
+  value: string;
+  onChangeText: (text: string) => void;
+  onSearch: (text: string) => void;
+};
+
+const SearchBar = ({ value, onChangeText, onSearch }: Props) => {
   return (
     <View style={styles.container}>
       <TextInput
         style={styles.input}
         placeholder="공연, 콘서트, 아티스트를 검색하세요."
         placeholderTextColor="#9CA3AF"
+        value={value}
+        onChangeText={onChangeText}
+        onSubmitEditing={(e: NativeSyntheticEvent<TextInputSubmitEditingEventData>) => onSearch(e.nativeEvent.text)}
+        returnKeyType="search"
       />
-      <SearchIcon />
+      <TouchableOpacity onPress={() => onSearch(value)}>
+        <SearchIcon />
+      </TouchableOpacity>
     </View>
   );
 };
