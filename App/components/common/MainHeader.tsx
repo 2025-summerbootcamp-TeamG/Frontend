@@ -1,45 +1,42 @@
 import React from "react";
-import { SafeAreaView, View, Text } from "react-native";
+import { View, Text, Platform, StatusBar, SafeAreaView } from "react-native";
 
-const MainHeader = () => (
-  <SafeAreaView style={{ backgroundColor: "#E53E3E" }}>
+const MainHeader = () => {
+  return (
     <View
       style={{
-        width: "100%",
-        height: 52,
         backgroundColor: "#E53E3E",
-        paddingLeft: 16,
-        paddingRight: 16,
-        paddingTop: 12,
-        paddingBottom: 12,
-        justifyContent: "flex-start",
-        alignItems: "center",
-        flexDirection: "row",
+        paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
       }}
     >
-      <View
-        style={{
-          flex: 1,
-          height: 28,
-          justifyContent: "flex-start",
-          alignItems: "center",
-          display: "flex",
-        }}
-      >
-        <Text
+      <SafeAreaView>
+        <View
           style={{
-            color: "white",
-            fontSize: 20,
-            fontFamily: "Pacifico",
-            fontWeight: "400",
-            lineHeight: 28,
+            width: "100%",
+            height: 52,
+            backgroundColor: "#E53E3E",
+            paddingLeft: 16,
+            paddingRight: 16,
+            justifyContent: "flex-start",
+            alignItems: "center",
+            flexDirection: "row",
           }}
         >
-          TeamG가 최고
-        </Text>
-      </View>
+          <Text
+            style={{
+              color: "white",
+              fontSize: 20,
+              fontFamily: "Pacifico",
+              fontWeight: "400",
+              lineHeight: 28,
+            }}
+          >
+            TeamG가 최고
+          </Text>
+        </View>
+      </SafeAreaView>
     </View>
-  </SafeAreaView>
-);
+  );
+};
 
 export default MainHeader;
