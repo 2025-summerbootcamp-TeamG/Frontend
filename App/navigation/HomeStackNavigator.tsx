@@ -4,13 +4,11 @@ import HomeScreen from "../pages/events/HomeScreen";
 import PopularEventsPage from "../pages/events/PopularEventsPage";
 import NewEventsPage from "../pages/events/NewEventsPage";
 import CategoryPage from "../pages/events/CategoryPage";
-import { TouchableOpacity } from "react-native";
 import EventDetailPage from "../pages/events/EventDetailPage";
+import SearchPage from "../pages/events/SearchPage";
 import { TouchableOpacity, Text, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import BackIcon from "../assets/events/backIcon.svg";
-import { View, Text } from "react-native";
-import SearchPage from "../pages/events/SearchPage";
 
 const Stack = createNativeStackNavigator();
 
@@ -116,6 +114,22 @@ export default function HomeStackNavigator() {
           headerLeft: () => <CustomHeaderLeftWithTitle title="상세 정보" />,
           headerBackVisible: false,
           headerTransparent: true,
+        }}
+      />
+      <Stack.Screen
+        name="CategoryPage"
+        component={CategoryPage}
+        options={({ route }: { route: any }) => ({
+          headerLeft: () => <CustomHeaderLeftWithTitle title={route.params?.categoryName || "카테고리"} />,
+          headerTitle: "",
+        })}
+      />
+      <Stack.Screen
+        name="SearchPage"
+        component={SearchPage}
+        options={{
+          headerLeft: () => <CustomHeaderLeftWithTitle title="검색 결과" />,
+          headerTitle: "",
         }}
       />
     </Stack.Navigator>
