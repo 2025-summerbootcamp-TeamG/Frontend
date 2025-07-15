@@ -6,13 +6,14 @@ import NewEventsPage from "../pages/events/NewEventsPage";
 import CategoryPage from "../pages/events/CategoryPage";
 import EventDetailPage from "../pages/events/EventDetailPage";
 import SearchPage from "../pages/events/SearchPage";
+import { AuthHistoryModal } from "../pages/user/AuthHistoryModal";
 import { TouchableOpacity, Text, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import BackIcon from "../assets/events/backIcon.svg";
 
 const Stack = createNativeStackNavigator();
 
-function CustomHeaderLeftWithTitle({ title }: { title: string }) {
+export function CustomHeaderLeftWithTitle({ title }: { title: string }) {
   const navigation = useNavigation();
   return (
     <View
@@ -92,7 +93,7 @@ export default function HomeStackNavigator() {
         name="PopularEvents"
         component={PopularEventsPage}
         options={{
-          headerTitle: () => null,
+          headerTitle: "",
           headerLeft: () => <CustomHeaderLeftWithTitle title="인기 티켓" />,
           headerBackVisible: false,
         }}
@@ -101,7 +102,7 @@ export default function HomeStackNavigator() {
         name="NewEvents"
         component={NewEventsPage}
         options={{
-          headerTitle: () => null,
+          headerTitle: "",
           headerLeft: () => <CustomHeaderLeftWithTitle title="신규 티켓" />,
           headerBackVisible: false,
         }}
@@ -129,6 +130,14 @@ export default function HomeStackNavigator() {
         component={SearchPage}
         options={{
           headerLeft: () => <CustomHeaderLeftWithTitle title="검색 결과" />,
+          headerTitle: "",
+        }}
+      />
+      <Stack.Screen
+        name="AuthHistoryModal"
+        component={AuthHistoryModal}
+        options={{
+          headerLeft: () => <CustomHeaderLeftWithTitle title="인증 내역" />,
           headerTitle: "",
         }}
       />

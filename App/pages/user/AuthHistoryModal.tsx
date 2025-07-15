@@ -8,6 +8,12 @@ import {
 } from "react-native";
 import BackActiveIcon from "../../assets/user/Back_active.svg";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useNavigation } from "@react-navigation/native";
+import { StackActions } from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import MyPage from "../pages/user/MyPage";
+import { CustomHeaderLeftWithTitle } from "./HomeStackNavigator";
+
 
 // 인증 내역 카드 컴포넌트 (DIV140 스타일 기반, props로 데이터 받음)
 interface AuthHistoryCardProps {
@@ -92,70 +98,33 @@ const authHistoryData = [
   },
 ];
 
-// onClose props를 받아서 뒤로가기 버튼에서 호출
-export const AuthHistoryModal = ({ onClose }: { onClose: () => void }) => {
+export const AuthHistoryModal = () => {
   return (
-    <View
-      style={{
-        flex: 1,
-        backgroundColor: "#fff" /*, width: 375, height: 812 */,
-      }}
-    >
-      <View
+    <View style={{ flex: 1, backgroundColor: "#fff" }}>
+      <ScrollView
         style={{ flex: 1, padding: 16, maxWidth: 400, alignSelf: "center" }}
+        contentContainerStyle={{ paddingBottom: 32 }}
+        showsVerticalScrollIndicator={false}
+        bounces={true}
+        overScrollMode="always"
       >
-        {/* 헤더: 상단에 뒤로가기 버튼과 타이틀 */}
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            height: 32,
-            width: 343,
-            marginBottom: 16,
-          }}
-        >
-          {/* 뒤로가기 버튼: 누르면 모달 닫기 */}
-          <TouchableOpacity onPress={onClose} style={styles.backButton}>
-            {/* Back_active.svg 아이콘을 사용한 뒤로가기 버튼 */}
-            <BackActiveIcon width={24} height={24} />
-          </TouchableOpacity>
-          {/* 타이틀 텍스트 */}
-          <Text style={{ fontWeight: "bold", fontSize: 18, marginLeft: 8 }}>
-            인증 내역
-          </Text>
-        </View>
-        {/* 인증 내역 리스트: 데이터 배열을 map으로 렌더링 */}
-        <ScrollView
-          style={{ flex: 1 }}
-          contentContainerStyle={{ paddingBottom: 32 }}
-          showsVerticalScrollIndicator={false}
-          bounces={true}
-          overScrollMode="always"
-        >
-          {authHistoryData.map((item, idx) => (
-            <AuthHistoryCard
-              key={idx}
-              title={item.title}
-              status={item.status}
-              statusColor={item.statusColor}
-              statusBg={item.statusBg}
-              date={item.date}
-              result={item.result}
-            />
-          ))}
-        </ScrollView>
-      </View>
+        {authHistoryData.map((item, idx) => (
+          <AuthHistoryCard
+            key={idx}
+            title={item.title}
+            status={item.status}
+            statusColor={item.statusColor}
+            statusBg={item.statusBg}
+            date={item.date}
+            result={item.result}
+          />
+        ))}
+      </ScrollView>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  backButton: {
-    width: 32,
-    height: 32,
-    justifyContent: "center",
-    alignItems: "center",
-  },
   /*cardWrap: {
     backgroundColor: "#fff",
     flex: 1,
