@@ -51,7 +51,7 @@ const TicketCard = ({
       <View style={styles.cardContent}>
         <View style={styles.cardHeader}>
           <View style={styles.h324}>
-            <Text style={styles.cardTitle}>{ticket.artist}</Text>
+            <Text style={styles.cardTitle}>{ticket.name}</Text>
           </View>
           <View style={[styles.statusBadge, statusStyle]}>
             <Text style={[styles.statusText, statusTextColor]}>
@@ -119,6 +119,7 @@ const filterOptions = [
 export interface TicketType {
   id?: number;
   artist?: string;
+  name?: string;
   date?: string;
   location?: string;
   price?: number;
@@ -134,8 +135,6 @@ export interface TicketType {
   primaryButton?: string;
   primaryButtonAction?: string;
   isExpired?: boolean;
-  seat_grade?: string;
-  seat_number?: string;
 }
 
 export default function MyTickets({ navigation }: MyTicketsProps) {

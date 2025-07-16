@@ -23,7 +23,7 @@ export default function SearchPage() {
 
   const filteredEvents = events.filter(
     (e) =>
-      e.artist.includes(query) ||
+      e.name.includes(query) ||
       e.location.includes(query) ||
       e.status.includes(query)
   );

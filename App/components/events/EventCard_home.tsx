@@ -11,6 +11,7 @@ export type Event = {
   status: string;
   image_url: string;
   type: string;
+  name: string;
 };
 
 interface EventCardProps {
@@ -33,7 +34,7 @@ export default function EventCard({ event, navigation }: EventCardProps) {
         </View>
         <View style={styles.infoWrap}>
           <Text style={styles.title} numberOfLines={1}>
-            {event.artist}
+            {event.name}
           </Text>
           <Text style={styles.desc} numberOfLines={1}>
             {event.date} - {event.location}

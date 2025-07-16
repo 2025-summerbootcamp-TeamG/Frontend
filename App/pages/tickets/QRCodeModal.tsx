@@ -5,6 +5,7 @@ import Cancel from "../../assets/tickets/Cancel.svg";
 
 interface TicketType {
   artist?: string;
+  name?: string;
   ticket_seat?: string;
   ticket_date?: string;
   date?: string;
@@ -59,7 +60,7 @@ export default function QRCodeModal({ ticket, onClose }: QRCodeModalProps) {
           {/* 공연명(artist) */}
           <View style={styles.marginWrap1}>
             <View style={styles.eventTitleWrap}>
-              <Text style={styles.eventTitle}>{t.artist || ""}</Text>
+              <Text style={styles.eventTitle}>{t.name || ""}</Text>
             </View>
           </View>
           {/* 좌석 정보 */}
