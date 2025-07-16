@@ -3,14 +3,22 @@ import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Cancel from "../../assets/tickets/Cancel.svg";
 
-export default function QRCodeModal({ ticket, onClose }) {
-  // ticket 정보는 props로 전달
-  const t = ticket || {};
+interface TicketType {
+  artist?: string;
+  ticket_seat?: string;
+  ticket_date?: string;
+  date?: string;
+}
 
-  // QR코드 만료 타이머 (60초)
-  const [timer, setTimer] = useState(60);
+interface QRCodeModalProps {
+  ticket?: TicketType | null;
+  onClose: () => void;
+}
+
+export default function QRCodeModal({ ticket, onClose }: QRCodeModalProps) {
+  const t = ticket || {};
+  const [timer, setTimer] = useState<number>(60);
   useEffect(() => {
-    // 1초마다 timer 감소, 0이 되면 멈춤
     if (timer <= 0) return;
     const interval = setInterval(() => {
       setTimer((prev) => prev - 1);
@@ -37,7 +45,6 @@ export default function QRCodeModal({ ticket, onClose }) {
           {/* QR코드 영역 (실제 QR코드 대신 회색 박스) */}
           <View style={styles.qrBoxWrap}>
             <View style={styles.qrBox}>
-              {/* 타이머가 0이 되면 만료 안내 표시 */}
               {timer === 0 && (
                 <View style={styles.qrExpiredBox}>
                   <Text style={styles.qrExpiredText}>
@@ -69,7 +76,6 @@ export default function QRCodeModal({ ticket, onClose }) {
               </Text>
             </View>
           </View>
-          {/* 티켓번호 등 필요시 추가 가능 */}
           {/* 안내문구 (빨간색, 가운데 정렬) */}
           <View style={styles.noticeWrap}>
             <Text style={styles.noticeText}>
@@ -79,7 +85,6 @@ export default function QRCodeModal({ ticket, onClose }) {
         </View>
         {/* 하단 빨간 박스(버튼 스타일) - 타이머만 표시, 만료 시 00 유지 */}
         <View style={styles.saveBtn}>
-          {/* 남은 시간(초) 표시, 00이 되면 그대로 유지 */}
           <Text style={styles.saveBtnText}>
             {timer.toString().padStart(2, "0")}
           </Text>
@@ -196,41 +201,6 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     fontSize: 12,
     textAlign: "center",
-    fontFamily: "Roboto-Regular",
-  },
-  qrCodeNoWrap: {
-    paddingBottom: 16,
-    flexDirection: "row",
-  },
-  ticketNoWrap: {
-    width: 95,
-    height: 16,
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  ticketNoText: {
-    color: "#6b7280",
-    lineHeight: 16,
-    fontSize: 12,
-    textAlign: "center",
-    fontFamily: "Roboto-Regular",
-  },
-  marginWrap4: {
-    paddingBottom: 8,
-    flexDirection: "row",
-  },
-  ticketNoLabelWrap: {
-    width: 50,
-    justifyContent: "center",
-    height: 16,
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  ticketNoLabel: {
-    color: "#4b5563",
-    textAlign: "center",
-    lineHeight: 16,
-    fontSize: 12,
     fontFamily: "Roboto-Regular",
   },
   noticeWrap: {
