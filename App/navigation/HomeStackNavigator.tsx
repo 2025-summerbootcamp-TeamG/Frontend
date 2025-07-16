@@ -6,15 +6,17 @@ import NewEventsPage from "../pages/events/NewEventsPage";
 import CategoryPage from "../pages/events/CategoryPage";
 import EventDetailPage from "../pages/events/EventDetailPage";
 import SearchPage from "../pages/events/SearchPage";
+import { AuthHistoryModal } from "../pages/user/AuthHistoryModal";
 import { TouchableOpacity, Text, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import BackIcon from "../assets/events/backIcon.svg";
 import SeatSelectPage from "../pages/events/SeatSelectPage";
 import PaymentScreen from "../pages/events/PaymentScreen";
+import FaceAuthScreen from "../pages/tickets/FaceAuthScreen";
 
 const Stack = createNativeStackNavigator();
 
-function CustomHeaderLeftWithTitle({ title }: { title: string }) {
+export function CustomHeaderLeftWithTitle({ title }: { title: string }) {
   const navigation = useNavigation();
   return (
     <View
@@ -58,7 +60,8 @@ function CustomHeaderLeftWithTitle({ title }: { title: string }) {
       >
         <View
           style={{
-            width: 70.73,
+            minWidth: 70, // 최소 너비만 지정
+            maxWidth: 180, // 너무 길어지지 않게 최대값도 지정 가능
             height: 28,
             justifyContent: "flex-start",
             alignItems: "center",
@@ -72,7 +75,10 @@ function CustomHeaderLeftWithTitle({ title }: { title: string }) {
               fontFamily: "Roboto",
               fontWeight: "700",
               lineHeight: 28,
+              textAlign: "center",
             }}
+            numberOfLines={1}
+            ellipsizeMode="tail"
           >
             {title}
           </Text>
@@ -94,7 +100,7 @@ export default function HomeStackNavigator() {
         name="PopularEvents"
         component={PopularEventsPage}
         options={{
-          headerTitle: () => null,
+          headerTitle: "",
           headerLeft: () => <CustomHeaderLeftWithTitle title="인기 티켓" />,
           headerBackVisible: false,
         }}
@@ -103,7 +109,7 @@ export default function HomeStackNavigator() {
         name="NewEvents"
         component={NewEventsPage}
         options={{
-          headerTitle: () => null,
+          headerTitle: "",
           headerLeft: () => <CustomHeaderLeftWithTitle title="신규 티켓" />,
           headerBackVisible: false,
         }}
@@ -128,28 +134,49 @@ export default function HomeStackNavigator() {
         }}
       />
       <Stack.Screen
-         name="Payment"
-         component={PaymentScreen}
-         options={{
-           headerTitle: "",
-           headerLeft: () => <CustomHeaderLeftWithTitle title="결제하기" />,
-           headerBackVisible: false,
-         }}
-       />
-       <Stack.Screen
-          name="CategoryPage"
-          component={CategoryPage}
-          options={({ route }: { route: any }) => ({
-            headerLeft: () => <CustomHeaderLeftWithTitle title={route.params?.categoryName || "카테고리"} />,
-            headerTitle: "",
-          })}
-        />
+        name="Payment"
+        component={PaymentScreen}
+        options={{
+          headerTitle: "",
+          headerLeft: () => <CustomHeaderLeftWithTitle title="결제하기" />,
+          headerBackVisible: false,
+        }}
+      />
+      <Stack.Screen
+        name="CategoryPage"
+        component={CategoryPage}
+        options={({ route }: { route: any }) => ({
+          headerLeft: () => (
+            <CustomHeaderLeftWithTitle
+              title={route.params?.categoryName || "카테고리"}
+            />
+          ),
+          headerTitle: "",
+        })}
+      />
       <Stack.Screen
         name="SearchPage"
         component={SearchPage}
         options={{
           headerLeft: () => <CustomHeaderLeftWithTitle title="검색 결과" />,
           headerTitle: "",
+        }}
+      />
+      <Stack.Screen
+        name="AuthHistoryModal"
+        component={AuthHistoryModal}
+        options={{
+          headerLeft: () => <CustomHeaderLeftWithTitle title="인증 내역" />,
+          headerTitle: "",
+        }}
+      />
+      <Stack.Screen
+        name="FaceAuthScreen"
+        component={FaceAuthScreen}
+        options={{
+          headerTitle: "",
+          headerLeft: () => <CustomHeaderLeftWithTitle title="얼굴 인증" />,
+          headerBackVisible: false,
         }}
       />
     </Stack.Navigator>

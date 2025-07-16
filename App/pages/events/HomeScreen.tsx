@@ -8,7 +8,7 @@ import { events } from "../../assets/events/EventsMock";
 import { useNavigation } from "@react-navigation/native";
 
 export default function HomeScreen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const [searchText, setSearchText] = useState("");
 
   const handleSearch = (text: string) => {

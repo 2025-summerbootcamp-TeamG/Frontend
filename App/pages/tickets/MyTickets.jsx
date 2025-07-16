@@ -82,9 +82,10 @@ const filterOptions = [
   { label: "지난", value: "지난" },
 ];
 
+
 // 티켓 카드 컴포넌트 (각 티켓 정보를 카드 형태로 렌더링)
-const TicketCard = ({ ticket, onQrPress }) => {
-  // 상태 뱃지 색상 및 텍스트 색상 분기
+const TicketCard = ({ ticket, navigation, onQrPress }) => {
+
   const statusStyle =
     ticket.ticket_statusText === "인증완료"
       ? [styles.statusBadge, { backgroundColor: "#dcfce7" }]
@@ -93,6 +94,11 @@ const TicketCard = ({ ticket, onQrPress }) => {
     ticket.ticket_statusText === "인증완료"
       ? { color: "#16a34a" }
       : { color: "#eab308" };
+
+  const handlePrimaryButtonPress = () => {
+    // '얼굴 인증하기' 버튼을 눌러도 아무 동작하지 않음 (FaceAuthScreen 이동 제거)
+    // QR 등 다른 액션은 기존대로
+  };
 
   return (
     <View style={styles.card}>
@@ -133,17 +139,17 @@ const TicketCard = ({ ticket, onQrPress }) => {
         </View>
         <View style={styles.marginWrap3}>
           <View style={styles.div39}>
-            <TouchableOpacity
-              style={styles.showqrcode140}
-              onPress={() => {
-                if (ticket.primaryButtonAction === "qr") {
+            <TouchableOpacity style={styles.showqrcode140} onPress={() => {handlePrimaryButtonPress(ticket)}>
+              <Text style={styles.qr42}>
+                {ticket.primaryButton !== "null" ? ticket.primaryButton: ""}
+              </Text>
+            </TouchableOpacity>
+                 
+             const handlePrimaryButtonPress = (ticket) => {
+               if (ticket.primaryButtonAction === "qr") {
                   onQrPress(ticket);
                 }
-              }}
-            >
-              <Text style={styles.qr42}>
-                {ticket.primaryButton !== "null" ? ticket.primaryButton : ""}
-              </Text>
+              };
             </TouchableOpacity>
             <View style={styles.marginWrap4}>
               <TouchableOpacity style={styles.showdetails143}>
@@ -157,8 +163,7 @@ const TicketCard = ({ ticket, onQrPress }) => {
   );
 };
 
-export default function MyTickets() {
-  // 필터 상태
+export default function MyTickets({ navigation }) {
   const [activeFilter, setActiveFilter] = useState("전체");
   // QR코드 모달 표시 여부
   const [qrModalVisible, setQrModalVisible] = useState(false);
@@ -222,14 +227,16 @@ export default function MyTickets() {
         </View>
         {/* 티켓 리스트 렌더링 */}
         {filteredTickets.map((ticket) => (
+
           <TicketCard
             key={ticket.id}
             ticket={ticket}
             onQrPress={handleQrPress}
+            navigation={navigation}
           />
         ))}
       </ScrollView>
-      {/* QR코드 모달 (선택된 티켓 정보 전달) */}
+      {/* QR코드 모달 (티켓 정보) */}
       <Modal
         visible={qrModalVisible}
         transparent

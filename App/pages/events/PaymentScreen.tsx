@@ -19,7 +19,7 @@ const STATUSBAR_HEIGHT =
   Platform.OS === "android" ? StatusBar.currentHeight || 0 : 0;
 
 export default function PaymentScreen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const [paymentMethod, setPaymentMethod] = useState("무통장입금");
   const [depositor, setDepositor] = useState("");
   const [buyerName, setBuyerName] = useState("");
@@ -179,7 +179,13 @@ export default function PaymentScreen() {
             주문 내용을 확인하였으며, 결제에 동의합니다.
           </Text>
         </View>
-        <TouchableOpacity style={styles.payBtn} disabled={!agree}>
+        <TouchableOpacity
+          style={styles.payBtn}
+          disabled={!agree}
+          onPress={() => {
+            navigation.navigate('내 티켓', { screen: 'FaceAuthScreen' });
+          }}
+        >
           <Text style={styles.payBtnText}>결제 완료하기</Text>
         </TouchableOpacity>
       </ScrollView>

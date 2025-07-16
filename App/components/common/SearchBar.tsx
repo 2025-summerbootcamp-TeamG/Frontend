@@ -21,7 +21,7 @@ const SearchBar = ({ value, onChangeText, onSearch }: Props) => {
         returnKeyType="search"
       />
       <TouchableOpacity onPress={() => onSearch(value)}>
-        <SearchIcon />
+      <SearchIcon />
       </TouchableOpacity>
     </View>
   );
