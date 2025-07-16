@@ -16,7 +16,7 @@ export default function TicketInfoModal({
   if (!ticket) return null;
   // 공연 정보
   const performanceInfo = {
-    title: ticket.artist || "NULL",
+    title: ticket.name || "NULL",
     date: ticket.ticket_date || ticket.date || "NULL",
     venue: ticket.location || "NULL",
   };

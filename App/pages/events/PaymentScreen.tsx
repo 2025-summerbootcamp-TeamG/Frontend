@@ -13,6 +13,7 @@ import DirectDepositIcon from "../../assets/payment/directdepositIcon.svg";
 import CheckIcon from "../../assets/common/CheckIcon.svg";
 import Svg, { Circle, Text as SvgText } from "react-native-svg";
 import { useNavigation } from "@react-navigation/native";
+import { events } from "../../assets/events/EventsMock";
 
 const HEADER_HEIGHT = 48;
 const STATUSBAR_HEIGHT =
@@ -27,6 +28,12 @@ export default function PaymentScreen() {
   const [buyerEmail, setBuyerEmail] = useState("");
   const [agree, setAgree] = useState(false);
 
+  // 임시: 첫 번째 이벤트 데이터 사용
+  const event = events[0];
+
+  // 에러 메시지 상태 추가
+  const [errorMsg, setErrorMsg] = useState("");
+
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <ScrollView
@@ -38,15 +45,15 @@ export default function PaymentScreen() {
           <Text style={styles.infoBoxTitle}>예매 정보</Text>
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>공연명</Text>
-            <Text style={styles.infoValue}>BTS 월드투어 2025</Text>
+            <Text style={styles.infoValue}>{event.name}</Text>
           </View>
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>공연일시</Text>
-            <Text style={styles.infoValue}>2025.08.15 19:00</Text>
+            <Text style={styles.infoValue}>{event.ticket_date || event.date}</Text>
           </View>
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>공연장소</Text>
-            <Text style={styles.infoValue}>서울 올림픽 주경기장</Text>
+            <Text style={styles.infoValue}>{event.location}</Text>
           </View>
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>좌석정보</Text>
@@ -181,13 +188,28 @@ export default function PaymentScreen() {
         </View>
         <TouchableOpacity
           style={styles.payBtn}
-          disabled={!agree}
           onPress={() => {
+            // 입력값 및 동의 체크 확인
+            if (!buyerName || !buyerPhone || !buyerEmail) {
+              setErrorMsg("예매자 정보가 누락되었습니다.");
+              return;
+            }
+            if (!agree) {
+              setErrorMsg("결제 동의에 체크해 주세요.");
+              return;
+            }
+            setErrorMsg("");
             navigation.navigate('내 티켓', { screen: 'FaceAuthScreen' });
           }}
         >
           <Text style={styles.payBtnText}>결제 완료하기</Text>
         </TouchableOpacity>
+        {/* 에러 메시지 표시 */}
+        {errorMsg !== "" && (
+          <Text style={{ color: '#E53E3E', textAlign: 'center', marginBottom: 16, marginTop: -10, fontSize: 14 }}>
+            {errorMsg}
+          </Text>
+        )}
       </ScrollView>
     </View>
   );

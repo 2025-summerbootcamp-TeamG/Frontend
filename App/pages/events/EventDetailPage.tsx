@@ -82,7 +82,7 @@ export default function EventDetailPage() {
                   color: "#111",
                 }}
               >
-                {event.artist}
+                {event.name}
               </Text>
               <Text
                 style={{
