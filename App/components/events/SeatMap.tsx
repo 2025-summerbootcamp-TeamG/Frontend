@@ -15,6 +15,7 @@ const sectionColors = {
 const seatGap = 20;
 const seatWidth = 16;
 const startY = 110;
+const startX = 40; // VIP 좌석의 시작 X 좌표
 
 // VIP: 5x5 배열, 3구역 (왼쪽, 가운데, 오른쪽) - 더 떨어뜨려 배치
 const vipSections = [
@@ -22,53 +23,107 @@ const vipSections = [
   { name: "VIP-C", color: sectionColors.VIP, offsetX: 150 },
   { name: "VIP-R", color: sectionColors.VIP, offsetX: 260 },
 ];
-const vipSeats = vipSections.flatMap((section, sIdx) =>
-  Array.from({ length: 4 }, (_, row) =>
-    Array.from({ length: 5 }, (_, col) => ({
-      id: `${section.name}-${row + 1}-${col + 1}`,
-      x: section.offsetX + col * seatGap,
-      y: startY + row * seatGap,
-    }))
-  ).flat()
+const totalRows = 4; // 각 구역의 행 수
+const totalCols = 5; // 각 구역의 열 수
+const totalSeatRows = totalRows * vipSections.length; // 12
+const rowNames = Array.from({ length: totalSeatRows }, (_, i) =>
+  String.fromCharCode(65 + i)
 );
+
+const vipRows = ["A", "B", "C", "D"]; // 4줄
+const vipCols = 15; // 각 줄에 15좌석
+const groupSize = 5; // 한 덩어리 좌석 수
+const groupGap = 10; // 덩어리 사이 간격(px)
+const zoneName = "VIP";
+
+const vipSeats: {
+  id: string;
+  name: string;
+  x: number;
+  y: number;
+  color: string;
+}[] = [];
+vipRows.forEach((row, rowIdx) => {
+  for (let col = 1; col <= vipCols; col++) {
+    const seatName = `${row}${col}`;
+    const groupIdx = Math.floor((col - 1) / groupSize);
+    const x = startX + (col - 1) * seatGap + groupIdx * groupGap;
+    vipSeats.push({
+      id: `${zoneName}-${seatName}`,
+      name: seatName,
+      x,
+      y: startY + rowIdx * seatGap,
+      color: sectionColors.VIP,
+    });
+  }
+});
 
 // S석: 4x5 배열 (왼쪽, 오른쪽만)
 const sSections = [
   { name: "S-L", color: sectionColors.S, offsetX: 40 },
   { name: "S-R", color: sectionColors.S, offsetX: 280 },
 ];
-const sSeats = sSections.flatMap((section, sIdx) =>
-  Array.from({ length: 5 }, (_, row) =>
-    Array.from({ length: 4 }, (_, col) => ({
-      id: `${section.name}-${row + 1}-${col + 1}`,
-      x: section.offsetX + col * seatGap,
-      y: startY + 110 + row * seatGap,
-    }))
-  ).flat()
-);
+const sZoneName = "S";
+const sRows = ["A", "B", "C", "D", "E"]; // 5줄
+const sCols = 8; // 8좌석 (4+4)
+const sStartX = 40;
+const sStartY = startY + 110;
 
-// R석: 8x5 배열 (S석 오른쪽 끝과 왼쪽 끝 사이)
-const rOffsetX = 140;
-const rSeats = Array.from({ length: 5 }, (_, row) =>
-  Array.from({ length: 6 }, (_, col) => ({
-    id: `R-${row + 1}-${col + 1}`,
-    x: rOffsetX + col * seatGap,
-    y: startY + 120 + row * seatGap,
-  }))
-).flat();
+const sSeats: { id: string; name: string; x: number; y: number }[] = [];
+sRows.forEach((row, rowIdx) => {
+  for (let col = 1; col <= sCols; col++) {
+    const seatName = `${row}${col}`;
+    sSeats.push({
+      id: `${sZoneName}-${seatName}`,
+      name: seatName,
+      x: sStartX + (col - 1) * seatGap + (col > 4 ? 160 : 0), // 4좌석씩 띄우기
+      y: sStartY + rowIdx * seatGap,
+    });
+  }
+});
+
+const rZoneName = "R";
+const rRows = ["A", "B", "C", "D", "E"]; // 5줄
+const rCols = 6; // 6좌석
+const rStartX = 140;
+const rStartY = startY + 120;
+
+const rSeats: { id: string; name: string; x: number; y: number }[] = [];
+rRows.forEach((row, rowIdx) => {
+  for (let col = 1; col <= rCols; col++) {
+    const seatName = `${row}${col}`;
+    rSeats.push({
+      id: `${rZoneName}-${seatName}`,
+      name: seatName,
+      x: rStartX + (col - 1) * seatGap,
+      y: rStartY + rowIdx * seatGap,
+    });
+  }
+});
 
 // A석: 24x5 배열, 일자 배치
-const aOffsetX = 40;
-const aCols = 16;
-const aRows = 2;
-const aSeats = Array.from({ length: aRows }, (_, row) =>
-  Array.from({ length: aCols }, (_, col) => ({
-    id: `A-${row + 1}-${col + 1}`,
-    x: aOffsetX + col * seatGap,
-    y: startY + 250 + row * seatGap,
-  }))
-).flat();
+const aZoneName = "A";
+const aRows = ["A", "B"]; // 2줄
+const aCols = 16; // 16좌석
+const aStartX = 40;
+const aStartY = startY + 250;
 
+const aSeats: { id: string; name: string; x: number; y: number }[] = [];
+aRows.forEach((row, rowIdx) => {
+  for (let col = 1; col <= aCols; col++) {
+    const seatName = `${row}${col}`;
+    aSeats.push({
+      id: `${aZoneName}-${seatName}`,
+      name: seatName,
+      x: aStartX + (col - 1) * seatGap,
+      y: aStartY + rowIdx * seatGap,
+    });
+  }
+});
+
+// TODO: API 연동 시 zone별 available_count를 받아오면 아래 getAvailableCount 함수와 seatSections 계산은 제거할 것!
+
+// 1. 구역별 전체 좌석 수 계산
 const seatSections = [
   { name: "VIP", color: sectionColors.VIP, seats: vipSeats },
   { name: "S", color: sectionColors.S, seats: sSeats },
@@ -76,8 +131,16 @@ const seatSections = [
   { name: "A", color: sectionColors.A, seats: aSeats },
 ];
 
+// 2. 구역별 잔여좌석 계산 함수
+function getAvailableCount(zone: string) {
+  const section = seatSections.find((s) => s.name === zone);
+  if (!section) return 0;
+  return section.seats.filter((seat) => !reservedSeats.includes(seat.id))
+    .length;
+}
+
 // 예시: 이미 선점된 좌석(다른 사람이 선택한 좌석)
-const reservedSeats = ["VIP2", "R5", "S8", "A10"];
+const reservedSeats = ["VIP-C2", "R-A5", "S-C8", "A-A10"];
 
 // seatSections를 seats 배열로 변환
 const seats: {
@@ -235,30 +298,32 @@ export default function SeatMap({ selected, onSelectSeat }: SeatMapProps) {
           marginBottom: 8,
         }}
       >
-        {Object.entries({ VIP: "VIP석", R: "R석", S: "S석", A: "A석" }).map(
-          ([type, label]) => (
-            <View
-              key={type}
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                marginHorizontal: 8,
-              }}
-            >
+        {seatSections.map(({ name, color }) => (
+          <View
+            key={name}
+            style={{
+              flexDirection: "column",
+              alignItems: "center",
+              marginHorizontal: 8,
+            }}
+          >
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
               <View
                 style={{
                   width: 14,
                   height: 14,
                   borderRadius: 3,
-                  backgroundColor:
-                    sectionColors[type as keyof typeof sectionColors],
+                  backgroundColor: color,
                   marginRight: 4,
                 }}
               />
-              <Text style={{ fontSize: 12 }}>{label}</Text>
+              <Text style={{ fontSize: 12 }}>{name}석</Text>
             </View>
-          )
-        )}
+            <Text style={{ color: "#E53E3E", fontSize: 11, marginTop: 2 }}>
+              잔여좌석: {getAvailableCount(name)}석
+            </Text>
+          </View>
+        ))}
       </View>
       {/* 이미 선점된 좌석 안내 모달 */}
       <Modal
