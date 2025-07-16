@@ -29,6 +29,8 @@ const TicketCard = ({
   const handlePrimaryButtonPress = (ticket: TicketType) => {
     if (ticket.primaryButtonAction === "qr") {
       onQrPress(ticket);
+    } else if (ticket.primaryButtonAction === "verify" && navigation) {
+      navigation.navigate("FaceAuthScreen", { fromMyTickets: true });
     }
   };
 
@@ -132,6 +134,8 @@ export interface TicketType {
   primaryButton?: string;
   primaryButtonAction?: string;
   isExpired?: boolean;
+  seat_grade?: string;
+  seat_number?: string;
 }
 
 export default function MyTickets({ navigation }: MyTicketsProps) {
