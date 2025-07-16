@@ -23,7 +23,7 @@ export default function EventCard({ event, navigation }: EventCardProps) {
     <TouchableOpacity
       onPress={() => {
         console.log("카드 클릭됨");
-        navigation.navigate("EventDetail", { event });
+        navigation.navigate("EventDetail", { eventId: event.id });
       }}
       activeOpacity={0.8}
     >

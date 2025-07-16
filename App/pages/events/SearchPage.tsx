@@ -2,16 +2,19 @@ import React, { useState, useEffect } from "react";
 import { View, Text, FlatList, StyleSheet, SafeAreaView } from "react-native";
 import { events } from "../../assets/events/EventsMock";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { HomeStackParamList } from "../../navigation/HomeStackNavigator";
 import SearchBar from "../../components/common/SearchBar";
 import EventCardSearch from "../../components/events/EventCard_search";
 
 type SearchPageRoute = { params?: { query?: string } };
 export default function SearchPage() {
-  const route = useRoute<RouteProp<SearchPageRoute, 'params'>>();
+  const route = useRoute<RouteProp<SearchPageRoute, "params">>();
   const initialQuery = route.params?.query || "";
   const [query, setQuery] = useState(initialQuery);
   const [searchText, setSearchText] = useState(initialQuery);
-  const navigation = useNavigation();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
 
   useEffect(() => {
     setQuery(initialQuery);
@@ -48,7 +51,14 @@ export default function SearchPage() {
           <FlatList
             data={filteredEvents}
             keyExtractor={(item) => item.id.toString()}
-            renderItem={({ item }) => <EventCardSearch event={item} />}
+            renderItem={({ item }) => (
+              <EventCardSearch
+                event={item}
+                onPress={() =>
+                  navigation.navigate("EventDetail", { eventId: item.id })
+                }
+              />
+            )}
             contentContainerStyle={{ paddingBottom: 32 }}
           />
         )}

@@ -1,22 +1,50 @@
 import React from "react";
-import { View, Text, Image, StyleSheet } from "react-native";
+import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
 import { Event } from "./EventCard_home";
 
-export default function EventCardSearch({ event }: { event: Event }) {
+export default function EventCardSearch({
+  event,
+  onPress,
+}: {
+  event: Event;
+  onPress?: () => void;
+}) {
   return (
-    <View style={styles.card}>
-      <Image source={{ uri: event.image_url }} style={styles.image} />
-      <View style={styles.infoWrap}>
-        <View style={styles.titleRow}>
-          <Text style={styles.title} numberOfLines={1}>{event.artist}</Text>
-          <View style={[styles.badge, event.status === "마감임박" ? styles.badgeHot : styles.badgeNormal]}>
-            <Text style={[styles.badgeText, event.status === "마감임박" ? styles.badgeTextHot : styles.badgeTextNormal]}>{event.status}</Text>
+    <TouchableOpacity onPress={onPress} activeOpacity={0.85}>
+      <View style={styles.card}>
+        <Image source={{ uri: event.image_url }} style={styles.image} />
+        <View style={styles.infoWrap}>
+          <View style={styles.titleRow}>
+            <Text style={styles.title} numberOfLines={1}>
+              {event.artist}
+            </Text>
+            <View
+              style={[
+                styles.badge,
+                event.status === "마감임박" || event.status === "인기"
+                  ? styles.badgeHot
+                  : styles.badgeNormal,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.badgeText,
+                  event.status === "마감임박" || event.status === "인기"
+                    ? styles.badgeTextHot
+                    : styles.badgeTextNormal,
+                ]}
+              >
+                {event.status}
+              </Text>
+            </View>
           </View>
+          <Text style={styles.desc} numberOfLines={1}>
+            {event.date} {event.location}
+          </Text>
+          <Text style={styles.price}>₩{event.price.toLocaleString()}</Text>
         </View>
-        <Text style={styles.desc} numberOfLines={1}>{event.date} {event.location}</Text>
-        <Text style={styles.price}>₩{event.price.toLocaleString()}</Text>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }
 
@@ -80,7 +108,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#E5E7EB",
   },
   badgeHot: {
-    backgroundColor: "#DBEAFE",
+    backgroundColor: "#FEE2E2", // 연한 빨간색
   },
   badgeNormal: {
     backgroundColor: "#E5E7EB",
@@ -90,7 +118,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   badgeTextHot: {
-    color: "#2563EB",
+    color: "#E53E3E", // 진한 빨간색
   },
   badgeTextNormal: {
     color: "#6B7280",

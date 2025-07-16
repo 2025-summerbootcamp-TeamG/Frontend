@@ -16,6 +16,20 @@ import FaceAuthScreen from "../pages/tickets/FaceAuthScreen";
 
 const Stack = createNativeStackNavigator();
 
+// StackParamList 타입 정의 및 export
+export type HomeStackParamList = {
+  HomeMain: undefined;
+  PopularEvents: undefined;
+  NewEvents: undefined;
+  EventDetail: { eventId: number };
+  SeatSelect: undefined;
+  Payment: undefined;
+  CategoryPage: { categoryName?: string };
+  SearchPage: undefined;
+  AuthHistoryModal: undefined;
+  FaceAuthScreen: undefined;
+};
+
 export function CustomHeaderLeftWithTitle({ title }: { title: string }) {
   const navigation = useNavigation();
   return (
