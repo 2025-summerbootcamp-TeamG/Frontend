@@ -8,6 +8,8 @@ interface TicketType {
   ticket_seat?: string;
   ticket_date?: string;
   date?: string;
+  seat_grade?: string;
+  seat_number?: string;
 }
 
 interface QRCodeModalProps {
@@ -64,7 +66,8 @@ export default function QRCodeModal({ ticket, onClose }: QRCodeModalProps) {
           <View style={styles.marginWrap1}>
             <View style={styles.seatWrap}>
               <Text style={styles.seatText}>
-                {t.ticket_seat !== "null" ? t.ticket_seat : ""}
+                {(t.seat_grade || "") +
+                  (t.seat_number ? " " + t.seat_number : "")}
               </Text>
             </View>
           </View>

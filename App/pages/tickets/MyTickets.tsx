@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import MainHeader from "../../components/common/MainHeader";
 import QRCodeModal from "./QRCodeModal";
+import TicketInfoModal from "./TicketInfoModal";
 import { events } from "../../assets/events/EventsMock";
 
 // 티켓 카드 컴포넌트 (각 티켓 정보를 카드 형태로 렌더링)
@@ -16,9 +17,15 @@ interface TicketCardProps {
   ticket: TicketType & { [key: string]: any };
   navigation?: any;
   onQrPress: (ticket: TicketType) => void;
+  onDetailPress: (ticket: TicketType) => void;
 }
 
-const TicketCard = ({ ticket, navigation, onQrPress }: TicketCardProps) => {
+const TicketCard = ({
+  ticket,
+  navigation,
+  onQrPress,
+  onDetailPress,
+}: TicketCardProps) => {
   const handlePrimaryButtonPress = (ticket: TicketType) => {
     if (ticket.primaryButtonAction === "qr") {
       onQrPress(ticket);
@@ -65,7 +72,8 @@ const TicketCard = ({ ticket, navigation, onQrPress }: TicketCardProps) => {
         <View style={styles.marginWrap1}>
           <View style={styles.p30}>
             <Text style={styles.cardInfo}>
-              {ticket.ticket_seat !== "null" ? ticket.ticket_seat : ""}
+              {(ticket.seat_grade || "") +
+                (ticket.seat_number ? " " + ticket.seat_number : "")}
             </Text>
           </View>
         </View>
@@ -75,13 +83,16 @@ const TicketCard = ({ ticket, navigation, onQrPress }: TicketCardProps) => {
               style={styles.showqrcode140}
               onPress={() => handlePrimaryButtonPress(ticket)}
             >
-              <Text style={styles.qr42}>
+              <Text style={styles.qr42} numberOfLines={1} ellipsizeMode="tail">
                 {ticket.primaryButton !== "null" ? ticket.primaryButton : ""}
               </Text>
             </TouchableOpacity>
 
             <View style={styles.marginWrap4}>
-              <TouchableOpacity style={styles.showdetails143}>
+              <TouchableOpacity
+                style={styles.showdetails143}
+                onPress={() => onDetailPress(ticket)}
+              >
                 <Text style={styles.text3}>상세정보</Text>
               </TouchableOpacity>
             </View>
@@ -114,7 +125,8 @@ export interface TicketType {
   type?: string;
   title?: string;
   ticket_date?: string;
-  ticket_seat?: string;
+  seat_grade?: string;
+  seat_number?: string;
   ticket_status?: string;
   ticket_statusText?: string;
   primaryButton?: string;
@@ -126,6 +138,8 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
   const [activeFilter, setActiveFilter] = useState<string>("전체");
   const [qrModalVisible, setQrModalVisible] = useState<boolean>(false);
   const [selectedTicket, setSelectedTicket] = useState<TicketType | null>(null);
+  const [infoModalVisible, setInfoModalVisible] = useState<boolean>(false);
+  const [infoTicket, setInfoTicket] = useState<TicketType | null>(null);
 
   // 티켓 정보가 없는(필드가 'null'인) 데이터는 리스트에서 제외
   const filteredTickets = events.filter(
@@ -138,6 +152,11 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
   const handleQrPress = (ticket: TicketType) => {
     setSelectedTicket(ticket);
     setQrModalVisible(true);
+  };
+
+  const handleDetailPress = (ticket: TicketType) => {
+    setInfoTicket(ticket);
+    setInfoModalVisible(true);
   };
 
   return (
@@ -183,6 +202,7 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
             key={ticket.id}
             ticket={ticket}
             onQrPress={handleQrPress}
+            onDetailPress={handleDetailPress}
             navigation={navigation}
           />
         ))}
@@ -198,6 +218,11 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
           onClose={() => setQrModalVisible(false)}
         />
       </Modal>
+      <TicketInfoModal
+        visible={infoModalVisible}
+        ticket={infoTicket}
+        onClose={() => setInfoModalVisible(false)}
+      />
     </>
   );
 }
@@ -348,7 +373,6 @@ const styles = StyleSheet.create({
     width: 87,
     backgroundColor: "#e53e3e",
     borderRadius: 8,
-    height: 24,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 12,
@@ -358,8 +382,8 @@ const styles = StyleSheet.create({
     color: "#fff",
     textAlign: "center",
     fontFamily: "Roboto-Regular",
-    lineHeight: 16,
-    fontSize: 12,
+    fontSize: 11,
+    lineHeight: 14,
   },
   marginWrap4: {
     paddingLeft: 8,
@@ -369,7 +393,6 @@ const styles = StyleSheet.create({
     width: 68,
     backgroundColor: "#f3f4f6",
     borderRadius: 8,
-    height: 24,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 12,
