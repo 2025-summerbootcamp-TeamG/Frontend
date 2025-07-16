@@ -181,11 +181,19 @@ export default function MyPageLogin() {
         visible={loginModalVisible}
         onClose={() => setLoginModalVisible(false)}
         onLoginSuccess={handleLoginSuccess}
+        onShowSignup={() => {
+          setLoginModalVisible(false);
+          setSignupModalVisible(true);
+        }}
       />
       <SignupModal
         visible={signupModalVisible}
         onClose={() => setSignupModalVisible(false)}
         onSignup={handleSignupSuccess}
+        onShowLogin={() => {
+          setSignupModalVisible(false);
+          setLoginModalVisible(true);
+        }}
       />
     </View>
   );
