@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import MainHeader from "../../components/common/MainHeader";
 import QRCodeModal from "./QRCodeModal";
+import TicketInfoModal from "./TicketInfoModal";
 import { events } from "../../assets/events/EventsMock";
 
 // 티켓 카드 컴포넌트 (각 티켓 정보를 카드 형태로 렌더링)
@@ -16,12 +17,20 @@ interface TicketCardProps {
   ticket: TicketType & { [key: string]: any };
   navigation?: any;
   onQrPress: (ticket: TicketType) => void;
+  onDetailPress: (ticket: TicketType) => void;
 }
 
-const TicketCard = ({ ticket, navigation, onQrPress }: TicketCardProps) => {
+const TicketCard = ({
+  ticket,
+  navigation,
+  onQrPress,
+  onDetailPress,
+}: TicketCardProps) => {
   const handlePrimaryButtonPress = (ticket: TicketType) => {
     if (ticket.primaryButtonAction === "qr") {
       onQrPress(ticket);
+    } else if (ticket.primaryButtonAction === "verify" && navigation) {
+      navigation.navigate("FaceAuthScreen", { fromMyTickets: true });
     }
   };
 
@@ -81,7 +90,10 @@ const TicketCard = ({ ticket, navigation, onQrPress }: TicketCardProps) => {
             </TouchableOpacity>
 
             <View style={styles.marginWrap4}>
-              <TouchableOpacity style={styles.showdetails143}>
+              <TouchableOpacity
+                style={styles.showdetails143}
+                onPress={() => onDetailPress(ticket)}
+              >
                 <Text style={styles.text3}>상세정보</Text>
               </TouchableOpacity>
             </View>
@@ -120,12 +132,16 @@ export interface TicketType {
   primaryButton?: string;
   primaryButtonAction?: string;
   isExpired?: boolean;
+  seat_grade?: string;
+  seat_number?: string;
 }
 
 export default function MyTickets({ navigation }: MyTicketsProps) {
   const [activeFilter, setActiveFilter] = useState<string>("전체");
   const [qrModalVisible, setQrModalVisible] = useState<boolean>(false);
   const [selectedTicket, setSelectedTicket] = useState<TicketType | null>(null);
+  const [infoModalVisible, setInfoModalVisible] = useState<boolean>(false);
+  const [infoTicket, setInfoTicket] = useState<TicketType | null>(null);
 
   // 티켓 정보가 없는(필드가 'null'인) 데이터는 리스트에서 제외
   const filteredTickets = events.filter(
@@ -138,6 +154,11 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
   const handleQrPress = (ticket: TicketType) => {
     setSelectedTicket(ticket);
     setQrModalVisible(true);
+  };
+
+  const handleDetailPress = (ticket: TicketType) => {
+    setInfoTicket(ticket);
+    setInfoModalVisible(true);
   };
 
   return (
@@ -183,6 +204,7 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
             key={ticket.id}
             ticket={ticket}
             onQrPress={handleQrPress}
+            onDetailPress={handleDetailPress}
             navigation={navigation}
           />
         ))}
@@ -198,6 +220,11 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
           onClose={() => setQrModalVisible(false)}
         />
       </Modal>
+      <TicketInfoModal
+        visible={infoModalVisible}
+        ticket={infoTicket}
+        onClose={() => setInfoModalVisible(false)}
+      />
     </>
   );
 }

@@ -9,7 +9,7 @@ import {
   Modal,
   ScrollView,
   TextInput,
-  Platform
+  Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";
@@ -19,7 +19,8 @@ import CompanionRegisterScreen from "../../pages/tickets/CompanionRegisterScreen
 
 type CameraFacing = "user" | "environment";
 
-export default function FaceAuthScreen({ navigation }: any) {
+export default function FaceAuthScreen({ navigation, route }: any) {
+  const fromMyTickets = route?.params?.fromMyTickets;
   const [modalVisible, setModalVisible] = useState(false);
   const [isSuccess, setIsSuccess] = useState(true);
   const [showCompanion, setShowCompanion] = useState(false); // 동행자 추가 UI 표시 여부
@@ -71,11 +72,7 @@ export default function FaceAuthScreen({ navigation }: any) {
       {/* 얼굴 가이드라인 박스 */}
       <View style={styles.guideBox}>
         <View style={styles.dottedRect}>
-          <CameraView
-            style={styles.camera}
-            facing="front"
-            ref={cameraRef}
-          />
+          <CameraView style={styles.camera} facing="front" ref={cameraRef} />
           {/* 빨간 타원 오버레이 */}
           <View style={styles.oval} pointerEvents="none" />
           {/* 안내 텍스트 */}
@@ -139,14 +136,18 @@ export default function FaceAuthScreen({ navigation }: any) {
               onPress={() => {
                 setModalVisible(false);
                 if (isSuccess) {
-                  setShowCompanion(true);
-                  if (ticketCount >= 2) {
-                    navigation.navigate('내 티켓', {
-                      screen: 'CompanionRegisterScreen',
-                      params: { companionCount: ticketCount - 1 }
-                    });
+                  if (fromMyTickets) {
+                    navigation.navigate("MyTickets");
                   } else {
-                    navigation.navigate('홈');
+                    setShowCompanion(true);
+                    if (ticketCount >= 2) {
+                      navigation.navigate("내 티켓", {
+                        screen: "CompanionRegisterScreen",
+                        params: { companionCount: ticketCount - 1 },
+                      });
+                    } else {
+                      navigation.navigate("홈");
+                    }
                   }
                 }
               }}
