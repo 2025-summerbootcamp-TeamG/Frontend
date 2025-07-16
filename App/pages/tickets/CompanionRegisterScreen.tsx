@@ -7,6 +7,7 @@ import {
   SafeAreaView,
   TextInput,
   ScrollView,
+  Modal,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -14,6 +15,8 @@ export default function CompanionRegisterScreen({ route, navigation }: any) {
   const companionCount = route.params?.companionCount ?? 1;
   const [companions, setCompanions] = useState(Array(companionCount).fill(""));
   const maxCompanions = 3;
+  // 모달 상태 추가
+  const [modalVisible, setModalVisible] = useState(false);
 
   function handleAddCompanion() {
     if (companions.length < maxCompanions) {
@@ -25,6 +28,17 @@ export default function CompanionRegisterScreen({ route, navigation }: any) {
     const arr = [...companions];
     arr[idx] = text;
     setCompanions(arr);
+  }
+
+  // 등록 완료 버튼 클릭 시 모달 표시
+  function handleRegisterComplete() {
+    setModalVisible(true);
+  }
+
+  // 모달 확인 버튼 클릭 시 MyTickets로 이동
+  function handleModalConfirm() {
+    setModalVisible(false);
+    navigation.navigate('MyTickets');
   }
 
   return (
@@ -41,7 +55,7 @@ export default function CompanionRegisterScreen({ route, navigation }: any) {
         등록해주세요
       </Text>
       <Text style={styles.desc}>
-        등록된 동행자는 별도의 얼굴 인증이 필요합니다
+        등록된 동행자는 별도의 얼굴 등록이 필요합니다
       </Text>
 
       {/* 동행자 입력 카드 */}
@@ -74,7 +88,7 @@ export default function CompanionRegisterScreen({ route, navigation }: any) {
           <Text style={styles.companionInfoTitle}>동행자 등록 안내</Text>
           <Text style={styles.companionInfoDesc}>
             동행자는 최대 3명까지 등록 가능하며, 모든 동행자는 24시간 이내에
-            얼굴 인증을 완료해야 합니다.
+            얼굴 등록을 완료해야 합니다.
           </Text>
         </View>
       </View>
@@ -82,10 +96,33 @@ export default function CompanionRegisterScreen({ route, navigation }: any) {
       {/* 등록 완료 버튼 */}
       <TouchableOpacity
         style={styles.button}
-        onPress={() => navigation.navigate('MyTickets')}
+        onPress={handleRegisterComplete}
       >
         <Text style={styles.buttonText}>등록 완료</Text>
       </TouchableOpacity>
+      {/* 등록 완료 모달 */}
+      <Modal
+        visible={modalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <View style={[styles.modalIconCircle, { backgroundColor: "#D1FADF" }]}> 
+              <Ionicons name="checkmark" size={40} color="#22C55E" />
+            </View>
+            <Text style={styles.modalTitle}>등록 완료</Text>
+            <Text style={styles.modalDesc}>동행자 등록이 완료되었습니다.</Text>
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={handleModalConfirm}
+            >
+              <Text style={styles.modalButtonText}>확인</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -196,4 +233,54 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   buttonText: { color: "#fff", fontWeight: "500", fontSize: 16 },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.15)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalBox: {
+    width: 320,
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    alignItems: "center",
+    padding: 28,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  modalIconCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "#D1FADF",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#222",
+    marginBottom: 8,
+  },
+  modalDesc: {
+    fontSize: 14,
+    color: "#4B5563",
+    marginBottom: 24,
+    textAlign: "center",
+  },
+  modalButton: {
+    backgroundColor: "#E53E3E",
+    borderRadius: 8,
+    width: "100%",
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+  modalButtonText: {
+    color: "#fff",
+    fontWeight: "500",
+    fontSize: 16,
+  },
 });

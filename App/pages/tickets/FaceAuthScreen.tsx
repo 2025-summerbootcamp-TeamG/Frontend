@@ -62,7 +62,7 @@ export default function FaceAuthScreen({ navigation }: any) {
     <SafeAreaView style={styles.container}>
       {/* 설명 */}
       <Text style={styles.desc1}>
-        티켓 리셀 방지를 위한 본인 인증 절차입니다.
+        티켓 리셀 방지를 위한 본인 등록 절차입니다.
       </Text>
       <Text style={styles.desc2}>
         얼굴이 가이드라인 안에 들어오도록 위치시켜 주세요.
@@ -97,9 +97,9 @@ export default function FaceAuthScreen({ navigation }: any) {
             style={{ marginRight: 8 }}
           />
           <View>
-            <Text style={styles.infoTitle}>얼굴 인증 후 동행자 등록</Text>
+            <Text style={styles.infoTitle}>얼굴 등록 후 동행자 등록</Text>
             <Text style={styles.infoDesc}>
-              얼굴 인증 완료 후, 동행자를 등록할 수 있습니다.
+              얼굴 등록 완료 후, 동행자를 등록할 수 있습니다.
             </Text>
           </View>
         </View>
@@ -127,11 +127,11 @@ export default function FaceAuthScreen({ navigation }: any) {
               )}
             </View>
             <Text style={styles.modalTitle}>
-              {isSuccess ? "등록 완료" : "인증 실패"}
+              {isSuccess ? "등록 완료" : "등록 실패"}
             </Text>
             <Text style={styles.modalDesc}>
               {isSuccess
-                ? "얼굴 인증이 성공적으로 완료되었습니다."
+                ? "얼굴 등록이 성공적으로 완료되었습니다."
                 : "얼굴을 가이드라인에 맞추어 다시 촬영해주세요."}
             </Text>
             <TouchableOpacity
