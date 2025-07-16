@@ -10,81 +10,16 @@ import {
 import MainHeader from "../../components/common/MainHeader";
 import QRCodeModal from "./QRCodeModal";
 import { events } from "../../assets/events/EventsMock";
-// 이미지 import (require 사용) + 지금은 null로 대체
-const ticketsData = [
-  // 티켓 더미 데이터 (실제 데이터 연동 시 이 부분을 API로 대체)
-  {
-    id: 1,
-    image: null,
-    title: "BTS 월드투어 2025",
-    date: "2025.07.15 (화) 19:00",
-    venue: "서울 올림픽 주경기장",
-    seat: "VIP석 L열 14",
-    status: "verified",
-    statusText: "인증완료",
-    primaryButton: "QR코드 보기",
-    primaryButtonAction: "qr",
-  },
-  {
-    id: 2,
-    image: null,
-    title: "서울시향 정기공연",
-    date: "2025.08.01 (금) 19:30",
-    venue: "롯데콘서트홀",
-    seat: "R석 A열 5",
-    status: "pending",
-    statusText: "인증필요",
-    primaryButton: "얼굴 인증하기",
-    primaryButtonAction: "verify",
-  },
-  {
-    id: 3,
-    image: null,
-    title: "현대미술전: 빛과 그림자",
-    date: "2025.07.30 (수) 10:00",
-    venue: "국립현대미술관",
-    seat: "일반",
-    status: "verified",
-    statusText: "인증완료",
-    primaryButton: "QR코드 보기",
-    primaryButtonAction: "qr",
-    isExpired: true,
-  },
-  {
-    id: 4,
-    image: null,
-    title: "두산 vs LG 프로야구",
-    date: "2025.07.25 (금) 18:30",
-    venue: "잠실야구장",
-    seat: "내야지정석",
-    status: "pending",
-    statusText: "인증필요",
-    primaryButton: "얼굴 인증하기",
-    primaryButtonAction: "verify",
-  },
-  {
-    id: 5,
-    image: null,
-    title: "백조의 호수",
-    date: "2025.09.01 (월) 19:00",
-    venue: "세종문화회관",
-    seat: "S석 G열 8",
-    status: "verified",
-    statusText: "인증완료",
-    primaryButton: "QR코드 보기",
-    primaryButtonAction: "qr",
-  },
-];
-
-const filterOptions = [
-  { label: "전체", value: "전체" },
-  { label: "예정", value: "예정" },
-  { label: "지난", value: "지난" },
-];
 
 // 티켓 카드 컴포넌트 (각 티켓 정보를 카드 형태로 렌더링)
-const TicketCard = ({ ticket, navigation, onQrPress }) => {
-  const handlePrimaryButtonPress = (ticket) => {
+interface TicketCardProps {
+  ticket: TicketType & { [key: string]: any };
+  navigation?: any;
+  onQrPress: (ticket: TicketType) => void;
+}
+
+const TicketCard = ({ ticket, navigation, onQrPress }: TicketCardProps) => {
+  const handlePrimaryButtonPress = (ticket: TicketType) => {
     if (ticket.primaryButtonAction === "qr") {
       onQrPress(ticket);
     }
@@ -102,13 +37,11 @@ const TicketCard = ({ ticket, navigation, onQrPress }) => {
   return (
     <View style={styles.card}>
       <View style={styles.marginWrap}>
-        {/* 행사 이미지 대신 하얀 빈칸 */}
         <View style={styles.blankImage} />
       </View>
       <View style={styles.cardContent}>
         <View style={styles.cardHeader}>
           <View style={styles.h324}>
-            {/* 제목은 artist만 사용 */}
             <Text style={styles.cardTitle}>{ticket.artist}</Text>
           </View>
           <View style={[styles.statusBadge, statusStyle]}>
@@ -159,32 +92,57 @@ const TicketCard = ({ ticket, navigation, onQrPress }) => {
   );
 };
 
-export default function MyTickets({ navigation }) {
-  const [activeFilter, setActiveFilter] = useState("전체");
-  // QR코드 모달 표시 여부
-  const [qrModalVisible, setQrModalVisible] = useState(false);
-  // 선택된 티켓 정보(모달에 전달)
-  const [selectedTicket, setSelectedTicket] = useState(null);
+interface MyTicketsProps {
+  navigation?: any;
+}
+
+const filterOptions = [
+  { label: "전체", value: "전체" },
+  { label: "예정", value: "예정" },
+  { label: "지난", value: "지난" },
+];
+
+// TicketType에 실제 사용하는 필드 추가
+export interface TicketType {
+  id?: number;
+  artist?: string;
+  date?: string;
+  location?: string;
+  price?: number;
+  status?: string;
+  image_url?: string;
+  type?: string;
+  title?: string;
+  ticket_date?: string;
+  ticket_seat?: string;
+  ticket_status?: string;
+  ticket_statusText?: string;
+  primaryButton?: string;
+  primaryButtonAction?: string;
+  isExpired?: boolean;
+}
+
+export default function MyTickets({ navigation }: MyTicketsProps) {
+  const [activeFilter, setActiveFilter] = useState<string>("전체");
+  const [qrModalVisible, setQrModalVisible] = useState<boolean>(false);
+  const [selectedTicket, setSelectedTicket] = useState<TicketType | null>(null);
 
   // 티켓 정보가 없는(필드가 'null'인) 데이터는 리스트에서 제외
   const filteredTickets = events.filter(
-    (ticket) =>
+    (ticket: any) =>
       ticket.ticket_status !== "null" &&
       ticket.ticket_seat !== "null" &&
       ticket.primaryButton !== "null"
   );
 
-  // QR코드 보기 버튼 클릭 시 모달 오픈
-  const handleQrPress = (ticket) => {
+  const handleQrPress = (ticket: TicketType) => {
     setSelectedTicket(ticket);
     setQrModalVisible(true);
   };
 
   return (
     <>
-      {/* 상단 메인헤더 */}
       <MainHeader />
-      {/* 티켓 리스트 스크롤뷰 */}
       <ScrollView
         style={{ backgroundColor: "#fff", flex: 1 }}
         contentContainerStyle={{
@@ -193,7 +151,6 @@ export default function MyTickets({ navigation }) {
           paddingTop: 0,
         }}
       >
-        {/* 헤더(타이틀+필터) */}
         <View style={{ width: "100%", padding: 16, backgroundColor: "#fff" }}>
           <View style={styles.headerRow}>
             <Text style={styles.headerTitle}>내 티켓</Text>
@@ -221,8 +178,7 @@ export default function MyTickets({ navigation }) {
             </View>
           </View>
         </View>
-        {/* 티켓 리스트 렌더링 */}
-        {filteredTickets.map((ticket) => (
+        {filteredTickets.map((ticket: any) => (
           <TicketCard
             key={ticket.id}
             ticket={ticket}
@@ -231,7 +187,6 @@ export default function MyTickets({ navigation }) {
           />
         ))}
       </ScrollView>
-      {/* QR코드 모달 (티켓 정보) */}
       <Modal
         visible={qrModalVisible}
         transparent
@@ -249,7 +204,6 @@ export default function MyTickets({ navigation }) {
 
 const styles = StyleSheet.create({
   customHeader: {
-    //헤더 적용이 안되서 직접 커스텀으로 만들음
     width: "100%",
     height: 52,
     paddingHorizontal: 16,
