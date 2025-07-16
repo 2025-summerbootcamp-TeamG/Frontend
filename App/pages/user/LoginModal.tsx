@@ -3,7 +3,7 @@ import { Modal, View, Text, TextInput, TouchableOpacity, Pressable, Alert } from
 import { Ionicons } from '@expo/vector-icons';
 import modalStyles from '../../styles/user/modal';
 
-export default function LoginModal({ visible, onClose, onLoginSuccess }: { visible: boolean; onClose: () => void; onLoginSuccess?: () => void }) {
+export default function LoginModal({ visible, onClose, onLoginSuccess, onShowSignup }: { visible: boolean; onClose: () => void; onLoginSuccess?: () => void; onShowSignup?: () => void }) {
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [autoLogin, setAutoLogin] = React.useState(false);
@@ -72,7 +72,7 @@ export default function LoginModal({ visible, onClose, onLoginSuccess }: { visib
           {/* 회원가입 안내 */}
           <View style={modalStyles.bottomRow}>
             <Text style={{ fontSize: 14 }}>아직 회원이 아니신가요? </Text>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={onShowSignup}>
               <Text style={modalStyles.signupText}>회원가입</Text>
             </TouchableOpacity>
           </View>

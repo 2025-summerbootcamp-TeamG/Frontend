@@ -3,7 +3,7 @@ import { Modal, View, Text, TextInput, TouchableOpacity, Pressable, Alert } from
 import { Ionicons } from '@expo/vector-icons';
 import modalStyles from '../../styles/user/modal';
 
-export default function SignupModal({ visible, onClose, onSignup }: { visible: boolean; onClose: () => void; onSignup?: () => void }) {
+export default function SignupModal({ visible, onClose, onSignup, onShowLogin }: { visible: boolean; onClose: () => void; onSignup?: () => void; onShowLogin?: () => void }) {
   const [name, setName] = React.useState('');
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
@@ -136,7 +136,7 @@ export default function SignupModal({ visible, onClose, onSignup }: { visible: b
           {/* 로그인 안내 */}
           <View style={modalStyles.bottomRow}>
             <Text style={{ fontSize: 14 }}>이미 계정이 있으신가요? </Text>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={onShowLogin}>
               <Text style={modalStyles.loginText}>로그인</Text>
             </TouchableOpacity>
           </View>
