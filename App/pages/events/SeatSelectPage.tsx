@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, TouchableOpacity, Text } from "react-native";
+import { View, TouchableOpacity, Text, Modal } from "react-native";
 import SeatMap from "../../components/events/SeatMap";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -11,6 +11,7 @@ type RootStackParamList = {
 
 export default function SeatSelectPage() {
   const [selected, setSelected] = useState<string[]>([]);
+  const [modalVisible, setModalVisible] = useState(false);
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route = useRoute();
@@ -20,6 +21,14 @@ export default function SeatSelectPage() {
   };
 
   const handleSelectSeat = (id: string) => {
+    if (
+      !selected.includes(id) &&
+      event.max_reserve &&
+      selected.length >= event.max_reserve
+    ) {
+      setModalVisible(true);
+      return;
+    }
     setSelected((prev) =>
       prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]
     );
@@ -50,7 +59,61 @@ export default function SeatSelectPage() {
             : event?.location || ""}
         </Text>
       </View>
-      <SeatMap selected={selected} onSelectSeat={handleSelectSeat} />
+      <SeatMap
+        selected={selected}
+        onSelectSeat={handleSelectSeat}
+        event_time={event_time}
+      />
+      {/* 초과 안내 모달 */}
+      <Modal visible={modalVisible} transparent animationType="fade">
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0,0,0,0.2)",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <View
+            style={{
+              width: 240,
+              padding: 20,
+              backgroundColor: "white",
+              borderRadius: 16,
+              alignItems: "center",
+            }}
+          >
+            <Text style={{ fontSize: 16, fontWeight: "700", marginBottom: 8 }}>
+              안내
+            </Text>
+            <Text
+              style={{
+                color: "#4B5563",
+                fontSize: 13,
+                textAlign: "center",
+                marginBottom: 12,
+              }}
+            >
+              1인 최대 예매 가능 수({event.max_reserve}매)를 초과할 수 없습니다.
+            </Text>
+            <TouchableOpacity
+              style={{
+                width: 120,
+                height: 32,
+                backgroundColor: "#E53E3E",
+                borderRadius: 8,
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+              onPress={() => setModalVisible(false)}
+            >
+              <Text style={{ color: "white", fontSize: 13, fontWeight: "400" }}>
+                확인
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
       {/* 결제하기 버튼 */}
       <View
         style={{
