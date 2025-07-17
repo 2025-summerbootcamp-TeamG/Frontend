@@ -64,7 +64,12 @@ const TicketCard = ({
         <View style={styles.marginWrap1}>
           <View style={styles.p30}>
             <Text style={styles.cardInfo}>
-              {ticket.ticket_date !== "null" ? ticket.ticket_date : ticket.date}
+              {ticket.ticket_date !== "null" && ticket.ticket_date
+                ? ticket.ticket_date
+                : Array.isArray(ticket.event_times) &&
+                  ticket.event_times.length > 0
+                ? formatEventTime(ticket.event_times[0])
+                : ticket.date}
             </Text>
           </View>
         </View>
@@ -105,6 +110,18 @@ const TicketCard = ({
   );
 };
 
+// 날짜/시간 포맷 함수 추가
+function formatEventTime(eventTime: any) {
+  if (!eventTime) return "";
+  const date = new Date(eventTime.event_date + "T" + eventTime.start_time);
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  const week = ["일", "월", "화", "수", "목", "금", "토"][date.getDay()];
+  const hour = eventTime.start_time.slice(0, 2);
+  const minute = eventTime.start_time.slice(3, 5);
+  return `${month}월 ${day}일 (${week}) ${hour}:${minute}`;
+}
+
 interface MyTicketsProps {
   navigation?: any;
 }
@@ -135,6 +152,7 @@ export interface TicketType {
   primaryButton?: string;
   primaryButtonAction?: string;
   isExpired?: boolean;
+  event_times?: any[]; // event_times 필드 추가
 }
 
 export default function MyTickets({ navigation }: MyTicketsProps) {

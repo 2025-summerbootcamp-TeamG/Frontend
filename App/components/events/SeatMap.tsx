@@ -184,30 +184,9 @@ export default function SeatMap({ selected, onSelectSeat }: SeatMapProps) {
 
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
-      {/* 상단 콘서트 제목만 표시 */}
-      <Text
-        style={{
-          fontSize: 20,
-          fontWeight: "bold",
-          marginTop: 20,
-          marginBottom: 8,
-          textAlign: "center",
-        }}
-      >
-        {event.artist}
-      </Text>
-      {/* 공연 일자 및 장소 */}
-      <Text
-        style={{
-          fontSize: 16,
-          color: "#6B7280",
-          textAlign: "center",
-          marginTop: 2,
-          marginBottom: 12,
-        }}
-      >
-        {event.date} | {event.location}
-      </Text>
+      {/* 상단 콘서트 제목 및 공연 일자/장소 제거 */}
+      {/* <Text ...>{event.name}</Text> */}
+      {/* <Text ...>{event.date} | {event.location}</Text> */}
       {/* SVG 좌석 배치 */}
       <View
         style={{

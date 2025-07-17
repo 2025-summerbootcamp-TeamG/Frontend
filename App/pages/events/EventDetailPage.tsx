@@ -1,33 +1,47 @@
-import React from "react";
+import React, { useRef, useState } from "react";
 import {
   View,
   Text,
-  Image,
-  ScrollView,
-  TouchableOpacity,
+  Animated,
   Dimensions,
-  BackHandler, // 추가
-  Platform, // 추가
+  TouchableOpacity,
+  BackHandler,
+  Platform,
 } from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import LocationIcon from "../../assets/events/locationIcon.svg";
 import PriceIcon from "../../assets/events/priceIcon.svg";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { events } from "../../assets/events/EventsMock";
+import type { RootStackParamList } from "../../navigation/HomeStackNavigator";
 
-type RootStackParamList = {
-  EventDetail: { event: any };
-  SeatSelect: { event: any };
-};
+// 날짜 포맷 변환 함수
+function formatEventTime(eventTime: {
+  event_date: string;
+  start_time: string;
+  end_time: string;
+}) {
+  const date = new Date(eventTime.event_date + "T" + eventTime.start_time);
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  const week = ["일", "월", "화", "수", "목", "금", "토"][date.getDay()];
+  const hour = eventTime.start_time.slice(0, 2);
+  const minute = eventTime.start_time.slice(3, 5);
+  return `${month}월 ${day}일 (${week}) ${hour}:${minute}`;
+}
 
 export default function EventDetailPage() {
   const route = useRoute();
   const { eventId } = route.params as { eventId: number | string };
   const event = events.find((e) => e.id === Number(eventId));
   const screenWidth = Dimensions.get("window").width;
-  const imageHeight = (screenWidth * 3) / 4; // 4:3 비율
+  const IMAGE_HEIGHT = (screenWidth * 3) / 4;
+  const scrollY = useRef(new Animated.Value(0)).current;
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const [showAll, setShowAll] = useState(false);
+  const [descLines, setDescLines] = useState(0);
+  const [selectedSchedule, setSelectedSchedule] = useState<number | null>(null);
 
   React.useEffect(() => {
     if (Platform.OS === "android") {
@@ -52,13 +66,25 @@ export default function EventDetailPage() {
 
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
-      <ScrollView
+      <Animated.ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingBottom: 100 }}
+        scrollEventThrottle={16}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: false }
+        )}
       >
-        <Image
+        <Animated.Image
           source={{ uri: event.image_url }}
-          style={{ width: "100%", height: imageHeight, borderRadius: 8 }}
+          style={{
+            width: "100%",
+            height: scrollY.interpolate({
+              inputRange: [-IMAGE_HEIGHT, 0, IMAGE_HEIGHT],
+              outputRange: [IMAGE_HEIGHT * 2, IMAGE_HEIGHT, IMAGE_HEIGHT],
+              extrapolate: "clamp",
+            }),
+          }}
           resizeMode="cover"
         />
 
@@ -160,25 +186,45 @@ export default function EventDetailPage() {
             >
               공연 정보
             </Text>
-            {typeof (event as any).description === "string" &&
-            (event as any).description.length > 0 ? (
+            <Text
+              style={{
+                color: "#374151",
+                fontSize: 14,
+                fontFamily: "Roboto",
+                lineHeight: 22.75,
+              }}
+              numberOfLines={showAll ? undefined : 5}
+              onTextLayout={(e) => setDescLines(e.nativeEvent.lines.length)}
+            >
+              {event.description}
+            </Text>
+            {descLines >= 1 && (
               <Text
                 style={{
-                  color: "#374151",
-                  fontSize: 14,
-                  fontFamily: "Roboto",
-                  lineHeight: 22.75,
+                  color: "#E53E3E",
+                  marginTop: 10,
+                  fontSize: 30,
+                  fontWeight: "bold",
+                  textAlign: "center",
                 }}
+                onPress={() => setShowAll((v) => !v)}
               >
-                {(event as any).description}
+                {showAll ? "▴" : "▾"}
               </Text>
-            ) : (
-              <Text style={{ color: "#9CA3AF", fontSize: 14 }}>설명 없음</Text>
             )}
           </View>
 
+          {/* 구분선 */}
+          <View
+            style={{
+              height: 1,
+              backgroundColor: "#E5E7EB",
+              marginVertical: 15,
+            }}
+          />
+
           {/* 공연 일정 */}
-          <View style={{ marginTop: 24 }}>
+          <View style={{ marginTop: 0 }}>
             <Text
               style={{
                 fontSize: 18,
@@ -190,48 +236,52 @@ export default function EventDetailPage() {
             >
               공연 일정
             </Text>
-            {Array.isArray((event as any).schedules) &&
-            (event as any).schedules.length > 0 ? (
-              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-                {(event as any).schedules.map(
-                  (schedule: string, idx: number) => (
-                    <View
-                      key={idx}
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+              {Array.isArray(event.event_times) &&
+              event.event_times.length > 0 ? (
+                event.event_times.map((et, idx) => (
+                  <TouchableOpacity
+                    key={idx}
+                    onPress={() => setSelectedSchedule(idx)}
+                    activeOpacity={0.8}
+                    style={{
+                      minWidth: 151,
+                      height: 38,
+                      paddingHorizontal: 17,
+                      paddingVertical: 9,
+                      borderRadius: 8,
+                      borderWidth: 1,
+                      borderColor:
+                        selectedSchedule === idx ? "#E53E3E" : "#E5E7EB",
+                      backgroundColor:
+                        selectedSchedule === idx ? "#FEE2E2" : "#fff",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      marginRight: 8,
+                      marginBottom: 8,
+                    }}
+                  >
+                    <Text
                       style={{
-                        minWidth: 151,
-                        height: 38,
-                        paddingHorizontal: 17,
-                        paddingVertical: 9,
-                        borderRadius: 8,
-                        borderWidth: 1,
-                        borderColor: "#E5E7EB",
-                        justifyContent: "center",
-                        alignItems: "center",
-                        marginRight: 8,
-                        marginBottom: 8,
+                        color: "#111",
+                        fontSize: 14,
+                        fontFamily: "Roboto",
+                        textAlign: "center",
                       }}
                     >
-                      <Text
-                        style={{
-                          color: "#111",
-                          fontSize: 14,
-                          fontFamily: "Roboto",
-                        }}
-                      >
-                        {schedule}
-                      </Text>
-                    </View>
-                  )
-                )}
-              </View>
-            ) : (
-              <Text style={{ color: "#9CA3AF", fontSize: 14 }}>
-                일정 정보 없음
-              </Text>
-            )}
+                      {formatEventTime(et)}
+                    </Text>
+                  </TouchableOpacity>
+                ))
+              ) : (
+                <Text style={{ color: "#9CA3AF", fontSize: 14 }}>
+                  일정 정보 없음
+                </Text>
+              )}
+            </View>
           </View>
         </View>
-      </ScrollView>
+      </Animated.ScrollView>
       {/* 하단 고정 예매하기 버튼 */}
       <View
         style={{
@@ -247,12 +297,20 @@ export default function EventDetailPage() {
           style={{
             width: "100%",
             height: 45,
-            backgroundColor: "#E53E3E",
+            backgroundColor: selectedSchedule !== null ? "#E53E3E" : "#E5E7EB",
             borderRadius: 8,
             justifyContent: "center",
             alignItems: "center",
           }}
-          onPress={() => navigation.navigate("SeatSelect", { event })}
+          disabled={selectedSchedule === null}
+          onPress={() => {
+            if (selectedSchedule !== null) {
+              navigation.navigate("SeatSelect", {
+                event,
+                event_time: event.event_times[selectedSchedule],
+              });
+            }
+          }}
         >
           <Text
             style={{
