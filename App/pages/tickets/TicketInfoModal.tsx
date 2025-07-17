@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Modal } from "react-native";
 import Cancel from "../../assets/tickets/Cancel.svg";
+import TicketCancel from "./TicketCancelModal";
 
 interface TicketInfoProps {
   visible: boolean;
@@ -13,6 +14,7 @@ export default function TicketInfoModal({
   ticket,
   onClose,
 }: TicketInfoProps) {
+  const [cancelModalVisible, setCancelModalVisible] = React.useState(false);
   if (!ticket) return null;
   // 공연 정보
   const performanceInfo = {
@@ -27,7 +29,6 @@ export default function TicketInfoModal({
       value: ticket.seat_grade || "NULL",
     },
     { label: "좌석 번호", value: ticket.seat_number || "NULL" },
-    { label: "티켓 매수", value: ticket.count ? `${ticket.count}매` : "NULL" },
     { label: "예매 번호", value: ticket.reservationNo || "NULL" },
   ];
   // 결제 정보
@@ -158,9 +159,7 @@ export default function TicketInfoModal({
                 <TouchableOpacity
                   activeOpacity={0.8}
                   style={styles.cancelticket270}
-                  onPress={() => {
-                    /* 예매취소 로직 */
-                  }}
+                  onPress={() => setCancelModalVisible(true)}
                 >
                   <Text style={styles.cancelText}>예매 취소</Text>
                 </TouchableOpacity>
@@ -181,6 +180,15 @@ export default function TicketInfoModal({
           </View>
         </View>
       </View>
+      <TicketCancel
+        visible={cancelModalVisible}
+        onClose={() => setCancelModalVisible(false)}
+        onConfirm={() => {
+          // 취소 완료 후 내 티켓 화면으로 이동
+          onClose(); // 상세정보 모달 닫기
+          // 여기서 필요한 경우 티켓 목록을 새로고침하거나 상태를 업데이트할 수 있습니다
+        }}
+      />
     </Modal>
   );
 }

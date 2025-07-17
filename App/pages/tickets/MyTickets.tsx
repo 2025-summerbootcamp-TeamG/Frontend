@@ -165,6 +165,33 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
   return (
     <>
       <MainHeader />
+      <View style={{ width: "100%", padding: 16, backgroundColor: "#fff" }}>
+        <View style={styles.headerRow}>
+          <Text style={styles.headerTitle}>내 티켓</Text>
+          <View style={styles.filterRow}>
+            {filterOptions.map((option) => (
+              <TouchableOpacity
+                key={option.value}
+                style={[
+                  styles.filterButton,
+                  activeFilter === option.value && styles.filterButtonActive,
+                ]}
+                onPress={() => setActiveFilter(option.value)}
+              >
+                <Text
+                  style={[
+                    styles.filterButtonText,
+                    activeFilter === option.value &&
+                      styles.filterButtonTextActive,
+                  ]}
+                >
+                  {option.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      </View>
       <ScrollView
         style={{ backgroundColor: "#fff", flex: 1 }}
         contentContainerStyle={{
@@ -173,33 +200,6 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
           paddingTop: 0,
         }}
       >
-        <View style={{ width: "100%", padding: 16, backgroundColor: "#fff" }}>
-          <View style={styles.headerRow}>
-            <Text style={styles.headerTitle}>내 티켓</Text>
-            <View style={styles.filterRow}>
-              {filterOptions.map((option) => (
-                <TouchableOpacity
-                  key={option.value}
-                  style={[
-                    styles.filterButton,
-                    activeFilter === option.value && styles.filterButtonActive,
-                  ]}
-                  onPress={() => setActiveFilter(option.value)}
-                >
-                  <Text
-                    style={[
-                      styles.filterButtonText,
-                      activeFilter === option.value &&
-                        styles.filterButtonTextActive,
-                    ]}
-                  >
-                    {option.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-        </View>
         {filteredTickets.map((ticket: any) => (
           <TicketCard
             key={ticket.id}
