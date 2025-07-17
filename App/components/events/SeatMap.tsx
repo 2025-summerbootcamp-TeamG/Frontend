@@ -131,39 +131,18 @@ const seatSections = [
   { name: "A", color: sectionColors.A, seats: aSeats },
 ];
 
-// 2. 구역별 잔여좌석 계산 함수
-function getAvailableCount(zone: string) {
-  const section = seatSections.find((s) => s.name === zone);
-  if (!section) return 0;
-  return section.seats.filter((seat) => !reservedSeats.includes(seat.id))
-    .length;
-}
-
-// 예시: 이미 선점된 좌석(다른 사람이 선택한 좌석)
-const reservedSeats = ["VIP-C2", "R-A5", "S-C8", "A-A10"];
-
-// seatSections를 seats 배열로 변환
-const seats: {
-  id: string;
-  x: number;
-  y: number;
-  type: string;
-  color: string;
-}[] = seatSections.flatMap((section) =>
-  section.seats.map((seat) => ({
-    ...seat,
-    type: section.name,
-    color: section.color,
-  }))
-);
-
 // SeatMap 컴포넌트가 선택 좌석(selected)과 setSelected, onSelectSeat 콜백을 props로 받도록 수정
 interface SeatMapProps {
   selected: string[];
   onSelectSeat: (id: string) => void;
+  event_time: any;
 }
 
-export default function SeatMap({ selected, onSelectSeat }: SeatMapProps) {
+export default function SeatMap({
+  selected,
+  onSelectSeat,
+  event_time,
+}: SeatMapProps) {
   const [modalVisible, setModalVisible] = React.useState(false);
   const route = useRoute();
   const event =
@@ -171,6 +150,26 @@ export default function SeatMap({ selected, onSelectSeat }: SeatMapProps) {
       ? (route.params as any).event
       : { artist: "콘서트 제목" };
   const [modalMessage, setModalMessage] = React.useState("");
+
+  // reservedSeats를 함수 내부에서 추출
+  const reservedSeats: string[] = [];
+  if (event_time && Array.isArray(event_time.zones)) {
+    (event_time.zones as any[]).forEach((zone: any) => {
+      (zone.seats as any[]).forEach((seat: any) => {
+        if (seat.seat_status === "booked") {
+          reservedSeats.push(seat.seat_number);
+        }
+      });
+    });
+  }
+
+  // getAvailableCount 함수도 내부로 이동
+  function getAvailableCount(zone: string) {
+    const section = seatSections.find((s) => s.name === zone);
+    if (!section) return 0;
+    return section.seats.filter((seat) => !reservedSeats.includes(seat.id))
+      .length;
+  }
 
   const handleSelect = (id: string) => {
     console.log("좌석 클릭됨", id);
@@ -224,23 +223,31 @@ export default function SeatMap({ selected, onSelectSeat }: SeatMapProps) {
           >
             STAGE
           </SvgText>
-          {seats.map((seat) => (
-            <Rect
-              key={seat.id}
-              x={seat.x}
-              y={seat.y}
-              width={seatWidth}
-              height={16} // seatHeight 제거
-              rx={3}
-              fill={
-                selected.includes(seat.id) || reservedSeats.includes(seat.id)
-                  ? "#cccccc"
-                  : seat.color
-              }
-              stroke={selected.includes(seat.id) ? "#E53E3E" : "#888"}
-              strokeWidth={selected.includes(seat.id) ? 2.5 : 1}
-            />
-          ))}
+          {seatSections
+            .flatMap((section) =>
+              section.seats.map((seat) => ({
+                ...seat,
+                type: section.name,
+                color: section.color,
+              }))
+            )
+            .map((seat) => (
+              <Rect
+                key={seat.id}
+                x={seat.x}
+                y={seat.y}
+                width={seatWidth}
+                height={16} // seatHeight 제거
+                rx={3}
+                fill={
+                  selected.includes(seat.id) || reservedSeats.includes(seat.id)
+                    ? "#cccccc"
+                    : seat.color
+                }
+                stroke={selected.includes(seat.id) ? "#E53E3E" : "#888"}
+                strokeWidth={selected.includes(seat.id) ? 2.5 : 1}
+              />
+            ))}
         </Svg>
         {/* Overlay TouchableOpacity for each seat */}
         <View
@@ -253,21 +260,29 @@ export default function SeatMap({ selected, onSelectSeat }: SeatMapProps) {
           }}
           pointerEvents="box-none"
         >
-          {seats.map((seat) => (
-            <TouchableOpacity
-              key={seat.id}
-              style={{
-                position: "absolute",
-                left: seat.x,
-                top: seat.y,
-                width: seatWidth,
-                height: 16, // seatHeight 제거
-                zIndex: 10,
-              }}
-              onPress={() => handleSelect(seat.id)}
-              activeOpacity={0.5}
-            />
-          ))}
+          {seatSections
+            .flatMap((section) =>
+              section.seats.map((seat) => ({
+                ...seat,
+                type: section.name,
+                color: section.color,
+              }))
+            )
+            .map((seat) => (
+              <TouchableOpacity
+                key={seat.id}
+                style={{
+                  position: "absolute",
+                  left: seat.x,
+                  top: seat.y,
+                  width: seatWidth,
+                  height: 16, // seatHeight 제거
+                  zIndex: 10,
+                }}
+                onPress={() => handleSelect(seat.id)}
+                activeOpacity={0.5}
+              />
+            ))}
         </View>
       </View>
       <View
