@@ -6,6 +6,7 @@ import {
   ScrollView,
   StyleSheet,
   Modal,
+  Image,
 } from "react-native";
 import MainHeader from "../../components/common/MainHeader";
 import QRCodeModal from "./QRCodeModal";
@@ -46,7 +47,15 @@ const TicketCard = ({
   return (
     <View style={styles.card}>
       <View style={styles.marginWrap}>
-        <View style={styles.blankImage} />
+        {ticket.image_url && ticket.image_url !== "null" ? (
+          <Image
+            source={{ uri: ticket.image_url }}
+            style={styles.blankImage}
+            resizeMode="cover"
+          />
+        ) : (
+          <View style={styles.blankImage} />
+        )}
       </View>
       <View style={styles.cardContent}>
         <View style={styles.cardHeader}>
@@ -162,13 +171,49 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
   const [infoModalVisible, setInfoModalVisible] = useState<boolean>(false);
   const [infoTicket, setInfoTicket] = useState<TicketType | null>(null);
 
+  // 오늘 날짜 (YYYY-MM-DD)
+  const today = new Date();
+  const todayStr = today.toISOString().slice(0, 10);
+
+  // 티켓의 기준 날짜 구하기 (event_times가 있으면 가장 가까운 event_date, 없으면 date)
+  function getTicketDate(ticket: any): string {
+    if (Array.isArray(ticket.event_times) && ticket.event_times.length > 0) {
+      // 여러 날짜 중 가장 가까운 미래 날짜, 없으면 가장 마지막 날짜
+      const sorted = ticket.event_times
+        .slice()
+        .sort((a: any, b: any) => a.event_date.localeCompare(b.event_date));
+      return sorted[0].event_date;
+    }
+    // date 필드가 YYYY.MM.DD 형식이면 YYYY-MM-DD로 변환
+    if (ticket.date && ticket.date.includes(".")) {
+      return ticket.date.replace(/\./g, "-");
+    }
+    return ticket.date || "";
+  }
+
+  // 날짜 비교: 예정/지난 분류
+  function isUpcoming(ticket: any): boolean {
+    const ticketDate = getTicketDate(ticket);
+    return ticketDate >= todayStr;
+  }
+  function isPast(ticket: any): boolean {
+    const ticketDate = getTicketDate(ticket);
+    return ticketDate < todayStr;
+  }
+
   // 티켓 정보가 없는(필드가 'null'인) 데이터는 리스트에서 제외
-  const filteredTickets = events.filter(
+  let filteredTickets = events.filter(
     (ticket: any) =>
       ticket.ticket_status !== "null" &&
       ticket.ticket_seat !== "null" &&
       ticket.primaryButton !== "null"
   );
+
+  if (activeFilter === "예정") {
+    filteredTickets = filteredTickets.filter(isUpcoming);
+  } else if (activeFilter === "지난") {
+    filteredTickets = filteredTickets.filter(isPast);
+  }
 
   const handleQrPress = (ticket: TicketType) => {
     setSelectedTicket(ticket);

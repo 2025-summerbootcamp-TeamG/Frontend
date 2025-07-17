@@ -13,7 +13,7 @@ import { StackActions } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import MyPage from "../pages/user/MyPage";
 import { CustomHeaderLeftWithTitle } from "./HomeStackNavigator";
-
+import { events } from "../../assets/events/EventsMock";
 
 // 인증 내역 카드 컴포넌트 (DIV140 스타일 기반, props로 데이터 받음)
 interface AuthHistoryCardProps {
@@ -54,49 +54,54 @@ const AuthHistoryCard = ({
   //</SafeAreaView>
 );
 
-// 인증 내역 데이터 예시
-const authHistoryData = [
-  {
-    title: "BTS 월드투어 2025",
-    status: "인증완료",
-    statusColor: "#16a34a",
-    statusBg: "#dcfce7",
-    date: "2025.07.01 14:23 인증",
-    result: "얼굴 인증 성공",
-  },
-  {
-    title: "현대미술전: 빛과 그림자",
-    status: "인증완료",
-    statusColor: "#16a34a",
-    statusBg: "#dcfce7",
-    date: "2025.07.10 09:15 인증",
-    result: "얼굴 인증 성공",
-  },
-  {
-    title: "백조의 호수",
-    status: "인증완료",
-    statusColor: "#16a34a",
-    statusBg: "#dcfce7",
-    date: "2025.08.15 17:30 인증",
-    result: "얼굴 인증 성공 (동행자 1명 포함)",
-  },
-  {
-    title: "서울시향 정기공연",
-    status: "인증필요",
-    statusColor: "#eab308",
-    statusBg: "#fef9c2",
-    date: "2025.08.01 공연 예정",
-    result: "얼굴 인증 대기 중",
-  },
-  {
-    title: "두산 vs LG 프로야구",
-    status: "인증필요",
-    statusColor: "#eab308",
-    statusBg: "#fef9c2",
-    date: "2025.07.25 경기 예정",
-    result: "얼굴 인증 대기 중 (동행자 2명)",
-  },
-];
+// 인증 내역 데이터 (이벤트 목에서 자동 생성)
+const authHistoryData = events
+  .filter(
+    (ticket) =>
+      ticket.ticket_status === "verified" || ticket.ticket_status === "pending"
+  )
+  .map((ticket) => {
+    // 상태 색상 및 배경
+    let statusColor = "#eab308";
+    let statusBg = "#fef9c2";
+    if (ticket.ticket_statusText === "인증완료") {
+      statusColor = "#16a34a";
+      statusBg = "#dcfce7";
+    }
+    // 날짜 문구 분기
+    function getEventLabel(ticket) {
+      if (ticket.genre === "스포츠") return "경기 예정";
+      if (ticket.genre === "전시회") return "전시 예정";
+      return "공연 예정";
+    }
+    // 날짜
+    let date = "";
+    if (ticket.authDate && ticket.authDate !== "") {
+      date = ticket.authDate + " 인증";
+    } else if (
+      Array.isArray(ticket.event_times) &&
+      ticket.event_times.length > 0
+    ) {
+      date = ticket.event_times[0].event_date + " " + getEventLabel(ticket);
+    } else if (ticket.date) {
+      date = ticket.date + " " + getEventLabel(ticket);
+    }
+    // 결과
+    let result = "";
+    if (ticket.ticket_status === "verified") {
+      result = "얼굴 인증 성공";
+    } else if (ticket.ticket_status === "pending") {
+      result = "얼굴 인증 대기 중";
+    }
+    return {
+      title: ticket.name,
+      status: ticket.ticket_statusText,
+      statusColor,
+      statusBg,
+      date,
+      result,
+    };
+  });
 
 export const AuthHistoryModal = () => {
   return (
