@@ -45,6 +45,11 @@ export default function AppNavigator() {
             <Text style={{ color, fontSize: 12 }}>홈</Text>
           ),
         }}
+        listeners={({ navigation, route }) => ({
+          tabPress: (e) => {
+            navigation.navigate("홈", { screen: "HomeMain" });
+          },
+        })}
       />
       <Tab.Screen
         name="내 티켓"
