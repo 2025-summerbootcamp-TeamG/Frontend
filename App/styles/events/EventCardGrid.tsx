@@ -36,7 +36,7 @@ export default function EventCardGrid({
           </TouchableOpacity>
         )}
       </View>
-      <View style={styles.grid}>
+      <View style={[styles.grid, { alignSelf: "center" }]}>
         {events.map((event: Event, idx) => (
           <EventCard
             key={event.id || idx}
@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   grid: {
-    width: 343,
+    width: 345,
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 12,

@@ -5,7 +5,7 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
 type RootStackParamList = {
-  Payment: undefined;
+  Payment: { event: any; event_time?: any; selected?: string[] };
   SeatSelect: { event: any; event_time?: any };
 };
 
@@ -135,7 +135,9 @@ export default function SeatSelectPage() {
             alignItems: "center",
           }}
           disabled={selected.length === 0}
-          onPress={() => navigation.navigate("Payment")}
+          onPress={() =>
+            navigation.navigate("Payment", { event, event_time, selected })
+          }
         >
           <Text style={{ color: "#fff", fontSize: 13, fontWeight: "500" }}>
             결제하기
