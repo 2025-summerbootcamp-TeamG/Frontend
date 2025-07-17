@@ -12,7 +12,7 @@ import {
 import DirectDepositIcon from "../../assets/payment/directdepositIcon.svg";
 import CheckIcon from "../../assets/common/CheckIcon.svg";
 import Svg, { Circle, Text as SvgText } from "react-native-svg";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import { events } from "../../assets/events/EventsMock";
 
 const HEADER_HEIGHT = 48;
@@ -21,6 +21,13 @@ const STATUSBAR_HEIGHT =
 
 export default function PaymentScreen() {
   const navigation = useNavigation<any>();
+  const route = useRoute();
+  const { event, event_time, selected } = (route.params || {}) as {
+    event: any;
+    event_time?: any;
+    selected?: string[];
+  };
+
   const [paymentMethod, setPaymentMethod] = useState("무통장입금");
   const [depositor, setDepositor] = useState("");
   const [buyerName, setBuyerName] = useState("");
@@ -28,11 +35,54 @@ export default function PaymentScreen() {
   const [buyerEmail, setBuyerEmail] = useState("");
   const [agree, setAgree] = useState(false);
 
-  // 임시: 첫 번째 이벤트 데이터 사용
-  const event = events[0];
-
   // 에러 메시지 상태 추가
   const [errorMsg, setErrorMsg] = useState("");
+
+  // 디버깅용 콘솔
+  console.log("selected:", selected);
+  console.log("event_time.zones:", event_time?.zones);
+  if (event_time?.zones) {
+    for (const zone of event_time.zones) {
+      console.log(
+        "zone:",
+        zone.rank,
+        "seats:",
+        zone.seats.map((s: any) => s.seat_number)
+      );
+    }
+  }
+
+  // 선택된 좌석 정보 추출 (여러 좌석 지원, zone명 분리 매칭)
+  let seatInfos: { zone: string; name: string; price: number }[] = [];
+  if (
+    event_time &&
+    Array.isArray(event_time.zones) &&
+    selected &&
+    selected.length > 0
+  ) {
+    for (const seatId of selected) {
+      const [zoneId, ...seatNameArr] = seatId.split("-");
+      const seatName = seatNameArr.join("-");
+      for (const zone of event_time.zones) {
+        if (zone.rank === zoneId) {
+          for (const seat of zone.seats) {
+            if (seat.seat_number === seatId || seat.seat_number === seatName) {
+              seatInfos.push({
+                zone: zone.rank,
+                name: seat.seat_number,
+                price: zone.price,
+              });
+            }
+          }
+        }
+      }
+    }
+  }
+  console.log("seatInfos:", seatInfos);
+
+  const seatPrice = seatInfos.reduce((sum, s) => sum + s.price, 0);
+  const fee = 1000;
+  const total = seatPrice + fee;
 
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
@@ -45,19 +95,23 @@ export default function PaymentScreen() {
           <Text style={styles.infoBoxTitle}>예매 정보</Text>
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>공연명</Text>
-            <Text style={styles.infoValue}>{event.name}</Text>
+            <Text style={styles.infoValue}>{event?.name}</Text>
           </View>
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>공연일시</Text>
-            <Text style={styles.infoValue}>{event.ticket_date || event.date}</Text>
+            <Text style={styles.infoValue}>{event?.date}</Text>
           </View>
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>공연장소</Text>
-            <Text style={styles.infoValue}>{event.location}</Text>
+            <Text style={styles.infoValue}>{event?.location}</Text>
           </View>
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>좌석정보</Text>
-            <Text style={styles.infoValue}>VIP석 1매</Text>
+            <Text style={styles.infoValue}>
+              {seatInfos.length > 0
+                ? seatInfos.map((s) => `${s.zone}석 ${s.name}`).join(", ")
+                : "좌석을 선택하세요"}
+            </Text>
           </View>
         </View>
 
@@ -154,16 +208,24 @@ export default function PaymentScreen() {
         {/* 결제 금액 */}
         <View style={styles.priceBox}>
           <View style={styles.priceRow}>
-            <Text style={styles.priceLabel}>VIP 석 x 1</Text>
-            <Text style={styles.priceValue}>₩165,000</Text>
+            <Text style={styles.priceLabel}>
+              {seatInfos.length > 0
+                ? seatInfos.map((s) => `${s.zone} 석 x 1`).join(", ")
+                : "좌석 미선택"}
+            </Text>
+            <Text style={styles.priceValue}>
+              {seatInfos.length > 0 ? `₩${seatPrice.toLocaleString()}` : "-"}
+            </Text>
           </View>
           <View style={styles.priceRow}>
             <Text style={styles.priceLabel}>예매 수수료</Text>
-            <Text style={styles.priceValue}>₩1,000</Text>
+            <Text style={styles.priceValue}>₩{fee.toLocaleString()}</Text>
           </View>
           <View style={styles.priceRow}>
             <Text style={styles.priceTotal}>총 결제금액</Text>
-            <Text style={styles.priceTotalValue}>₩166,000</Text>
+            <Text style={styles.priceTotalValue}>
+              ₩{total.toLocaleString()}
+            </Text>
           </View>
         </View>
 
@@ -199,14 +261,22 @@ export default function PaymentScreen() {
               return;
             }
             setErrorMsg("");
-            navigation.navigate('내 티켓', { screen: 'FaceAuthScreen' });
+            navigation.navigate("내 티켓", { screen: "FaceAuthScreen" });
           }}
         >
           <Text style={styles.payBtnText}>결제 완료하기</Text>
         </TouchableOpacity>
         {/* 에러 메시지 표시 */}
         {errorMsg !== "" && (
-          <Text style={{ color: '#E53E3E', textAlign: 'center', marginBottom: 16, marginTop: -10, fontSize: 14 }}>
+          <Text
+            style={{
+              color: "#E53E3E",
+              textAlign: "center",
+              marginBottom: 16,
+              marginTop: -10,
+              fontSize: 14,
+            }}
+          >
             {errorMsg}
           </Text>
         )}

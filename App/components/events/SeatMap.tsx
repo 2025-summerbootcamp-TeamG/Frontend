@@ -156,8 +156,8 @@ export default function SeatMap({
   if (event_time && Array.isArray(event_time.zones)) {
     (event_time.zones as any[]).forEach((zone: any) => {
       (zone.seats as any[]).forEach((seat: any) => {
-        if (seat.seat_status === "booked") {
-          reservedSeats.push(seat.seat_number);
+        if (seat.seat_status === "booked" || seat.seat_status === "reserved") {
+          reservedSeats.push(seat.name || seat.seat_number);
         }
       });
     });
