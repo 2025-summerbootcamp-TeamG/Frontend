@@ -36,6 +36,15 @@ export default function TicketStackNavigator() {
           headerBackVisible: false,
         }}
       />
+      <Stack.Screen
+        name="FaceRegisterScreen"
+        component={require('../pages/tickets/FaceRegisterScreen').default}
+        options={{
+          headerTitle: "",
+          headerLeft: () => <CustomHeaderLeftWithTitle title="얼굴 등록" />, 
+          headerBackVisible: false,
+        }}
+      />
       <Stack.Screen name="결제하기" component={PaymentScreen} />
     </Stack.Navigator>
   );

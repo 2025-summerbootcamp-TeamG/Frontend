@@ -199,7 +199,8 @@ export default function PaymentScreen() {
               return;
             }
             setErrorMsg("");
-            navigation.navigate('내 티켓', { screen: 'FaceAuthScreen' });
+            // 결제 완료 후 얼굴 등록 화면으로 이동 (중첩 네비게이터)
+            navigation.navigate('내 티켓', { screen: 'FaceRegisterScreen', params: { ticketId: 1 } });
           }}
         >
           <Text style={styles.payBtnText}>결제 완료하기</Text>

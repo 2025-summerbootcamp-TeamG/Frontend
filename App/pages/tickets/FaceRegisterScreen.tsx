@@ -1,4 +1,3 @@
-// Frontend/App/pages/user/FaceAuthScreen.tsx
 import React, { useState, useRef } from "react";
 import {
   View,
@@ -12,7 +11,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import axios from "axios";
 
-export default function FaceAuthScreen({ navigation, route }: any) {
+export default function FaceRegisterScreen({ navigation, route }: any) {
   const ticketId = route?.params?.ticketId;
   const [modalVisible, setModalVisible] = useState(false);
   const [isSuccess, setIsSuccess] = useState(true);
@@ -33,8 +32,8 @@ export default function FaceAuthScreen({ navigation, route }: any) {
     );
   }
 
-  // 사진 촬영 및 인증
-  const handleAuth = async () => {
+  // 사진 촬영 및 등록
+  const handleRegister = async () => {
     setLoading(true);
     setError("");
     try {
@@ -45,12 +44,12 @@ export default function FaceAuthScreen({ navigation, route }: any) {
       // const imageBase64 = photo.base64;
       // const checkRes = await axios.post("http://192.168.55.4:8000/api/v1/face/check/", { image: imageBase64 });
       // if (!checkRes.data.is_in_guide) { ... }
-      // const authRes = await axios.post(`http://192.168.55.4:8000/api/v1/tickets/${ticketId}/aws-auth/`, { image: imageBase64 });
+      // const registerRes = await axios.post(`http://192.168.55.4:8000/api/v1/tickets/${ticketId}/aws-register/`, { image: imageBase64 });
       const success = Math.random() > 0.5;
       setIsSuccess(success);
       setModalVisible(true);
     } catch (e: any) {
-      setError(e.message || "인증 중 오류가 발생했습니다.");
+      setError(e.message || "등록 중 오류가 발생했습니다.");
       setIsSuccess(false);
       setModalVisible(true);
     } finally {
@@ -60,7 +59,7 @@ export default function FaceAuthScreen({ navigation, route }: any) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.desc1}>본인 확인을 위한 얼굴 인증 절차입니다.</Text>
+      <Text style={styles.desc1}>티켓 리셀 방지를 위한 본인 등록 절차입니다.</Text>
       <Text style={styles.desc2}>얼굴이 가이드라인 안에 들어오도록 위치시켜 주세요.</Text>
       <View style={styles.guideBox}>
         <View style={styles.dottedRect}>
@@ -72,8 +71,8 @@ export default function FaceAuthScreen({ navigation, route }: any) {
         </View>
       </View>
       {error ? <Text style={{ color: "red", textAlign: "center" }}>{error}</Text> : null}
-      <TouchableOpacity style={styles.button} onPress={handleAuth} disabled={loading}>
-        <Text style={styles.buttonText}>{loading ? "인증 중..." : "얼굴 인증"}</Text>
+      <TouchableOpacity style={styles.button} onPress={handleRegister} disabled={loading}>
+        <Text style={styles.buttonText}>{loading ? "등록 중..." : "얼굴 등록"}</Text>
       </TouchableOpacity>
       <Modal
         visible={modalVisible}
@@ -95,10 +94,10 @@ export default function FaceAuthScreen({ navigation, route }: any) {
                 <Ionicons name="close" size={40} color="#EF4444" />
               )}
             </View>
-            <Text style={styles.modalTitle}>{isSuccess ? "인증 성공" : "인증 실패"}</Text>
+            <Text style={styles.modalTitle}>{isSuccess ? "등록 완료" : "등록 실패"}</Text>
             <Text style={styles.modalDesc}>
               {isSuccess
-                ? "얼굴 인증이 성공적으로 완료되었습니다."
+                ? "얼굴 등록이 성공적으로 완료되었습니다."
                 : "얼굴을 가이드라인에 맞추어 다시 촬영해주세요."}
             </Text>
             <TouchableOpacity
@@ -250,4 +249,4 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     fontSize: 16,
   },
-});
+}); 
