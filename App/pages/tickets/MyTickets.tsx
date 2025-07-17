@@ -12,6 +12,7 @@ import MainHeader from "../../components/common/MainHeader";
 import QRCodeModal from "./QRCodeModal";
 import TicketInfoModal from "./TicketInfoModal";
 import { events } from "../../assets/events/EventsMock";
+import { useFocusEffect } from "@react-navigation/native";
 
 // 티켓 카드 컴포넌트 (각 티켓 정보를 카드 형태로 렌더링)
 interface TicketCardProps {
@@ -171,6 +172,25 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
   const [infoModalVisible, setInfoModalVisible] = useState<boolean>(false);
   const [infoTicket, setInfoTicket] = useState<TicketType | null>(null);
 
+  useFocusEffect(
+    React.useCallback(() => {
+      setQrModalVisible(false);
+      setInfoModalVisible(false);
+      setSelectedTicket(null);
+      setInfoTicket(null);
+    }, [])
+  );
+
+  // 티켓 목록을 state로 관리
+  const [tickets, setTickets] = useState(events);
+
+  // 모달자동삭제: 상세정보 모달이 열려 있을 때, 해당 티켓이 목록에 없으면 자동으로 닫기
+  // React.useEffect(() => {
+  //   if (infoTicket && !tickets.find(t => t.id === infoTicket.id)) {
+  //     setInfoModalVisible(false);
+  //   }
+  // }, [tickets, infoTicket]);
+
   // 오늘 날짜 (YYYY-MM-DD)
   const today = new Date();
   const todayStr = today.toISOString().slice(0, 10);
@@ -202,7 +222,7 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
   }
 
   // 티켓 정보가 없는(필드가 'null'인) 데이터는 리스트에서 제외
-  let filteredTickets = events.filter(
+  let filteredTickets = tickets.filter(
     (ticket: any) =>
       ticket.ticket_status !== "null" &&
       ticket.ticket_seat !== "null" &&
@@ -214,6 +234,11 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
   } else if (activeFilter === "지난") {
     filteredTickets = filteredTickets.filter(isPast);
   }
+
+  // 예매 취소 성공 시 티켓 목록에서 제거
+  const handleCancelSuccess = (ticketId: number) => {
+    setTickets((prev) => prev.filter((t) => t.id !== ticketId));
+  };
 
   const handleQrPress = (ticket: TicketType) => {
     setSelectedTicket(ticket);
@@ -288,6 +313,9 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
         visible={infoModalVisible}
         ticket={infoTicket}
         onClose={() => setInfoModalVisible(false)}
+        navigation={navigation}
+        onCancelSuccess={handleCancelSuccess}
+        isTicketActive={!!tickets.find((t) => t.id === infoTicket?.id)}
       />
     </>
   );

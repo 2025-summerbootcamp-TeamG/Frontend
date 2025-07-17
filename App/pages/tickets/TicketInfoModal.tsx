@@ -1,5 +1,12 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Modal } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Modal,
+  Alert,
+} from "react-native";
 import Cancel from "../../assets/tickets/Cancel.svg";
 import TicketCancel from "./TicketCancelModal";
 
@@ -7,12 +14,18 @@ interface TicketInfoProps {
   visible: boolean;
   ticket: any; // 실제 타입 필요시 TicketType 등으로 교체
   onClose: () => void;
+  navigation: any; // 추가
+  onCancelSuccess?: (ticketId: number) => void;
+  isTicketActive?: boolean;
 }
 
 export default function TicketInfoModal({
   visible,
   ticket,
   onClose,
+  navigation, // 추가
+  onCancelSuccess,
+  isTicketActive = true,
 }: TicketInfoProps) {
   const [cancelModalVisible, setCancelModalVisible] = React.useState(false);
   if (!ticket) return null;
@@ -157,9 +170,13 @@ export default function TicketInfoModal({
             <View style={styles.actionRow}>
               <View style={{ flex: 1, paddingHorizontal: 24 }}>
                 <TouchableOpacity
-                  activeOpacity={0.8}
-                  style={styles.cancelticket270}
-                  onPress={() => setCancelModalVisible(true)}
+                  activeOpacity={isTicketActive ? 0.8 : 1}
+                  style={[
+                    styles.cancelticket270,
+                    !isTicketActive && { opacity: 0.4 },
+                  ]}
+                  onPress={() => isTicketActive && setCancelModalVisible(true)}
+                  disabled={!isTicketActive}
                 >
                   <Text style={styles.cancelText}>예매 취소</Text>
                 </TouchableOpacity>
@@ -184,9 +201,9 @@ export default function TicketInfoModal({
         visible={cancelModalVisible}
         onClose={() => setCancelModalVisible(false)}
         onConfirm={() => {
-          // 취소 완료 후 내 티켓 화면으로 이동
-          onClose(); // 상세정보 모달 닫기
-          // 여기서 필요한 경우 티켓 목록을 새로고침하거나 상태를 업데이트할 수 있습니다
+          if (onCancelSuccess && ticket && ticket.id) {
+            onCancelSuccess(ticket.id);
+          }
         }}
       />
     </Modal>
