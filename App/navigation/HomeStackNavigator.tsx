@@ -30,6 +30,12 @@ export type HomeStackParamList = {
   FaceAuthScreen: undefined;
 };
 
+export type RootStackParamList = {
+  EventDetail: { event: any };
+  SeatSelect: { event: any; event_time?: any };
+  Payment: undefined;
+};
+
 export function CustomHeaderLeftWithTitle({ title }: { title: string }) {
   const navigation = useNavigation();
   return (
@@ -135,7 +141,7 @@ export default function HomeStackNavigator() {
           headerTitle: "",
           headerLeft: () => <CustomHeaderLeftWithTitle title="상세 정보" />,
           headerBackVisible: false,
-          headerTransparent: true,
+          //headerTransparent: true,
         }}
       />
       <Stack.Screen

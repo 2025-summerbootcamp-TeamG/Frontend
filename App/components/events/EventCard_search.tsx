@@ -16,7 +16,7 @@ export default function EventCardSearch({
         <View style={styles.infoWrap}>
           <View style={styles.titleRow}>
             <Text style={styles.title} numberOfLines={1}>
-              {event.artist}
+              {event.name}
             </Text>
             <View
               style={[
