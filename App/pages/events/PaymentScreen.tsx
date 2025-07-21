@@ -261,8 +261,11 @@ export default function PaymentScreen() {
               return;
             }
             setErrorMsg("");
-            // 결제 완료 후 얼굴 등록 화면으로 이동 (중첩 네비게이터)
-            navigation.navigate('내 티켓', { screen: 'FaceRegisterScreen', params: { ticketId: 1 } });
+            // 결제 완료 후 얼굴 등록 화면으로 이동 (seatInfos도 params로 전달)
+            navigation.navigate('내 티켓', {
+              screen: 'FaceRegisterScreen',
+              params: { ticketId: 1, seatInfos }
+            });
           }}
         >
           <Text style={styles.payBtnText}>결제 완료하기</Text>
