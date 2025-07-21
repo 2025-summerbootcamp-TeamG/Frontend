@@ -88,7 +88,7 @@ export default function PaymentScreen() {
   const fee = 1000;
   const total = seatPrice + fee;
 
-  const purchaseId = "2"; // 또는 "test-id" 등 임의의 값
+  const purchaseId = "1"; // 또는 "test-id" 등 임의의 값
 
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
@@ -266,7 +266,6 @@ export default function PaymentScreen() {
               return;
             }
             setErrorMsg("");
-
             try {
               // payForTicket 함수 호출 (PayRequest 타입에 맞게 수정)
               const result = await payForTicket(
@@ -278,7 +277,10 @@ export default function PaymentScreen() {
                 }
               );
               // 결제 성공 시 처리 (AxiosResponse 구조 반영)
-              navigation.navigate('내 티켓', { screen: 'FaceRegisterScreen', params: { ticketId: result.data.ticketId } });
+              navigation.navigate('내 티켓', {
+              screen: 'FaceRegisterScreen',
+              params: { ticketId: 1, seatInfos }
+            });
             } catch (e) {
               setErrorMsg("결제 처리 중 오류가 발생했습니다.");
             }
