@@ -2,18 +2,27 @@ import React from 'react';
 import { Modal, View, Text, TextInput, TouchableOpacity, Pressable, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import modalStyles from '../../styles/user/modal';
+import { login } from "../../services/UserService";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export default function LoginModal({ visible, onClose, onLoginSuccess, onShowSignup }: { visible: boolean; onClose: () => void; onLoginSuccess?: () => void; onShowSignup?: () => void }) {
+export default function LoginModal({ visible, onClose, onLoginSuccess, onShowSignup }: { visible: boolean; onClose: () => void; onLoginSuccess?: (data?: any) => void; onShowSignup?: () => void }) {
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [autoLogin, setAutoLogin] = React.useState(false);
 
-  // 예시: 아이디/비밀번호가 'test@test.com' / '1234'일 때만 성공
-  const handleLogin = () => {
-    if (email === 'test@test.com' && password === '1234') {
-      if (onLoginSuccess) onLoginSuccess();
-    } else {
-      Alert.alert('로그인 실패', '아이디/비밀번호 불일치');
+  
+  const handleLogin = async () => {
+    try {
+      const data = await login({ email, password });
+      // data: { access, refresh }
+      await AsyncStorage.setItem("accessToken", data.access);
+      await AsyncStorage.setItem("refreshToken", data.refresh);
+      if (onLoginSuccess) onLoginSuccess(data);
+    } catch (err: any) {
+      Alert.alert(
+        "로그인 실패",
+        err?.response?.data?.detail || err?.response?.data?.message || "로그인 실패"
+      );
     }
   };
 
