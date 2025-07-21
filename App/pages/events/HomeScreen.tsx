@@ -17,28 +17,11 @@ export default function HomeScreen() {
   useEffect(() => {
     getEvents({ page: 1, limit: 50 })
       .then((res) => {
-        console.log("API에서 받아온 전체 events:", res.events);
         // 인기: 조회수 내림차순 (Number로 변환)
         const sorted = [...res.events].sort(
           (a, b) => Number(b.view_count) - Number(a.view_count)
         );
-        console.log(
-          "정렬 결과 전체:",
-          sorted.map((e) => ({
-            id: e.id,
-            name: e.name,
-            view_count: e.view_count,
-          }))
-        );
         const popular = sorted.slice(0, 4);
-        console.log(
-          "상위 4개:",
-          popular.map((e) => ({
-            id: e.id,
-            name: e.name,
-            view_count: e.view_count,
-          }))
-        );
         // 신규: created_at 내림차순
         const newList = [...res.events]
           .sort((a, b) => {

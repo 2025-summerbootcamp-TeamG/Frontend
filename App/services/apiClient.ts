@@ -1,12 +1,9 @@
-import axios, {
-  AxiosRequestConfig,
-  AxiosResponse,
-  InternalAxiosRequestConfig,
-} from "axios";
+import axios, { AxiosResponse, InternalAxiosRequestConfig } from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Constants from "expo-constants";
 
 const apiClient = axios.create({
-  baseURL: "http://52.79.184.120:8000/api/v1/",
+  baseURL: Constants.expoConfig?.extra?.API_BASE_URL,
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
