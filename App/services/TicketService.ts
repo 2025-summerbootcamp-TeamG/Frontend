@@ -1,4 +1,4 @@
-import axios from 'axios';
+import apiClient from './apiClient';
 import {
   GuideLineCheckRequest,
   GuideLineCheckResponse,
@@ -7,45 +7,28 @@ import {
   SaveFaceToDBRequest,
   SaveFaceToDBResponse
 } from './Types';
-import type { AxiosResponse } from 'axios';
-import { API_BASE_URL } from '@env';
 
-// 임시: 실제로는 Context, SecureStore 등에서 불러오도록 구현
-export const getToken = () => {
-  return "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzUzMTEyMDI3LCJpYXQiOjE3NTMxMTE3MjcsImp0aSI6ImI0YWRjNTRkNzAyYTQ0MTdiZTgxODM2MTg2NTRmODE1IiwidXNlcl9pZCI6MSwibmFtZSI6Ilx1ZDE0Y1x1YzJhNFx1ZDJiOCIsImVtYWlsIjoidGVzdEB0ZXN0LmNvbSJ9.tONFeGCeTr0GKL73-LSblLhht42Z5YrCuEP-_5UsHsE"
-};
-
-// 얼굴 가이드라인 체크 (FaceGuideCheckAPIView)
+// 얼굴 가이드라인 체크
 export const FaceGuideCheck = async (
-  data: { image: string }
+  data: GuideLineCheckRequest
 ): Promise<GuideLineCheckResponse> => {
-  const token = getToken();
-  const response = await axios.post(`${API_BASE_URL}/face/check/`, data, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
+  const response = await apiClient.post('face/check/', data);
   return response.data;
 };
 
-// AWS Rekognition 얼굴 등록 (AWSFaceRecognitionRegister)
+// AWS Rekognition 얼굴 등록
 export const AWSFaceRecognitionRegister = async (
   ticketId: number,
-  data: { image: string }
+  data: FaceRegisterRequest
 ): Promise<FaceRegisterResponse> => {
-  const token = getToken();
-  const response = await axios.post(`${API_BASE_URL}/tickets/${ticketId}/aws-register/`, data, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
+  const response = await apiClient.post(`tickets/${ticketId}/aws-register/`, data);
   return response.data;
 };
 
-// DB 기반 얼굴 등록 상태 변경 (FaceRegisterAPIView)
+// DB 기반 얼굴 등록 상태 변경
 export const FaceRegister = async (
   ticketId: number,
   data: { face_verified: boolean }
 ): Promise<AxiosResponse<SaveFaceToDBResponse>> => {
-  const token = getToken();
-  const response = await axios.patch(`${API_BASE_URL}/tickets/${ticketId}/register/`, data, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  return response;
+  return await apiClient.patch(`tickets/${ticketId}/register/`, data);
 };
