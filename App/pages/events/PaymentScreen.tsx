@@ -88,7 +88,7 @@ export default function PaymentScreen() {
   const fee = 1000;
   const total = seatPrice + fee;
 
-  const purchaseId = "2"; // 또는 "test-id" 등 임의의 값
+  const purchaseId = "1"; // 또는 "test-id" 등 임의의 값
 
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
