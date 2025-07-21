@@ -22,3 +22,9 @@ export interface EventListResponse {
   events: Event[];
   message: string;
 }
+
+export type PayRequest = {
+    name: string;
+    phone: string;
+    email: string;
+  };

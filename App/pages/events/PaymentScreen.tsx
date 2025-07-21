@@ -14,6 +14,8 @@ import CheckIcon from "../../assets/common/CheckIcon.svg";
 import Svg, { Circle, Text as SvgText } from "react-native-svg";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { events } from "../../assets/events/EventsMock";
+import { payForTicket } from "../../services/EventService";
+
 
 const HEADER_HEIGHT = 48;
 const STATUSBAR_HEIGHT =
@@ -26,7 +28,9 @@ export default function PaymentScreen() {
     event: any;
     event_time?: any;
     selected?: string[];
+    purchaseId: string;
   };
+
 
   const [paymentMethod, setPaymentMethod] = useState("무통장입금");
   const [depositor, setDepositor] = useState("");
@@ -83,6 +87,8 @@ export default function PaymentScreen() {
   const seatPrice = seatInfos.reduce((sum, s) => sum + s.price, 0);
   const fee = 1000;
   const total = seatPrice + fee;
+
+  const purchaseId = "2"; // 또는 "test-id" 등 임의의 값
 
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
@@ -250,8 +256,7 @@ export default function PaymentScreen() {
         </View>
         <TouchableOpacity
           style={styles.payBtn}
-          onPress={() => {
-            // 입력값 및 동의 체크 확인
+          onPress={async () => {
             if (!buyerName || !buyerPhone || !buyerEmail) {
               setErrorMsg("예매자 정보가 누락되었습니다.");
               return;
@@ -261,8 +266,22 @@ export default function PaymentScreen() {
               return;
             }
             setErrorMsg("");
-            // 결제 완료 후 얼굴 등록 화면으로 이동 (중첩 네비게이터)
-            navigation.navigate('내 티켓', { screen: 'FaceRegisterScreen', params: { ticketId: 1 } });
+
+            try {
+              // payForTicket 함수 호출 (PayRequest 타입에 맞게 수정)
+              const result = await payForTicket(
+                purchaseId,
+                {
+                  name: buyerName,
+                  phone: buyerPhone,
+                  email: buyerEmail,
+                }
+              );
+              // 결제 성공 시 처리 (AxiosResponse 구조 반영)
+              navigation.navigate('내 티켓', { screen: 'FaceRegisterScreen', params: { ticketId: result.data.ticketId } });
+            } catch (e) {
+              setErrorMsg("결제 처리 중 오류가 발생했습니다.");
+            }
           }}
         >
           <Text style={styles.payBtnText}>결제 완료하기</Text>
