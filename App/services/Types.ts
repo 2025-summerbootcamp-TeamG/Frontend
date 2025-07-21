@@ -28,3 +28,7 @@ export type PayRequest = {
     phone: string;
     email: string;
   };
+
+export type ShareRequest = {
+    ticket_user_emails: string[];
+  };
