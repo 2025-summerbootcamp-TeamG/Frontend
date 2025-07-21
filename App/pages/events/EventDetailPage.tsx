@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -7,21 +7,24 @@ import {
   TouchableOpacity,
   BackHandler,
   Platform,
+  Modal,
 } from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import LocationIcon from "../../assets/events/locationIcon.svg";
 import PriceIcon from "../../assets/events/priceIcon.svg";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { events } from "../../assets/events/EventsMock";
+import { getEventDetail } from "../../services/EventService";
 import type { RootStackParamList } from "../../navigation/HomeStackNavigator";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import LoginModal from "../user/LoginModal";
 
 // 날짜 포맷 변환 함수
 function formatEventTime(eventTime: {
-  event_date: string;
+  date: string;
   start_time: string;
   end_time: string;
 }) {
-  const date = new Date(eventTime.event_date + "T" + eventTime.start_time);
+  const date = new Date(eventTime.date + "T" + eventTime.start_time);
   const month = date.getMonth() + 1;
   const day = date.getDate();
   const week = ["일", "월", "화", "수", "목", "금", "토"][date.getDay()];
@@ -33,7 +36,9 @@ function formatEventTime(eventTime: {
 export default function EventDetailPage() {
   const route = useRoute();
   const { eventId } = route.params as { eventId: number | string };
-  const event = events.find((e) => e.id === Number(eventId));
+  const [event, setEvent] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const screenWidth = Dimensions.get("window").width;
   const IMAGE_HEIGHT = (screenWidth * 3) / 4;
   const scrollY = useRef(new Animated.Value(0)).current;
@@ -42,8 +47,23 @@ export default function EventDetailPage() {
   const [showAll, setShowAll] = useState(false);
   const [descLines, setDescLines] = useState(0);
   const [selectedSchedule, setSelectedSchedule] = useState<number | null>(null);
+  const [loginModalVisible, setLoginModalVisible] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
+    setLoading(true);
+    setError(null);
+    getEventDetail(Number(eventId))
+      .then((data) => {
+        setEvent(data);
+        setLoading(false);
+      })
+      .catch((e) => {
+        setError("이벤트 정보를 불러오지 못했습니다.");
+        setLoading(false);
+      });
+  }, [eventId]);
+
+  useEffect(() => {
     if (Platform.OS === "android") {
       const backHandler = BackHandler.addEventListener(
         "hardwareBackPress",
@@ -56,13 +76,41 @@ export default function EventDetailPage() {
     }
   }, []);
 
-  if (!event) {
+  if (loading) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <Text>이벤트 정보를 찾을 수 없습니다.</Text>
+        <Text>로딩중...</Text>
       </View>
     );
   }
+
+  if (error || !event) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <Text>{error || "이벤트 정보를 찾을 수 없습니다."}</Text>
+      </View>
+    );
+  }
+  //토큰이 존재하는지 여부 확인
+  const checkToken = async (): Promise<boolean> => {
+    const token = await AsyncStorage.getItem("accessToken");
+    return !!token;
+  };
+
+  // handleReserve 함수 수정
+  const handleReserve = async () => {
+    const hasToken = await checkToken();
+    if (!hasToken) {
+      setLoginModalVisible(true);
+      return;
+    }
+    if (selectedSchedule !== null) {
+      navigation.navigate("SeatSelect", {
+        event,
+        event_time: event.schedules[selectedSchedule],
+      });
+    }
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
@@ -168,7 +216,7 @@ export default function EventDetailPage() {
               <Text
                 style={{ color: "#111", fontSize: 14, fontFamily: "Roboto" }}
               >
-                {`₩${Number(event.price).toLocaleString()}`}
+                {event.price}
               </Text>
             </View>
           </View>
@@ -237,9 +285,8 @@ export default function EventDetailPage() {
               공연 일정
             </Text>
             <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-              {Array.isArray(event.event_times) &&
-              event.event_times.length > 0 ? (
-                event.event_times.map((et, idx) => (
+              {Array.isArray(event.schedules) && event.schedules.length > 0 ? (
+                event.schedules.map((et: any, idx: number) => (
                   <TouchableOpacity
                     key={idx}
                     onPress={() => setSelectedSchedule(idx)}
@@ -303,14 +350,7 @@ export default function EventDetailPage() {
             alignItems: "center",
           }}
           disabled={selectedSchedule === null}
-          onPress={() => {
-            if (selectedSchedule !== null) {
-              navigation.navigate("SeatSelect", {
-                event,
-                event_time: event.event_times[selectedSchedule],
-              });
-            }
-          }}
+          onPress={handleReserve}
         >
           <Text
             style={{
@@ -324,6 +364,56 @@ export default function EventDetailPage() {
           </Text>
         </TouchableOpacity>
       </View>
+      {/* 로그인 필요 안내 모달 */}
+      <Modal visible={loginModalVisible} transparent animationType="fade">
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0,0,0,0.2)",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <View
+            style={{
+              width: 240,
+              padding: 20,
+              backgroundColor: "white",
+              borderRadius: 16,
+              alignItems: "center",
+            }}
+          >
+            <Text style={{ fontSize: 16, fontWeight: "700", marginBottom: 8 }}>
+              안내
+            </Text>
+            <Text
+              style={{
+                color: "#4B5563",
+                fontSize: 13,
+                textAlign: "center",
+                marginBottom: 12,
+              }}
+            >
+              로그인이 필요한 서비스입니다. 로그인부터 해주세요.
+            </Text>
+            <TouchableOpacity
+              style={{
+                width: 120,
+                height: 32,
+                backgroundColor: "#E53E3E",
+                borderRadius: 8,
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+              onPress={() => setLoginModalVisible(false)}
+            >
+              <Text style={{ color: "white", fontSize: 13, fontWeight: "400" }}>
+                확인
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }

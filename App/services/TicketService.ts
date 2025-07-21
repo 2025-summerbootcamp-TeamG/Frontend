@@ -1,18 +1,19 @@
-import apiClient from './apiClient';
+import apiClient from "./apiClient";
 import {
   GuideLineCheckRequest,
   GuideLineCheckResponse,
   FaceRegisterRequest,
   FaceRegisterResponse,
   SaveFaceToDBRequest,
-  SaveFaceToDBResponse
-} from './Types';
+  SaveFaceToDBResponse,
+} from "./Types";
+import type { AxiosResponse } from "axios";
 
 // 얼굴 가이드라인 체크
 export const FaceGuideCheck = async (
   data: GuideLineCheckRequest
 ): Promise<GuideLineCheckResponse> => {
-  const response = await apiClient.post('face/check/', data);
+  const response = await apiClient.post("face/check/", data);
   return response.data;
 };
 
@@ -21,7 +22,10 @@ export const AWSFaceRecognitionRegister = async (
   ticketId: number,
   data: FaceRegisterRequest
 ): Promise<FaceRegisterResponse> => {
-  const response = await apiClient.post(`tickets/${ticketId}/aws-register/`, data);
+  const response = await apiClient.post(
+    `tickets/${ticketId}/aws-register/`,
+    data
+  );
   return response.data;
 };
 

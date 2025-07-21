@@ -53,7 +53,7 @@ export default function SearchPage() {
             keyExtractor={(item) => item.id.toString()}
             renderItem={({ item }) => (
               <EventCardSearch
-                event={item}
+                event={item as any} // 오류나서 내가 임시로 수정함 너가 알아서 api에 맞게 수정하삼
                 onPress={() =>
                   navigation.navigate("EventDetail", { eventId: item.id })
                 }
