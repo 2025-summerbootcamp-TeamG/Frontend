@@ -2,6 +2,7 @@ import React from 'react';
 import { Modal, View, Text, TextInput, TouchableOpacity, Pressable, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import modalStyles from '../../styles/user/modal';
+import { signup } from "../../services/UserService";
 
 export default function SignupModal({ visible, onClose, onSignup, onShowLogin }: { visible: boolean; onClose: () => void; onSignup?: () => void; onShowLogin?: () => void }) {
   const [name, setName] = React.useState('');
@@ -11,7 +12,7 @@ export default function SignupModal({ visible, onClose, onSignup, onShowLogin }:
   const [phone, setPhone] = React.useState('');
   const [agree, setAgree] = React.useState(false);
 
-  const handleSignup = () => {
+  const handleSignup = async () => {
     if (!name) {
       Alert.alert('입력 오류', '이름을 입력하세요');
       return;
@@ -32,23 +33,24 @@ export default function SignupModal({ visible, onClose, onSignup, onShowLogin }:
       Alert.alert('입력 오류', '비밀번호와 비밀번호 확인이 일치하지 않습니다');
       return;
     }
-    if (!phone) {
-      Alert.alert('입력 오류', '전화번호를 입력하세요');
-      return;
-    }
     if (!agree) {
       Alert.alert('입력 오류', '이용약관 및 개인정보처리방침에 동의해야 합니다');
       return;
     }
-    // 이메일 중복 예시: test@test.com이면 중복
-    if (email === 'test@test.com') {
-      Alert.alert('회원가입 실패', '이메일이 중복되었습니다');
-      return;
+    try {
+      await signup({ email, password, password2: passwordCheck, name, phone });
+      Alert.alert("회원가입 성공", "회원가입이 완료되었습니다");
+      if (onSignup) onSignup();
+    } catch (err: any) {
+      console.log("Error message:", err.message);
+
+      const msg =
+        err?.response?.data?.email?.[0] ||
+        err?.response?.data?.password2 ||
+        err?.response?.data?.message ||
+        "회원가입 실패";
+      Alert.alert("회원가입 실패", msg);
     }
-    // 성공
-    Alert.alert('회원가입 성공', '회원가입이 완료되었습니다', [
-      { text: '확인', onPress: () => { if (onSignup) onSignup(); } }
-    ]);
   };
 
   return (
@@ -95,6 +97,7 @@ export default function SignupModal({ visible, onClose, onSignup, onShowLogin }:
               value={password}
               onChangeText={setPassword}
               secureTextEntry
+              textContentType="oneTimeCode"
               placeholderTextColor="#bdbdbd"
             />
           </View>
@@ -107,6 +110,7 @@ export default function SignupModal({ visible, onClose, onSignup, onShowLogin }:
               value={passwordCheck}
               onChangeText={setPasswordCheck}
               secureTextEntry
+              textContentType="oneTimeCode"
               placeholderTextColor="#bdbdbd"
             />
           </View>
@@ -118,7 +122,7 @@ export default function SignupModal({ visible, onClose, onSignup, onShowLogin }:
               placeholder="전화번호를 입력하세요"
               value={phone}
               onChangeText={setPhone}
-              keyboardType="phone-pad"
+              keyboardType="default"
               placeholderTextColor="#bdbdbd"
             />
           </View>

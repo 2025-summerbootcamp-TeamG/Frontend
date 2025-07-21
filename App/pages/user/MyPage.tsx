@@ -1,4 +1,5 @@
-import React from "react";
+import { jwtDecode } from "jwt-decode";
+import React, { useEffect } from "react";
 import {
   View,
   Text,
@@ -6,6 +7,7 @@ import {
   ScrollView,
   StyleSheet,
   Modal,
+  Alert,
 } from "react-native";
 import {
   Ionicons,
@@ -18,18 +20,46 @@ import LoginModal from "./LoginModal";
 import SignupModal from "./SignupModal";
 import { AuthHistoryModal } from "./AuthHistoryModal";
 import MainHeader from "../../components/common/MainHeader";
+import { login, signup, logout } from "../../services/UserService";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function MyPageLogin() {
   const navigation = useNavigation() as any;
+  const [user, setUser] = React.useState<{ name: string; email: string } | null>(null);
   const [isLoggedIn, setIsLoggedIn] = React.useState(false);
   const [loginModalVisible, setLoginModalVisible] = React.useState(false);
   const [signupModalVisible, setSignupModalVisible] = React.useState(false);
   const [authHistoryVisible, setAuthHistoryVisible] = React.useState(false);
 
-  // 로그인 성공 시 호출되는 함수 예시
-  const handleLoginSuccess = () => {
-    setIsLoggedIn(true);
-    setLoginModalVisible(false);
+  // 앱 실행 시 로그인 상태 복구
+  useEffect(() => {
+    const checkLoginStatus = async () => {
+      const accessToken = await AsyncStorage.getItem("accessToken");
+      if (accessToken) {
+        try {
+          const decoded = jwtDecode<{ name: string; email: string }>(accessToken);
+          setUser({ name: decoded.name, email: decoded.email });
+          setIsLoggedIn(true);
+        } catch (e) {
+          // 토큰 만료 등 디코딩 실패 시
+          setIsLoggedIn(false);
+          setUser(null);
+        }
+      }
+    };
+    checkLoginStatus();
+  }, []);
+
+  // 로그인 성공 시 호출되는 함수
+  const handleLoginSuccess = async (data: any) => {
+    try {
+      const decoded = jwtDecode<{ name: string; email: string }>(data.access);
+      setUser({ name: decoded.name, email: decoded.email });
+      setIsLoggedIn(true);
+      setLoginModalVisible(false);
+    } catch (err) {
+      Alert.alert("로그인 실패", "토큰 처리 중 오류가 발생했습니다.");
+    }
   };
 
   // 회원가입 성공 시 호출되는 함수
@@ -38,10 +68,24 @@ export default function MyPageLogin() {
     setSignupModalVisible(false);
   };
 
-  // 예시 사용자 정보
-  const user = {
-    name: "김민수",
-    email: "minsu.kim@email.com",
+
+
+  const handleLogout = async () => {
+    try {
+      const refresh = await AsyncStorage.getItem("refreshToken");
+      if (!refresh) throw new Error("토큰 없음");
+      await logout(refresh);
+      await AsyncStorage.removeItem("accessToken");
+      await AsyncStorage.removeItem("refreshToken");
+      setUser(null);
+      setIsLoggedIn(false);
+      // 상태 초기화 등
+    } catch (err: any) {
+      Alert.alert(
+        "로그아웃 실패",
+        err?.response?.data?.error || err?.response?.data?.message || "로그아웃 실패"
+      );
+    }
   };
 
   return (
@@ -86,8 +130,12 @@ export default function MyPageLogin() {
             <View style={styles.profileIconWrapper}>
               <Ionicons name="person" size={48} color="#bbb" />
             </View>
-            <Text style={styles.profileName}>{user.name}</Text>
-            <Text style={styles.profileEmail}>{user.email}</Text>
+            {user && ( // user가 있을 때만 표시
+              <>
+                <Text style={styles.profileName}>{user.name}</Text>
+                <Text style={styles.profileEmail}>{user.email}</Text>
+              </>
+            )}
             <TouchableOpacity style={styles.profileEditBtn}>
               <Text style={styles.profileEditBtnText}>프로필 편집</Text>
             </TouchableOpacity>
@@ -169,7 +217,7 @@ export default function MyPageLogin() {
         {isLoggedIn && (
           <TouchableOpacity
             style={styles.logoutBtn}
-            onPress={() => setIsLoggedIn(false)}
+            onPress={handleLogout}
           >
             <Text style={styles.logoutBtnText}>로그아웃</Text>
           </TouchableOpacity>

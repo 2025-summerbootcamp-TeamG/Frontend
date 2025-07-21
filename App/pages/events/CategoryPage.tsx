@@ -2,6 +2,7 @@ import React from "react";
 import { View } from "react-native";
 import { events } from "../../assets/events/EventsMock";
 import EventCardGrid from "../../styles/events/EventCardGrid";
+import { getEvents } from "../../services/EventService";
 
 export default function CategoryPage({ route }: any) {
   const { categoryName } = route.params;
