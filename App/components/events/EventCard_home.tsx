@@ -9,9 +9,8 @@ export type Event = {
   location: string;
   price: number;
   status: string;
-  image_url: string;
-  type: string;
   name: string;
+  thumbnail: string;
 };
 
 interface EventCardProps {
@@ -30,7 +29,7 @@ export default function EventCard({ event, navigation }: EventCardProps) {
     >
       <View style={styles.card}>
         <View style={styles.imageWrap}>
-          <Image source={{ uri: event.image_url }} style={styles.image} />
+          <Image source={{ uri: event.thumbnail }} style={styles.image} />
         </View>
         <View style={styles.infoWrap}>
           <Text style={styles.title} numberOfLines={1}>

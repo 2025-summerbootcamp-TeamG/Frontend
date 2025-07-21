@@ -33,6 +33,9 @@
         "asset": "./assets/fonts/Roboto-VariableFont_wdth,wght.ttf",
         "family": "Roboto"
       }
-    ]
+    ],
+    "extra": {
+      "API_BASE_URL": "http://52.79.184.120:8000/api/v1/"
+    }
   }
 }
