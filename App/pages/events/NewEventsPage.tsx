@@ -18,12 +18,14 @@ export default function NewEventsPage() {
     setLoading(true);
     try {
       const res = await getEvents({ page, limit });
-      const sorted = [...res.events].sort((a, b) => {
-        const dateA = new Date(a.created_at).getTime();
-        const dateB = new Date(b.created_at).getTime();
-        return dateB - dateA;
+      setEvents((prev) => {
+        const combined = page === 1 ? res.events : [...prev, ...res.events];
+        return [...combined].sort((a, b) => {
+          const dateA = new Date(a.created_at).getTime();
+          const dateB = new Date(b.created_at).getTime();
+          return dateB - dateA;
+        });
       });
-      setEvents((prev) => (page === 1 ? sorted : [...prev, ...sorted]));
       if (res.events.length < limit) setHasMore(false);
       setPage((prev) => prev + 1);
     } catch {
