@@ -97,6 +97,7 @@ export default function SignupModal({ visible, onClose, onSignup, onShowLogin }:
               value={password}
               onChangeText={setPassword}
               secureTextEntry
+              textContentType="oneTimeCode"
               placeholderTextColor="#bdbdbd"
             />
           </View>
@@ -109,6 +110,7 @@ export default function SignupModal({ visible, onClose, onSignup, onShowLogin }:
               value={passwordCheck}
               onChangeText={setPasswordCheck}
               secureTextEntry
+              textContentType="oneTimeCode"
               placeholderTextColor="#bdbdbd"
             />
           </View>
@@ -120,7 +122,7 @@ export default function SignupModal({ visible, onClose, onSignup, onShowLogin }:
               placeholder="전화번호를 입력하세요"
               value={phone}
               onChangeText={setPhone}
-              keyboardType="phone-pad"
+              keyboardType="default"
               placeholderTextColor="#bdbdbd"
             />
           </View>

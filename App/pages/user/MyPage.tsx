@@ -73,9 +73,8 @@ export default function MyPageLogin() {
   const handleLogout = async () => {
     try {
       const refresh = await AsyncStorage.getItem("refreshToken");
-      const access = await AsyncStorage.getItem("accessToken");
       if (!refresh) throw new Error("토큰 없음");
-      await logout(refresh, access || undefined);
+      await logout(refresh);
       await AsyncStorage.removeItem("accessToken");
       await AsyncStorage.removeItem("refreshToken");
       setUser(null);
