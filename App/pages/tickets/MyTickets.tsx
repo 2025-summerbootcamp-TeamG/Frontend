@@ -173,29 +173,27 @@ export interface TicketType {
   authDate?: string;
 }
 function mapTicketToTicketType(ticket: any): TicketType {
-  // face_verified 값이 boolean 또는 문자열("true"/"false")로 올 수 있으니 보완
-  const isFaceVerified =
-    ticket.face_verified === true || ticket.face_verified === "true";
-  const isFaceNotVerified =
-    ticket.face_verified === false ||
-    ticket.face_verified === "false" ||
-    !ticket.face_verified;
   let primaryButton = "";
   let primaryButtonAction = "";
-  if (isFaceNotVerified && ticket.ticket_status === "booked") {
+
+  // 얼굴 인증 안 됐고 예매완료 상태면 '얼굴 인증하기' 버튼
+  if (!ticket.face_verified && ticket.ticket_status === "booked") {
     primaryButton = "얼굴 인증하기";
     primaryButtonAction = "verify";
-  } else if (isFaceVerified && ticket.ticket_status === "booked") {
+  }
+  // 얼굴 인증 완료 && 예매완료 상태면 'QR코드 보기' 버튼
+  else if (ticket.face_verified && ticket.ticket_status === "booked") {
     primaryButton = "QR코드 보기";
     primaryButtonAction = "qr";
   }
+
   return {
     id: ticket.id,
     name: ticket.event_name ?? "",
     artist: "",
-    date: ticket.event_date ?? ticket.booked_at ?? "",
+    date: ticket.event_date ?? "",
     location: ticket.event_location ?? "",
-    price: ticket.ticket_price ? Number(ticket.ticket_price) : 0,
+    price: 0,
     image_url: ticket.image_url ?? "",
     seat_number: ticket.seat_number ?? "",
     seat_grade: ticket.seat_rank ?? "",
@@ -205,6 +203,13 @@ function mapTicketToTicketType(ticket: any): TicketType {
     face_verified: ticket.face_verified ?? false,
     primaryButton,
     primaryButtonAction,
+    event_times: [],
+    genre: "",
+    reservationNo: "",
+    authDate: "",
+    isExpired: false,
+    type: "",
+    title: "",
   };
 }
 
@@ -224,7 +229,18 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
     const checkLogin = async () => {
       const token = await AsyncStorage.getItem("accessToken");
       setIsLoggedIn(!!token);
-      if (!token) setLoginModalVisible(true);
+      if (!token) {
+        Alert.alert(
+          "로그인 필요",
+          "내 티켓을 확인하려면 로그인이 필요합니다.",
+          [
+            {
+              text: "확인",
+              onPress: () => {}, // 아무 동작도 하지 않음
+            },
+          ]
+        );
+      }
     };
     checkLogin();
   }, []);
@@ -239,7 +255,8 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
         (ticket) =>
           ticket.id !== undefined && ticket.id !== null && ticket.id > 0
       );
-      setTickets(validTickets.map(mapTicketToTicketType));
+      const mappedTickets = validTickets.map(mapTicketToTicketType);
+      setTickets(mappedTickets);
     } catch (e) {
       Alert.alert(
         "티켓 불러오기 실패",
@@ -251,7 +268,7 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
   // 내 티켓 페이지가 포커스될 때마다 로그인 상태와 티켓 목록을 새로 불러오기
   useFocusEffect(
     React.useCallback(() => {
-      const checkLoginAndFetch = async () => {
+      const fetchTickets = async () => {
         const token = await AsyncStorage.getItem("accessToken");
         setIsLoggedIn(!!token);
         if (token) {
@@ -261,14 +278,18 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
               (ticket) =>
                 ticket.id !== undefined && ticket.id !== null && ticket.id > 0
             );
-            setTickets(validTickets.map(mapTicketToTicketType));
+            const mappedTickets = validTickets.map(mapTicketToTicketType);
+            setTickets(mappedTickets);
           } catch (e) {
-            // 에러 처리 (필요시 Alert 등)
+            Alert.alert(
+              "티켓 불러오기 실패",
+              "서버에서 티켓 목록을 가져오지 못했습니다."
+            );
           }
         }
       };
-      checkLoginAndFetch();
-    }, [])
+      fetchTickets();
+    }, [navigation])
   );
 
   // 티켓 목록을 state로 관리
@@ -313,10 +334,7 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
 
   // 티켓 정보가 없는(필드가 'null'인) 데이터는 리스트에서 제외
   let filteredTickets = tickets.filter(
-    (ticket: any) =>
-      ticket.ticket_status !== "null" &&
-      ticket.ticket_seat !== "null" &&
-      ticket.primaryButton !== "null"
+    (ticket: any) => ticket.ticket_status !== "null"
   );
 
   if (activeFilter === "예정") {
