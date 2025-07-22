@@ -72,6 +72,6 @@ export async function getTicketFaceAuth(ticketId: number) {
 
 // 티켓 상태 checked_in으로 변경
 export async function certifyTicket(ticketId: number): Promise<TicketCertificationResponse> {
-  const res = await api.patch(`ticket/${ticketId}/certification/`);
+  const res = await api.patch(`tickets/${ticketId}/certification/`);
   return res.data;
 }
