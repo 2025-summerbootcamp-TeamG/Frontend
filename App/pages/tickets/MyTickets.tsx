@@ -16,7 +16,9 @@ import { events } from "../../assets/events/EventsMock";
 import { useFocusEffect } from "@react-navigation/native";
 import LoginModal from "../user/LoginModal";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { getMyTickets, getTicketDetail, getTicketFaceAuth, certifyTicket } from "../../services/TicketService";
+
+import { getMyTickets, getTicketDetail, getTicketFaceAuth, certifyTicket, TicketQRcode } from "../../services/TicketService";
+
 
 // 티켓 카드 컴포넌트 (각 티켓 정보를 카드 형태로 렌더링)
 interface TicketCardProps {
@@ -250,6 +252,11 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
   };
 
   // 내 티켓 페이지가 포커스될 때마다 로그인 상태와 티켓 목록을 새로 불러오기
+
+  const [qrData, setQrData] = useState<any>(null);
+  const [qrLoading, setQrLoading] = useState(false);
+  const [qrError, setQrError] = useState("");
+
   useFocusEffect(
     React.useCallback(() => {
       const checkLoginAndFetch = async () => {
@@ -353,9 +360,20 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
     setTickets((prev) => prev.filter((t) => t.id !== ticketId));
   };
 
-  const handleQrPress = (ticket: TicketType) => {
-    setSelectedTicket(ticket);
-    setQrModalVisible(true);
+  const handleQrPress = async (ticket: TicketType) => {
+    setQrLoading(true);
+    setQrError("");
+    try {
+      const data = await TicketQRcode(ticket.id!);
+      setQrData(data);
+      setSelectedTicket(ticket);
+      setQrModalVisible(true);
+    } catch (e : any) {
+      setQrError("QR 코드 생성에 실패했습니다.");
+      setQrModalVisible(true);
+    } finally {
+      setQrLoading(false);
+    }
   };
 
   const handleDetailPress = async (ticket: TicketType) => {
@@ -439,7 +457,6 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
         onClose={() => setLoginModalVisible(false)}
         onLoginSuccess={handleLoginSuccess}
       />
-      {/* 로그인 안 했으면 티켓 목록 등 UI 숨김 */}
       {isLoggedIn && (
         <>
           <View style={{ width: "100%", padding: 16, backgroundColor: "#fff" }}>
@@ -497,7 +514,14 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
           >
             <QRCodeModal
               ticket={selectedTicket}
-              onClose={() => setQrModalVisible(false)}
+              qrData={qrData}
+              loading={qrLoading}
+              error={qrError}
+              onClose={() => {
+                setQrModalVisible(false);
+                setQrData(null);
+                setQrError("");
+              }}
             />
           </Modal>
           <TicketInfoModal
