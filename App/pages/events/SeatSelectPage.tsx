@@ -1,16 +1,30 @@
-import React, { useState } from "react";
-import { View, TouchableOpacity, Text, Modal } from "react-native";
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  TouchableOpacity,
+  Text,
+  Modal,
+  ActivityIndicator,
+} from "react-native";
 import SeatMap from "../../components/events/SeatMap";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { getSeatsByZone } from "../../services/EventService";
+import { Seat } from "../../services/Types";
 
 type RootStackParamList = {
   Payment: { event: any; event_time?: any; selected?: string[] };
-  SeatSelect: { event: any; event_time?: any };
+  SeatSelect: { event: any; event_time?: any; zone_id: number };
 };
+
+const zoneIds = [1, 2, 3, 4];
 
 export default function SeatSelectPage() {
   const [selected, setSelected] = useState<string[]>([]);
+  const [seats, setSeats] = useState<Seat[]>([]);
+  const [availableCount, setAvailableCount] = useState<number>(0);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [loginModalVisible, setLoginModalVisible] = useState(false);
   const navigation =
@@ -20,6 +34,41 @@ export default function SeatSelectPage() {
     event: any;
     event_time?: any;
   };
+  const [eventDate, setEventDate] = useState<string | null>(null);
+  const [startTime, setStartTime] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchAllSeats = async () => {
+      try {
+        setLoading(true);
+
+        // 모든 zone의 좌석 데이터를 병렬로 요청
+        const responses = await Promise.all(
+          zoneIds.map((id) => getSeatsByZone(id))
+        );
+
+        // 유효한 응답만 필터링해서 하나의 배열로 합치기
+        const allSeats = responses
+          .filter((res) => res.statusCode === 200 && Array.isArray(res.data))
+          .flatMap((res) => res.data);
+
+        setSeats(allSeats);
+
+        // 전체 좌석 중 예약 가능 좌석 수 계산 (booked/reserved 제외)
+        const totalAvailable = allSeats.filter(
+          (seat) =>
+            seat.seat_status !== "booked" && seat.seat_status !== "reserved"
+        ).length;
+        setAvailableCount(totalAvailable);
+      } catch (err) {
+        setError("전체 좌석을 불러오지 못했습니다.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAllSeats();
+  }, []);
 
   const handleSelectSeat = (id: string) => {
     if (
@@ -40,14 +89,13 @@ export default function SeatSelectPage() {
   };
 
   // 날짜/시간 포맷 함수
-  function formatEventTime(eventTime: any) {
-    if (!eventTime) return "";
-    const date = new Date(eventTime.event_date + "T" + eventTime.start_time);
+  function formatEventDateTime(dateStr: string, timeStr: string) {
+    const date = new Date(dateStr + "T" + timeStr);
     const month = date.getMonth() + 1;
     const day = date.getDate();
     const week = ["일", "월", "화", "수", "목", "금", "토"][date.getDay()];
-    const hour = eventTime.start_time.slice(0, 2);
-    const minute = eventTime.start_time.slice(3, 5);
+    const hour = timeStr.slice(0, 2);
+    const minute = timeStr.slice(3, 5);
     return `${month}월 ${day}일 (${week}) ${hour}:${minute}`;
   }
 
@@ -59,8 +107,10 @@ export default function SeatSelectPage() {
           {event?.name || "콘서트 제목"}
         </Text>
         <Text style={{ fontSize: 16, color: "#6B7280" }}>
-          {event_time
-            ? `${formatEventTime(event_time)} | ${event?.location || ""}`
+          {eventDate && startTime
+            ? `${formatEventDateTime(eventDate, startTime)} | ${
+                event?.location || ""
+              }`
             : event?.location || ""}
         </Text>
       </View>
@@ -68,6 +118,7 @@ export default function SeatSelectPage() {
         selected={selected}
         onSelectSeat={handleSelectSeat}
         event_time={event_time}
+        seats={seats}
       />
       {/* 초과 안내 모달 */}
       <Modal visible={modalVisible} transparent animationType="fade">

@@ -105,9 +105,13 @@ export default function EventDetailPage() {
       return;
     }
     if (selectedSchedule !== null) {
+      const selectedEventTime = event.schedules[selectedSchedule];
+      // 문제가 되었던 zones 확인 로직을 제거하고,
+      // 첫 번째 존(VIP, id: 1)으로 바로 이동하도록 수정합니다.
       navigation.navigate("SeatSelect", {
         event,
-        event_time: event.schedules[selectedSchedule],
+        event_time: selectedEventTime,
+        zone_id: 1, // 1: VIP, 2: R, 3: S, 4: A
       });
     }
   };
