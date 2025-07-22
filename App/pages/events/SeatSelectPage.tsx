@@ -25,7 +25,23 @@ type RootStackParamList = {
   SeatSelect: { event: any; event_time?: any; zone_id?: number };
 };
 
-const zoneIds = [1, 2, 3, 4];
+// zoneIds 배열 제거
+// const zoneIds = [1, 2, 3, 4];
+
+// zone명 순서대로 매핑
+// const zoneNames = ["VIP", "R", "S", "A"];
+// const currentZoneIds = event_time?.zone_ids || [];
+// const zoneIdToName = Object.fromEntries(
+//   currentZoneIds.map((id, idx) => [id, zoneNames[idx]])
+// );
+// const currentEventTimeId = event_time?.event_time_id;
+
+// const filteredSeats = seats.filter((seat) => {
+//   if (seat.event_time_id !== currentEventTimeId) return false;
+//   const prefix = seat.seat_number.split("-")[0];
+//   // zoneIdToName의 value(=zone명) 중에 prefix가 있으면 통과
+//   return Object.values(zoneIdToName).includes(prefix);
+// });
 
 export default function SeatSelectPage() {
   const [selected, setSelected] = useState<string[]>([]);
@@ -45,6 +61,20 @@ export default function SeatSelectPage() {
   const [eventDate, setEventDate] = useState<string | null>(null);
   const [startTime, setStartTime] = useState<string | null>(null);
 
+  // zone명 순서대로 매핑
+  const zoneNames = ["VIP", "R", "S", "A"];
+  const currentZoneIds: number[] = event_time?.zone_ids || [];
+  const zoneIdToName: { [key: number]: string } = Object.fromEntries(
+    currentZoneIds.map((id: number, idx: number) => [id, zoneNames[idx]])
+  );
+  const currentEventTimeId: number | undefined = event_time?.event_time_id;
+
+  const filteredSeats = seats.filter((seat: Seat) => {
+    if (seat.event_time_id !== currentEventTimeId) return false;
+    const prefix = seat.seat_number.split("-")[0];
+    return Object.values(zoneIdToName).includes(prefix);
+  });
+
   useEffect(() => {
     const fetchAllSeats = async () => {
       try {
@@ -52,7 +82,7 @@ export default function SeatSelectPage() {
 
         // 모든 zone의 좌석 데이터를 병렬로 요청
         const responses = await Promise.all(
-          zoneIds.map((id) => getSeatsByZone(id))
+          currentZoneIds.map((id) => getSeatsByZone(id))
         );
 
         // 유효한 응답만 필터링해서 하나의 배열로 합치기
@@ -78,6 +108,12 @@ export default function SeatSelectPage() {
     fetchAllSeats();
   }, []);
 
+  // 필터링: 현재 event_time에 해당하는 zone_id만 추출
+  // const currentZoneIds = event_time?.zone_ids || [];
+  // const filteredSeats = seats.filter((seat) =>
+  //   currentZoneIds.includes(seat.zone_id)
+  // );
+
   const handleSelectSeat = (id: string) => {
     if (
       !selected.includes(id) &&
@@ -98,25 +134,22 @@ export default function SeatSelectPage() {
 
   const handleGoToPayment = async () => {
     try {
-      const seatIds = seats
+      const seatIds = filteredSeats
         .filter((seat) => selected.includes(seat.seat_number))
         .map((seat) => seat.seat_id);
-      const selectedSeats = seats.filter((seat) =>
+      const seatInfos = filteredSeats.filter((seat) =>
         seatIds.includes(seat.seat_id)
       );
-      const event_time_id = event_time.event_time_id;
       console.log("event.id:", event.id);
       console.log("event_time_id:", event_time.event_time_id);
       console.log("seatIds:", seatIds);
-      // seatInfos 생성: 선택된 좌석의 상세 정보 추출
-      const seatInfos = seats.filter((seat) => seatIds.includes(seat.seat_id));
       console.log("buyTickets body:", {
         seat_id: seatIds,
-        event_time_id: event_time_id,
+        event_time_id: event_time.event_time_id,
       });
       const buyResult = await buyTickets(event.id, {
         seat_id: seatIds,
-        event_time_id: event_time_id,
+        event_time_id: event_time.event_time_id,
       });
       navigation.navigate("Payment", {
         event,
@@ -161,7 +194,7 @@ export default function SeatSelectPage() {
         selected={selected}
         onSelectSeat={handleSelectSeat}
         event_time={event_time}
-        seats={seats}
+        seats={filteredSeats}
       />
       {/* 초과 안내 모달 */}
       <Modal visible={modalVisible} transparent animationType="fade">

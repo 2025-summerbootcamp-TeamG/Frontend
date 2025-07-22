@@ -44,9 +44,9 @@ export const searchEvents = async (keyword: string, page = 1, limit = 20) => {
   return response.data;
 };
 
-export async function buyTickets(eventId: any, body: any) {
+export async function buyTickets(event_id: any, body: any) {
   // body: { seat_id: [좌석id...], event_time_id: ... }
   return apiClient
-    .post("events/${eventId}/tickets/buy", body)
+    .post(`events/${event_id}/tickets/buy`, body)
     .then((res) => res.data);
 }

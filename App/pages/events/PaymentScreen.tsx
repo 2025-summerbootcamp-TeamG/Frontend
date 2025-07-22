@@ -265,6 +265,7 @@ export default function PaymentScreen() {
               // 결제 성공 시 처리 (AxiosResponse 구조 반영)
 
               setTicketId(result.data.ticketId); // 결제 API 응답에서 발급된 ticketId(티켓 고유 ID)를 상태로 저장
+              
               navigation.navigate('내 티켓', { // 내 티켓 화면으로 이동
                 screen: 'FaceRegisterScreen', // FaceRegisterScreen으로 이동
                 params: { ticketId: result.data.ticketId, seatInfos } // ticketId: 임시로 1로 고정하여 전달, seatInfos: 선택한 좌석 정보 배열을 FaceRegisterScreen으로 전달
