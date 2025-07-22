@@ -11,10 +11,18 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { getSeatsByZone } from "../../services/EventService";
 import { Seat } from "../../services/Types";
+import { buyTickets } from "../../services/EventService";
 
 type RootStackParamList = {
-  Payment: { event: any; event_time?: any; selected?: string[] };
-  SeatSelect: { event: any; event_time?: any; zone_id: number };
+  Payment: {
+    event: any;
+    event_time?: any;
+    selected?: string[];
+    purchase_id?: number;
+    ticketIds?: number[];
+    seatInfos?: any[];
+  };
+  SeatSelect: { event: any; event_time?: any; zone_id?: number };
 };
 
 const zoneIds = [1, 2, 3, 4];
@@ -86,6 +94,41 @@ export default function SeatSelectPage() {
 
   const handleRequireLogin = () => {
     setLoginModalVisible(true);
+  };
+
+  const handleGoToPayment = async () => {
+    try {
+      const seatIds = seats
+        .filter((seat) => selected.includes(seat.seat_number))
+        .map((seat) => seat.seat_id);
+      const selectedSeats = seats.filter((seat) =>
+        seatIds.includes(seat.seat_id)
+      );
+      const event_time_id = event_time.event_time_id;
+      console.log("event.id:", event.id);
+      console.log("event_time_id:", event_time.event_time_id);
+      console.log("seatIds:", seatIds);
+      // seatInfos 생성: 선택된 좌석의 상세 정보 추출
+      const seatInfos = seats.filter((seat) => seatIds.includes(seat.seat_id));
+      console.log("buyTickets body:", {
+        seat_id: seatIds,
+        event_time_id: event_time_id,
+      });
+      const buyResult = await buyTickets(event.id, {
+        seat_id: seatIds,
+        event_time_id: event_time_id,
+      });
+      navigation.navigate("Payment", {
+        event,
+        event_time,
+        selected,
+        purchase_id: buyResult.purchase_id,
+        ticketIds: buyResult.ticket_ids,
+        seatInfos,
+      });
+    } catch (e) {
+      alert("좌석 예매 중 오류가 발생했습니다.");
+    }
   };
 
   // 날짜/시간 포맷 함수
@@ -241,9 +284,7 @@ export default function SeatSelectPage() {
             alignItems: "center",
           }}
           disabled={selected.length === 0}
-          onPress={() =>
-            navigation.navigate("Payment", { event, event_time, selected })
-          }
+          onPress={handleGoToPayment}
         >
           <Text style={{ color: "#fff", fontSize: 13, fontWeight: "500" }}>
             결제하기

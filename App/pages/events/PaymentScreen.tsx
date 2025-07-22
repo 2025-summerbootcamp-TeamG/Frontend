@@ -15,7 +15,7 @@ import Svg, { Circle, Text as SvgText } from "react-native-svg";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { events } from "../../assets/events/EventsMock";
 import { payForTicket } from "../../services/EventService";
-
+import { buyTickets } from "../../services/EventService";
 
 const HEADER_HEIGHT = 48;
 const STATUSBAR_HEIGHT =
@@ -31,7 +31,6 @@ export default function PaymentScreen() {
     purchaseId: string;
   };
 
-
   const [paymentMethod, setPaymentMethod] = useState("무통장입금");
   const [depositor, setDepositor] = useState("");
   const [buyerName, setBuyerName] = useState("");
@@ -41,20 +40,6 @@ export default function PaymentScreen() {
 
   // 에러 메시지 상태 추가
   const [errorMsg, setErrorMsg] = useState("");
-
-  // 디버깅용 콘솔
-  console.log("selected:", selected);
-  console.log("event_time.zones:", event_time?.zones);
-  if (event_time?.zones) {
-    for (const zone of event_time.zones) {
-      console.log(
-        "zone:",
-        zone.rank,
-        "seats:",
-        zone.seats.map((s: any) => s.seat_number)
-      );
-    }
-  }
 
   // 선택된 좌석 정보 추출 (여러 좌석 지원, zone명 분리 매칭)
   let seatInfos: { zone: string; name: string; price: number }[] = [];
@@ -268,19 +253,16 @@ export default function PaymentScreen() {
             setErrorMsg("");
             try {
               // payForTicket 함수 호출 (PayRequest 타입에 맞게 수정)
-              const result = await payForTicket(
-                purchaseId,
-                {
-                  name: buyerName,
-                  phone: buyerPhone,
-                  email: buyerEmail,
-                }
-              );
+              const result = await payForTicket(purchaseId, {
+                name: buyerName,
+                phone: buyerPhone,
+                email: buyerEmail,
+              });
               // 결제 성공 시 처리 (AxiosResponse 구조 반영)
-              navigation.navigate('내 티켓', {
-              screen: 'FaceRegisterScreen',
-              params: { ticketId: 1, seatInfos }
-            });
+              navigation.navigate("내 티켓", {
+                screen: "FaceRegisterScreen",
+                params: { ticketId: 1, seatInfos },
+              });
             } catch (e) {
               setErrorMsg("결제 처리 중 오류가 발생했습니다.");
             }
