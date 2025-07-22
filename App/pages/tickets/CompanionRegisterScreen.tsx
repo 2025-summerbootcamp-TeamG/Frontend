@@ -12,11 +12,13 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 
 export default function CompanionRegisterScreen({ route, navigation }: any) {
-  const companionCount = route.params?.companionCount ?? 1;
+  const seatInfos = route.params?.seatInfos || [];
+  const companionCount = Math.max((seatInfos.length || 1) - 1, 1);
   const [companions, setCompanions] = useState(Array(companionCount).fill(""));
   const maxCompanions = 3;
   // 모달 상태 추가
   const [modalVisible, setModalVisible] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
   function handleAddCompanion() {
     if (companions.length < maxCompanions) {
@@ -32,6 +34,12 @@ export default function CompanionRegisterScreen({ route, navigation }: any) {
 
   // 등록 완료 버튼 클릭 시 모달 표시
   function handleRegisterComplete() {
+    // 하나라도 비어 있으면 에러 메시지
+    if (companions.some((email) => !email.trim())) {
+      setErrorMsg("모든 동행자의 ID를 등록해주세요");
+      return;
+    }
+    setErrorMsg("");
     setModalVisible(true);
   }
 
@@ -100,6 +108,10 @@ export default function CompanionRegisterScreen({ route, navigation }: any) {
       >
         <Text style={styles.buttonText}>등록 완료</Text>
       </TouchableOpacity>
+      {/* 에러 메시지 */}
+      {errorMsg !== "" && (
+        <Text style={{ color: "#E53E3E", textAlign: "center", marginTop: 8 }}>{errorMsg}</Text>
+      )}
       {/* 등록 완료 모달 */}
       <Modal
         visible={modalVisible}

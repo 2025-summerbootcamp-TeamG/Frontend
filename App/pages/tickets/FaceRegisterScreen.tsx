@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -9,16 +9,29 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";
-import axios from "axios";
+import { FaceGuideCheck, AWSFaceRecognitionRegister, FaceRegister } from '../../services/TicketService';
+import type { GuideLineCheckResponse, FaceRegisterResponse, SaveFaceToDBResponse } from '../../services/Types';
+
+// 응답에서 message 안전하게 추출
+function extractMessage(res: any): string {
+  if (!res) return '';
+  if (typeof res.message === 'string') return res.message;
+  if (res.data && typeof res.data.message === 'string') return res.data.message;
+  return '';
+}
 
 export default function FaceRegisterScreen({ navigation, route }: any) {
   const ticketId = route?.params?.ticketId;
   const [modalVisible, setModalVisible] = useState(false);
   const [isSuccess, setIsSuccess] = useState(true);
-  const cameraRef = useRef(null);
+  const cameraRef = useRef<any>(null);
   const [permission, requestPermission] = useCameraPermissions();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const selectedSeats = route?.params?.selected_seats || [];
+  const seatInfos = route?.params?.seatInfos || [];
 
   if (!permission) return <View />;
   if (!permission.granted) {
@@ -37,22 +50,70 @@ export default function FaceRegisterScreen({ navigation, route }: any) {
     setLoading(true);
     setError("");
     try {
-      // 실제 API 연동 대신 50% 확률로 성공/실패
-      // 사진 촬영 등 실제 코드 주석 처리
-      // if (!cameraRef.current) throw new Error("카메라를 찾을 수 없습니다.");
-      // const photo = await cameraRef.current.takePictureAsync({ base64: true, quality: 0.3 });
-      // const imageBase64 = photo.base64;
-      // const checkRes = await axios.post("http://192.168.55.4:8000/api/v1/face/check/", { image: imageBase64 });
-      // if (!checkRes.data.is_in_guide) { ... }
-      // const registerRes = await axios.post(`http://192.168.55.4:8000/api/v1/tickets/${ticketId}/aws-register/`, { image: imageBase64 });
-      const success = Math.random() > 0.5;
-      setIsSuccess(success);
+      if (!cameraRef.current) throw new Error("카메라를 찾을 수 없습니다.");
+      const photo = await cameraRef.current.takePictureAsync({ base64: true, quality: 0.3 });
+      const imageBase64 = photo.base64;
+
+      // 1. 가이드라인 체크
+      const guideRes: GuideLineCheckResponse = await FaceGuideCheck({ image: imageBase64 });
+      if (!guideRes.is_in_guide) {
+        setIsSuccess(false);
+        setSuccessMessage('');
+        setErrorMessage(guideRes.message || '얼굴을 가이드라인에 맞춰주세요');
+        setModalVisible(true);
+        setLoading(false);
+        return;
+      }
+
+      // 2. AWS 얼굴 등록
+      const awsRes: FaceRegisterResponse = await AWSFaceRecognitionRegister(ticketId, { image: imageBase64 });
+      if (!awsRes.success && !(awsRes.message && awsRes.message.includes("성공"))) {
+        setIsSuccess(false);
+        setSuccessMessage('');
+        setErrorMessage(awsRes.message || 'AWS 얼굴 등록 실패');
+        setModalVisible(true);
+        setLoading(false);
+        return;
+      }
+
+      // 3. DB 저장
+      let dbRes: SaveFaceToDBResponse | any, dbStatus: number, message: string;
+      try {
+        const dbResponse = await FaceRegister(ticketId, { face_verified: true });
+        dbRes = dbResponse.data ? dbResponse.data : dbResponse;
+        dbStatus = dbResponse.status || 200;
+        message = extractMessage(dbRes);
+      } catch (err: any) {
+        dbRes = err.response?.data || {};
+        dbStatus = err.response?.status || 500;
+        message = extractMessage(dbRes);
+      }
+
+      // 성공/실패 분기 (메시지에 '성공' 또는 '정상적으로 업데이트' 포함 시 무조건 성공)
+      const isSuccessMsg: boolean = !!(
+        message &&
+        (
+          message.includes("성공") ||
+          message.includes("정상적으로 업데이트")
+        )
+      );
+      setIsSuccess(isSuccessMsg);
+      setSuccessMessage(isSuccessMsg ? message : '');
+      setErrorMessage(!isSuccessMsg ? message : '');
       setModalVisible(true);
+      setLoading(false);
+      return;
     } catch (e: any) {
-      setError(e.message || "등록 중 오류가 발생했습니다.");
       setIsSuccess(false);
+      setSuccessMessage('');
+      let msg = "등록 중 오류가 발생했습니다.";
+      if (e.response && e.response.data) {
+        msg = e.response.data.message || e.response.data.error || JSON.stringify(e.response.data);
+      } else if (e.message) {
+        msg = e.message;
+      }
+      setErrorMessage(msg);
       setModalVisible(true);
-    } finally {
       setLoading(false);
     }
   };
@@ -94,17 +155,23 @@ export default function FaceRegisterScreen({ navigation, route }: any) {
                 <Ionicons name="close" size={40} color="#EF4444" />
               )}
             </View>
-            <Text style={styles.modalTitle}>{isSuccess ? "등록 완료" : "등록 실패"}</Text>
+            <Text style={styles.modalTitle}>
+              {isSuccess ? "등록 완료" : "등록 실패"}
+            </Text>
             <Text style={styles.modalDesc}>
-              {isSuccess
-                ? "얼굴 등록이 성공적으로 완료되었습니다."
-                : "얼굴을 가이드라인에 맞추어 다시 촬영해주세요."}
+              {isSuccess ? successMessage : errorMessage}
             </Text>
             <TouchableOpacity
               style={styles.modalButton}
               onPress={() => {
                 setModalVisible(false);
-                if (isSuccess) navigation.goBack();
+                if (isSuccess) {
+                  if (seatInfos.length >= 2) {
+                    navigation.navigate('CompanionRegisterScreen', { ticketId, seatInfos });
+                  } else {
+                    navigation.navigate('MyTickets');
+                  }
+                }
               }}
             >
               <Text style={styles.modalButtonText}>확인</Text>
@@ -220,7 +287,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: "#D1FADF",
+    backgroundColor: "#D1FADF", // 이 값은 동적으로 바뀜
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 16,

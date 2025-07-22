@@ -12,6 +12,7 @@ type RootStackParamList = {
 export default function SeatSelectPage() {
   const [selected, setSelected] = useState<string[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
+  const [loginModalVisible, setLoginModalVisible] = useState(false);
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route = useRoute();
@@ -32,6 +33,10 @@ export default function SeatSelectPage() {
     setSelected((prev) =>
       prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]
     );
+  };
+
+  const handleRequireLogin = () => {
+    setLoginModalVisible(true);
   };
 
   // 날짜/시간 포맷 함수
@@ -106,6 +111,56 @@ export default function SeatSelectPage() {
                 alignItems: "center",
               }}
               onPress={() => setModalVisible(false)}
+            >
+              <Text style={{ color: "white", fontSize: 13, fontWeight: "400" }}>
+                확인
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+      {/* 로그인 필요 안내 모달 */}
+      <Modal visible={loginModalVisible} transparent animationType="fade">
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0,0,0,0.2)",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <View
+            style={{
+              width: 240,
+              padding: 20,
+              backgroundColor: "white",
+              borderRadius: 16,
+              alignItems: "center",
+            }}
+          >
+            <Text style={{ fontSize: 16, fontWeight: "700", marginBottom: 8 }}>
+              안내
+            </Text>
+            <Text
+              style={{
+                color: "#4B5563",
+                fontSize: 13,
+                textAlign: "center",
+                marginBottom: 12,
+              }}
+            >
+              로그인이 필요합니다.
+            </Text>
+            <TouchableOpacity
+              style={{
+                width: 120,
+                height: 32,
+                backgroundColor: "#3182CE",
+                borderRadius: 8,
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+              onPress={() => setLoginModalVisible(false)}
             >
               <Text style={{ color: "white", fontSize: 13, fontWeight: "400" }}>
                 확인

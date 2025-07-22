@@ -1,14 +1,13 @@
 import axios from "axios";
 import type { InternalAxiosRequestConfig, AxiosResponse } from "axios";
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
-
 
 const apiClient = axios.create({
   baseURL: Constants.expoConfig?.extra?.API_BASE_URL,
   timeout: 10000,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
@@ -18,10 +17,14 @@ apiClient.interceptors.request.use(
     const token = await AsyncStorage.getItem("accessToken");
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
+    } else if (config.headers && config.headers.Authorization) {
+      delete config.headers.Authorization;
     }
+
+    console.log("API 요청 헤더:", config.headers);
     return config;
   },
-  (error: any) => Promise.reject(error)
+  (error) => Promise.reject(error)
 );
 
 // 응답 인터셉터 (에러 처리 등)

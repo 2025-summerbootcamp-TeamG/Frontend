@@ -6,8 +6,6 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
-  Modal,
-  Alert,
 } from "react-native";
 import {
   Ionicons,
@@ -20,7 +18,7 @@ import LoginModal from "./LoginModal";
 import SignupModal from "./SignupModal";
 import { AuthHistoryModal } from "./AuthHistoryModal";
 import MainHeader from "../../components/common/MainHeader";
-import { login, signup, logout } from "../../services/UserService";
+import { logout } from "../../services/UserService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function MyPageLogin() {
@@ -32,26 +30,17 @@ export default function MyPageLogin() {
   const [isLoggedIn, setIsLoggedIn] = React.useState(false);
   const [loginModalVisible, setLoginModalVisible] = React.useState(false);
   const [signupModalVisible, setSignupModalVisible] = React.useState(false);
-  const [authHistoryVisible, setAuthHistoryVisible] = React.useState(false);
 
-  // 앱 실행 시 로그인 상태 복구 + 포커스될 때마다 로그인 상태 체크
-  useFocusEffect(
-    React.useCallback(() => {
-      const checkLoginStatus = async () => {
-        const accessToken = await AsyncStorage.getItem("accessToken");
-        if (accessToken) {
-          try {
-            const decoded = jwtDecode<{ name: string; email: string }>(
-              accessToken
-            );
-            setUser({ name: decoded.name, email: decoded.email });
-            setIsLoggedIn(true);
-          } catch (e) {
-            // 토큰 만료 등 디코딩 실패 시
-            setIsLoggedIn(false);
-            setUser(null);
-          }
-        } else {
+  // 앱 실행 시 로그인 상태 복구
+  useEffect(() => {
+    const checkLoginStatus = async () => {
+      const accessToken = await AsyncStorage.getItem("accessToken");
+      if (accessToken) {
+        try {
+          const decoded = jwtDecode<{ name: string; email: string }>(accessToken);
+          setUser({ name: decoded.name, email: decoded.email });
+          setIsLoggedIn(true);
+        } catch (e) {
           setIsLoggedIn(false);
           setUser(null);
         }
@@ -60,72 +49,50 @@ export default function MyPageLogin() {
     }, [])
   );
 
-  // 로그인 성공 시 호출되는 함수
+  // 로그인 성공 시
   const handleLoginSuccess = async (data: any) => {
     try {
       const decoded = jwtDecode<{ name: string; email: string }>(data.access);
       setUser({ name: decoded.name, email: decoded.email });
       setIsLoggedIn(true);
       setLoginModalVisible(false);
-    } catch (err) {
-      Alert.alert("로그인 실패", "토큰 처리 중 오류가 발생했습니다.");
+    } catch {
+      setIsLoggedIn(false);
+      setUser(null);
     }
   };
 
-  // 회원가입 성공 시 호출되는 함수
+  // 회원가입 성공 시
   const handleSignupSuccess = () => {
-    setIsLoggedIn(false); // 로그인 상태로 전환하지 않음
+    setIsLoggedIn(false);
     setSignupModalVisible(false);
   };
 
-  const handleLogout = async () => {
-    try {
-      const refresh = await AsyncStorage.getItem("refreshToken");
-      if (!refresh) throw new Error("토큰 없음");
+  // 완전 리팩토링한 로그아웃 함수
 
-      await logout(refresh);
-      await AsyncStorage.removeItem("accessToken");
-      await AsyncStorage.removeItem("refreshToken");
-      setUser(null);
-      setIsLoggedIn(false);
-      // 상태 초기화 등
-    } catch (err: any) {
-      Alert.alert(
-        "로그아웃 실패",
-        err?.response?.data?.error ||
-          err?.response?.data?.message ||
-          "로그아웃 실패"
-      );
-    }
-    /*
-// 서버 로그아웃 시도
-      await logout(refresh); 
-    } catch (e) {
-      console.error("로그아웃 실패(서버):", e);
-      // 서버 실패여도 로컬 토큰 삭제는 계속 진행
-    }
-    // 무조건 토큰 삭제
+  const handleLogout = async () => {
+    // 1. 토큰 삭제 및 상태 초기화 (무조건 실행)
     await AsyncStorage.removeItem("accessToken");
     await AsyncStorage.removeItem("refreshToken");
-    console.log("accessToken 삭제 완료");
     setUser(null);
-    //깃허브에 올리기 전에 위 코드 삭제 후 주석 되돌리기*/
+    setIsLoggedIn(false);
+
+    // 2. 서버 로그아웃은 시도만 하고 실패해도 무시
+    try {
+      const refresh = await AsyncStorage.getItem("refreshToken");
+      if (refresh) {
+        await logout(refresh);
+      }
+    } catch (e) {
+      // 네트워크/만료/이미 블랙리스트 등 모든 에러는 무시
+      console.warn("서버 로그아웃 실패(무시):", e);
+    }
   };
 
   return (
     <View style={styles.container}>
-      {/* 상단바 */}
-      {/*바로 밑의 주석은 기존 상단바*/}
-      {/*<View style={styles.header}>
-        <Text style={styles.logo}>TeamG가 최고</Text>
-        <Ionicons name="search" size={24} color="white" />
-      </View>*/}
-      {/*메인과 같은 상단바*/}
       <MainHeader />
-      <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={{ paddingBottom: 80 }}
-      >
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 80 }}>
         {/* 로그인 전 UI */}
         {!isLoggedIn ? (
           <View style={styles.profileSection}>
@@ -154,7 +121,7 @@ export default function MyPageLogin() {
             <View style={styles.profileIconWrapper}>
               <Ionicons name="person" size={48} color="#bbb" />
             </View>
-            {user && ( // user가 있을 때만 표시
+            {user && (
               <>
                 <Text style={styles.profileName}>{user.name}</Text>
                 <Text style={styles.profileEmail}>{user.email}</Text>
@@ -237,7 +204,7 @@ export default function MyPageLogin() {
           </View>
         </View>
 
-        {/* 로그아웃 버튼 (로그인 후에만 노출) */}
+        {/* 로그아웃 버튼 */}
         {isLoggedIn && (
           <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
             <Text style={styles.logoutBtnText}>로그아웃</Text>
@@ -269,6 +236,7 @@ export default function MyPageLogin() {
 }
 
 const styles = StyleSheet.create({
+  // ... 동일
   container: { flex: 1, backgroundColor: "#f9fafb" },
   header: {
     flexDirection: "row",
