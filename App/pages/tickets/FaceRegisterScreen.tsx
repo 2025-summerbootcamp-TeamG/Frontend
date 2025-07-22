@@ -71,9 +71,17 @@ export default function FaceRegisterScreen({ navigation, route }: any) {
       }
 
       // 2. AWS 얼굴 등록 (서버에 이미지 전송)
-      const awsRes: FaceRegisterResponse = await AWSFaceRecognitionRegister(ticketId, { image: imageBase64 }); // AWS Rekognition에 얼굴 이미지를 등록하는 API 호출, 결과는 { message, FaceId, ExternalImageId } 형태로 반환됨(성공 시 message: '얼굴 등록 성공', FaceId: AWS에서 발급된 얼굴 ID, ExternalImageId: 등록된 외부 ID)
+      // AWSFaceRecognitionRegister API는 AWS Rekognition에 user_{user_id}_ticket_{ticket_id}로 얼굴을 등록
+      // 응답 예시:
+      //  - 성공: { message: "얼굴 등록 성공", FaceId, ExternalImageId }
+      //  - 중복: { message: "이미 등록된 얼굴이 있습니다. 중복 등록이 불가합니다.", ExternalImageId }
+      //  - 실패: { message: "얼굴 등록 실패", response }
+      //  - 입력값 오류: { message: "image가 필요합니다." }
+      //  - 서버 오류: { message: "AWS Rekognition 처리 중 오류", error }
+      const awsRes: FaceRegisterResponse = await AWSFaceRecognitionRegister(ticketId, { image: imageBase64 });
+      // 등록 결과 처리
       if (!awsRes.success && !(awsRes.message && awsRes.message.includes("성공"))) {
-        // AWS 등록 실패: 실패 모달 표시
+        // 등록 실패: 중복, 입력값 오류, AWS 오류 등
         setIsSuccess(false);
         setSuccessMessage('');
         setErrorMessage(awsRes.message || 'AWS 얼굴 등록 실패');
@@ -83,10 +91,17 @@ export default function FaceRegisterScreen({ navigation, route }: any) {
       }
 
       // 3. DB에 얼굴 등록 결과 저장
+      // FaceRegister API는 DB의 ticket 테이블에 face_verified, verified_at만 저장
+      // 응답 예시:
+      //  - 성공: { code: 200, message: "얼굴 등록 상태가 정상적으로 업데이트 되었습니다", data: {...} }
+      //  - 입력값 오류: { message: "face_verified가 필요합니다", data: null }
+      //  - 권한 없음: { message: "해당 사용자의 티켓 권한 없음", data: null }
+      //  - 티켓 없음: { message: "티켓 없음", data: null }
+      //  - 서버 오류: { message: "내부 서버 오류", error }
       let dbRes: SaveFaceToDBResponse | any, dbStatus: number, message: string;
       try {
         // DB 저장 API 호출
-        const dbResponse = await FaceRegister(ticketId, { face_verified: true }); // 서버에 얼굴 등록 상태를 저장하는 API 호출, 결과는 { message, data } 형태로 반환됨(성공 시 message: 안내문구, data: 티켓정보)
+        const dbResponse = await FaceRegister(ticketId, { face_verified: true }); // 서버에 얼굴 등록 상태를 저장하는 API 호출
         dbRes = dbResponse; // 바로 결과 객체 사용 (예: { message, data })
         dbStatus = 200; // 응답에 별도 status/code가 없으므로 200으로 고정
         message = extractMessage(dbRes); // 응답 객체에서 message 문자열만 안전하게 추출
@@ -96,7 +111,6 @@ export default function FaceRegisterScreen({ navigation, route }: any) {
         dbStatus = err.response?.status || 500;
         message = extractMessage(dbRes);
       }
-
       // 성공/실패 분기 (메시지에 '성공' 또는 '정상적으로 업데이트' 포함 시 성공 처리)
       const isSuccessMsg: boolean = !!(
         message &&

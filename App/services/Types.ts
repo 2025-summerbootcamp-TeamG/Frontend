@@ -56,3 +56,11 @@ export interface SaveFaceToDBResponse {
   success: boolean;
   message: string;
 }
+
+export interface FaceAuthResponse {
+  message: string;
+  FaceId?: string;
+  ExternalImageId?: string;
+  Similarity?: number;
+  success?: boolean; // 필요시
+}

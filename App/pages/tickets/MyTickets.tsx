@@ -32,7 +32,10 @@ const TicketCard = ({
     if (ticket.primaryButtonAction === "qr") {
       onQrPress(ticket);
     } else if (ticket.primaryButtonAction === "verify" && navigation) {
-      navigation.navigate("FaceAuthScreen", { fromMyTickets: true });
+      navigation.navigate("FaceAuthScreen", {
+        fromMyTickets: true,
+        ticketId: ticket.id, // 선택한 티켓의 고유 ID를 ticketId로 전달
+      });
     }
   };
 

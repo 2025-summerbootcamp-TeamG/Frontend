@@ -5,7 +5,8 @@ import {
   FaceRegisterRequest,
   FaceRegisterResponse,
   SaveFaceToDBRequest,
-  SaveFaceToDBResponse
+  SaveFaceToDBResponse,
+  FaceAuthResponse
 } from './Types';
 
 // 얼굴 가이드라인 체크
@@ -37,7 +38,7 @@ export const FaceRegister = async (
 export const FaceAuth = async (
   ticketId: number,
   data: FaceRegisterRequest
-): Promise<FaceRegisterResponse> => {
+): Promise<FaceAuthResponse> => {
   const response = await apiClient.post(`tickets/${ticketId}/aws-auth/`, data);
   return response.data;
 };
