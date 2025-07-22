@@ -15,7 +15,7 @@ import {
   Feather,
   AntDesign,
 } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import LoginModal from "./LoginModal";
 import SignupModal from "./SignupModal";
 import { AuthHistoryModal } from "./AuthHistoryModal";
@@ -25,30 +25,40 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function MyPageLogin() {
   const navigation = useNavigation() as any;
-  const [user, setUser] = React.useState<{ name: string; email: string } | null>(null);
+  const [user, setUser] = React.useState<{
+    name: string;
+    email: string;
+  } | null>(null);
   const [isLoggedIn, setIsLoggedIn] = React.useState(false);
   const [loginModalVisible, setLoginModalVisible] = React.useState(false);
   const [signupModalVisible, setSignupModalVisible] = React.useState(false);
   const [authHistoryVisible, setAuthHistoryVisible] = React.useState(false);
 
-  // 앱 실행 시 로그인 상태 복구
-  useEffect(() => {
-    const checkLoginStatus = async () => {
-      const accessToken = await AsyncStorage.getItem("accessToken");
-      if (accessToken) {
-        try {
-          const decoded = jwtDecode<{ name: string; email: string }>(accessToken);
-          setUser({ name: decoded.name, email: decoded.email });
-          setIsLoggedIn(true);
-        } catch (e) {
-          // 토큰 만료 등 디코딩 실패 시
+  // 앱 실행 시 로그인 상태 복구 + 포커스될 때마다 로그인 상태 체크
+  useFocusEffect(
+    React.useCallback(() => {
+      const checkLoginStatus = async () => {
+        const accessToken = await AsyncStorage.getItem("accessToken");
+        if (accessToken) {
+          try {
+            const decoded = jwtDecode<{ name: string; email: string }>(
+              accessToken
+            );
+            setUser({ name: decoded.name, email: decoded.email });
+            setIsLoggedIn(true);
+          } catch (e) {
+            // 토큰 만료 등 디코딩 실패 시
+            setIsLoggedIn(false);
+            setUser(null);
+          }
+        } else {
           setIsLoggedIn(false);
           setUser(null);
         }
-      }
-    };
-    checkLoginStatus();
-  }, []);
+      };
+      checkLoginStatus();
+    }, [])
+  );
 
   // 로그인 성공 시 호출되는 함수
   const handleLoginSuccess = async (data: any) => {
@@ -68,12 +78,11 @@ export default function MyPageLogin() {
     setSignupModalVisible(false);
   };
 
-
-
   const handleLogout = async () => {
     try {
       const refresh = await AsyncStorage.getItem("refreshToken");
       if (!refresh) throw new Error("토큰 없음");
+
       await logout(refresh);
       await AsyncStorage.removeItem("accessToken");
       await AsyncStorage.removeItem("refreshToken");
@@ -83,9 +92,24 @@ export default function MyPageLogin() {
     } catch (err: any) {
       Alert.alert(
         "로그아웃 실패",
-        err?.response?.data?.error || err?.response?.data?.message || "로그아웃 실패"
+        err?.response?.data?.error ||
+          err?.response?.data?.message ||
+          "로그아웃 실패"
       );
     }
+    /*
+// 서버 로그아웃 시도
+      await logout(refresh); 
+    } catch (e) {
+      console.error("로그아웃 실패(서버):", e);
+      // 서버 실패여도 로컬 토큰 삭제는 계속 진행
+    }
+    // 무조건 토큰 삭제
+    await AsyncStorage.removeItem("accessToken");
+    await AsyncStorage.removeItem("refreshToken");
+    console.log("accessToken 삭제 완료");
+    setUser(null);
+    //깃허브에 올리기 전에 위 코드 삭제 후 주석 되돌리기*/
   };
 
   return (
@@ -215,10 +239,7 @@ export default function MyPageLogin() {
 
         {/* 로그아웃 버튼 (로그인 후에만 노출) */}
         {isLoggedIn && (
-          <TouchableOpacity
-            style={styles.logoutBtn}
-            onPress={handleLogout}
-          >
+          <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
             <Text style={styles.logoutBtnText}>로그아웃</Text>
           </TouchableOpacity>
         )}
