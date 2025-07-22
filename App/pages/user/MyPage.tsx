@@ -37,17 +37,19 @@ export default function MyPageLogin() {
       const accessToken = await AsyncStorage.getItem("accessToken");
       if (accessToken) {
         try {
-          const decoded = jwtDecode<{ name: string; email: string }>(accessToken);
+          const decoded = jwtDecode<{ name: string; email: string }>(
+            accessToken
+          );
           setUser({ name: decoded.name, email: decoded.email });
           setIsLoggedIn(true);
         } catch (e) {
           setIsLoggedIn(false);
           setUser(null);
         }
-      };
-      checkLoginStatus();
-    }, [])
-  );
+      }
+    };
+    checkLoginStatus();
+  }, []);
 
   // 로그인 성공 시
   const handleLoginSuccess = async (data: any) => {
@@ -92,7 +94,10 @@ export default function MyPageLogin() {
   return (
     <View style={styles.container}>
       <MainHeader />
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 80 }}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingBottom: 80 }}
+      >
         {/* 로그인 전 UI */}
         {!isLoggedIn ? (
           <View style={styles.profileSection}>
