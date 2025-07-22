@@ -16,8 +16,9 @@ import { events } from "../../assets/events/EventsMock";
 import { useFocusEffect } from "@react-navigation/native";
 import LoginModal from "../user/LoginModal";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { getMyTickets, getTicketDetail, getTicketFaceAuth, certifyTicket } from "../../services/TicketService";
-import { TicketQRcode } from "../../services/TicketService";
+
+import { getMyTickets, getTicketDetail, getTicketFaceAuth, certifyTicket, TicketQRcode } from "../../services/TicketService";
+
 
 // 티켓 카드 컴포넌트 (각 티켓 정보를 카드 형태로 렌더링)
 interface TicketCardProps {

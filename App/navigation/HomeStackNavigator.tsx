@@ -32,7 +32,7 @@ export type HomeStackParamList = {
 
 export type RootStackParamList = {
   EventDetail: { event: any };
-  SeatSelect: { event: any; event_time?: any; zone_id: number };
+  SeatSelect: { event: any; event_time?: any; zone_id?: number };
   Payment: undefined;
 };
 
