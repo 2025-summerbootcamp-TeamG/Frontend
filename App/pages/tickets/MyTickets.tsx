@@ -34,28 +34,14 @@ const TicketCard = ({
   onDetailPress,
   onPrimaryButtonPress,
 }: TicketCardProps) => {
-  const handlePrimaryButtonPress = (ticket: TicketType) => {
-    if (ticket.primaryButtonAction === "qr") {
-      onQrPress(ticket);
-    } else if (ticket.primaryButtonAction === "verify" && navigation) {
-      navigation.navigate("FaceAuthScreen", { fromMyTickets: true });
-    }
-  };
-
-  // TicketCard 내 상태 뱃지 색상 조건
   const statusStyle =
-    ticket.ticket_status === "booked" && ticket.face_verified
+    ticket.ticket_statusText === "인증완료"
       ? [styles.statusBadge, { backgroundColor: "#dcfce7" }]
-      : ticket.ticket_status === "booked"
-      ? [styles.statusBadge, { backgroundColor: "#fef9c2" }]
-      : [styles.statusBadge, { backgroundColor: "#f3f4f6" }];
-
+      : [styles.statusBadge, { backgroundColor: "#fef9c2" }];
   const statusTextColor =
-    ticket.ticket_status === "booked" && ticket.face_verified
+    ticket.ticket_statusText === "인증완료"
       ? { color: "#16a34a" }
-      : ticket.ticket_status === "booked"
-      ? { color: "#eab308" }
-      : { color: "#888" };
+      : { color: "#eab308" };
 
   return (
     <View style={styles.card}>
@@ -206,11 +192,11 @@ function mapTicketToTicketType(ticket: any): TicketType {
 
   return {
     id: ticket.id,
-    name: ticket.event_name ?? "",
-    artist: "",
-    date: ticket.event_date ?? "",
-    location: ticket.event_location ?? "",
-    price: 0,
+    name: ticket.event_name ?? ticket.name ?? "",
+    artist: ticket.artist ?? "",
+    date: ticket.event_date ?? ticket.date ?? ticket.booked_at ?? "",
+    location: ticket.event_location ?? ticket.location ?? "",
+    price: ticket.ticket_price ? Number(ticket.ticket_price) : ticket.price ?? 0,
     image_url: ticket.image_url ?? "",
     seat_number: ticket.seat_number ?? "",
     seat_grade: ticket.seat_rank ?? ticket.seat_grade ?? "",
@@ -219,13 +205,6 @@ function mapTicketToTicketType(ticket: any): TicketType {
     face_verified: ticket.face_verified ?? false,
     primaryButton,
     primaryButtonAction,
-    event_times: [],
-    genre: "",
-    reservationNo: "",
-    authDate: "",
-    isExpired: false,
-    type: "",
-    title: "",
     verified_at: ticket.verified_at ?? new Date().toISOString(), // 추가
   };
 }
@@ -246,18 +225,7 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
     const checkLogin = async () => {
       const token = await AsyncStorage.getItem("accessToken");
       setIsLoggedIn(!!token);
-      if (!token) {
-        Alert.alert(
-          "로그인 필요",
-          "내 티켓을 확인하려면 로그인이 필요합니다.",
-          [
-            {
-              text: "확인",
-              onPress: () => {}, // 아무 동작도 하지 않음
-            },
-          ]
-        );
-      }
+      if (!token) setLoginModalVisible(true);
     };
     checkLogin();
   }, []);
@@ -272,8 +240,7 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
         (ticket) =>
           ticket.id !== undefined && ticket.id !== null && ticket.id > 0
       );
-      const mappedTickets = validTickets.map(mapTicketToTicketType);
-      setTickets(mappedTickets);
+      setTickets(validTickets.map(mapTicketToTicketType));
     } catch (e) {
       Alert.alert(
         "티켓 불러오기 실패",
@@ -285,7 +252,7 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
   // 내 티켓 페이지가 포커스될 때마다 로그인 상태와 티켓 목록을 새로 불러오기
   useFocusEffect(
     React.useCallback(() => {
-      const fetchTickets = async () => {
+      const checkLoginAndFetch = async () => {
         const token = await AsyncStorage.getItem("accessToken");
         setIsLoggedIn(!!token);
         if (token) {
@@ -295,18 +262,14 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
               (ticket) =>
                 ticket.id !== undefined && ticket.id !== null && ticket.id > 0
             );
-            const mappedTickets = validTickets.map(mapTicketToTicketType);
-            setTickets(mappedTickets);
+            setTickets(validTickets.map(mapTicketToTicketType));
           } catch (e) {
-            Alert.alert(
-              "티켓 불러오기 실패",
-              "서버에서 티켓 목록을 가져오지 못했습니다."
-            );
+            // 에러 처리 (필요시 Alert 등)
           }
         }
       };
-      fetchTickets();
-    }, [navigation])
+      checkLoginAndFetch();
+    }, [])
   );
 
   // 티켓 목록 불러온 후 각 티켓의 face_verified 상태를 DB에서 동기화
@@ -371,9 +334,12 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
     return ticketDate < todayStr;
   }
 
-  // 티켓 정보가 없는(필드가 'null'인) 데이터는 리스트에서 제외 + booked 상태만 남김
+  // 티켓 정보가 없는(필드가 'null'인) 데이터는 리스트에서 제외
   let filteredTickets = tickets.filter(
-    (ticket: any) => ticket.ticket_status === "booked"
+    (ticket: any) =>
+      ticket.ticket_status !== "null" &&
+      ticket.ticket_seat !== "null" &&
+      ticket.primaryButton !== "null"
   );
 
   if (activeFilter === "예정") {
