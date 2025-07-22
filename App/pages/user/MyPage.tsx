@@ -13,7 +13,7 @@ import {
   Feather,
   AntDesign,
 } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import LoginModal from "./LoginModal";
 import SignupModal from "./SignupModal";
 import { AuthHistoryModal } from "./AuthHistoryModal";
@@ -23,7 +23,10 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function MyPageLogin() {
   const navigation = useNavigation() as any;
-  const [user, setUser] = React.useState<{ name: string; email: string } | null>(null);
+  const [user, setUser] = React.useState<{
+    name: string;
+    email: string;
+  } | null>(null);
   const [isLoggedIn, setIsLoggedIn] = React.useState(false);
   const [loginModalVisible, setLoginModalVisible] = React.useState(false);
   const [signupModalVisible, setSignupModalVisible] = React.useState(false);
@@ -41,10 +44,10 @@ export default function MyPageLogin() {
           setIsLoggedIn(false);
           setUser(null);
         }
-      }
-    };
-    checkLoginStatus();
-  }, []);
+      };
+      checkLoginStatus();
+    }, [])
+  );
 
   // 로그인 성공 시
   const handleLoginSuccess = async (data: any) => {
@@ -66,6 +69,7 @@ export default function MyPageLogin() {
   };
 
   // 완전 리팩토링한 로그아웃 함수
+
   const handleLogout = async () => {
     // 1. 토큰 삭제 및 상태 초기화 (무조건 실행)
     await AsyncStorage.removeItem("accessToken");
@@ -202,10 +206,7 @@ export default function MyPageLogin() {
 
         {/* 로그아웃 버튼 */}
         {isLoggedIn && (
-          <TouchableOpacity
-            style={styles.logoutBtn}
-            onPress={handleLogout}
-          >
+          <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
             <Text style={styles.logoutBtnText}>로그아웃</Text>
           </TouchableOpacity>
         )}

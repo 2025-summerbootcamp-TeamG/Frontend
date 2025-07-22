@@ -34,4 +34,5 @@ yarn-error.*
 App/.env
 # typescript
 *.tsbuildinfo
-
+#env ignore
+App/.env

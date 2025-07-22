@@ -8,6 +8,7 @@ import {
   SaveFaceToDBResponse,
 } from "./Types";
 import type { AxiosResponse } from "axios";
+import type { Ticket, TicketDetail } from "./Types";
 
 // 얼굴 가이드라인 체크
 export const FaceGuideCheck = async (
@@ -36,3 +37,19 @@ export const FaceRegister = async (
 ): Promise<AxiosResponse<SaveFaceToDBResponse>> => {
   return await apiClient.patch(`tickets/${ticketId}/register/`, data);
 };
+// 내 티켓 목록 조회 (로그인 필요)
+export async function getMyTickets(): Promise<Ticket[]> {
+  const res = await api.get("tickets/");
+  return res.data;
+}
+// 티켓 상세정보 조회 (로그인 필요)
+export async function getTicketDetail(ticketId: number): Promise<TicketDetail> {
+  const res = await api.get(`tickets/${ticketId}/`);
+  return res.data;
+}
+
+// 티켓 취소 (로그인 필요)
+export async function cancelTicket(ticketId: number): Promise<TicketDetail> {
+  const res = await api.patch(`tickets/${ticketId}/`);
+  return res.data;
+}
