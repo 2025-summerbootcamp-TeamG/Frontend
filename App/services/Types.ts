@@ -56,6 +56,15 @@ export interface SaveFaceToDBResponse {
   success: boolean;
   message: string;
 }
+
+export interface FaceAuthResponse {
+  message: string;
+  FaceId?: string;
+  ExternalImageId?: string;
+  Similarity?: number;
+  success?: boolean; // 필요시
+}
+
 export interface Seat {
   seat_id: number;
   seat_number: string;
@@ -99,4 +108,13 @@ export interface TicketDetail {
   created_at: string;
   updated_at: string;
   is_deleted: boolean;
+}
+
+export interface TicketCertificationResponse {
+  message: string;
+  ticket: {
+    id: number;
+    ticket_status: string;
+    verified_at?: string; // 추가
+  };
 }
