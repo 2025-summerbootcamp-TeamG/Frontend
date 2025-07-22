@@ -42,6 +42,7 @@ export default function EventDetailPage() {
   const screenWidth = Dimensions.get("window").width;
   const IMAGE_HEIGHT = (screenWidth * 3) / 4;
   const scrollY = useRef(new Animated.Value(0)).current;
+  const [selectedZoneIdx, setSelectedZoneIdx] = useState<number | null>(null);
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [showAll, setShowAll] = useState(false);
@@ -106,12 +107,10 @@ export default function EventDetailPage() {
     }
     if (selectedSchedule !== null) {
       const selectedEventTime = event.schedules[selectedSchedule];
-      // 문제가 되었던 zones 확인 로직을 제거하고,
-      // 첫 번째 존(VIP, id: 1)으로 바로 이동하도록 수정합니다.
+      console.log("[예매] event_time_id:", selectedEventTime.event_time_id);
       navigation.navigate("SeatSelect", {
         event,
         event_time: selectedEventTime,
-        zone_id: 1, // 1: VIP, 2: R, 3: S, 4: A
       });
     }
   };
@@ -292,8 +291,11 @@ export default function EventDetailPage() {
               {Array.isArray(event.schedules) && event.schedules.length > 0 ? (
                 event.schedules.map((et: any, idx: number) => (
                   <TouchableOpacity
-                    key={idx}
-                    onPress={() => setSelectedSchedule(idx)}
+                    key={et.event_time_id}
+                    onPress={() => {
+                      setSelectedSchedule(idx);
+                      setSelectedZoneIdx(null);
+                    }}
                     activeOpacity={0.8}
                     style={{
                       minWidth: 151,
