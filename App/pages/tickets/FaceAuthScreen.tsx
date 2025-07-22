@@ -11,6 +11,8 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import axios from "axios";
+import { FaceGuideCheck, FaceAuth } from '../../services/TicketService';
+import type { GuideLineCheckResponse, FaceAuthResponse } from '../../services/Types';
 
 export default function FaceAuthScreen({ navigation, route }: any) {
   const ticketId = route?.params?.ticketId;
@@ -20,6 +22,8 @@ export default function FaceAuthScreen({ navigation, route }: any) {
   const [permission, requestPermission] = useCameraPermissions();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   if (!permission) return <View />;
   if (!permission.granted) {
@@ -33,28 +37,69 @@ export default function FaceAuthScreen({ navigation, route }: any) {
     );
   }
 
-  // 사진 촬영 및 인증
+  // 사진 촬영 및 얼굴 인증 처리 함수
   const handleAuth = async () => {
-    setLoading(true);
+    setLoading(true); // 로딩 시작
     setError("");
+    setSuccessMessage('');
+    setErrorMessage('');
     try {
-      // 실제 API 연동 대신 50% 확률로 성공/실패
-      // 사진 촬영 등 실제 코드 주석 처리
-      // if (!cameraRef.current) throw new Error("카메라를 찾을 수 없습니다.");
-      // const photo = await cameraRef.current.takePictureAsync({ base64: true, quality: 0.3 });
-      // const imageBase64 = photo.base64;
-      // const checkRes = await axios.post("http://192.168.55.4:8000/api/v1/face/check/", { image: imageBase64 });
-      // if (!checkRes.data.is_in_guide) { ... }
-      // const authRes = await axios.post(`http://192.168.55.4:8000/api/v1/tickets/${ticketId}/aws-auth/`, { image: imageBase64 });
-      const success = Math.random() > 0.5;
-      setIsSuccess(success);
+      // 카메라 ref가 없으면 에러 처리
+      if (!cameraRef.current) throw new Error("카메라를 찾을 수 없습니다.");
+      // 사진 촬영 (base64 인코딩, 화질 0.3, 고용량 사진은 처리를 못함)
+      // @ts-ignore
+      const photo = await cameraRef.current.takePictureAsync({ base64: true, quality: 0.3 });
+      const imageBase64 = photo.base64;
+      // 1. 얼굴이 가이드라인 안에 있는지 체크 (서버에 이미지 전송)
+      const guideRes: GuideLineCheckResponse = await FaceGuideCheck({ image: imageBase64 }); // 얼굴 가이드라인 체크 API 호출, 결과는 { is_in_guide, message } 형태로 반환됨(성공 시 is_in_guide: true/false, message: 안내문구)
+      if (!guideRes.is_in_guide) {
+        // 가이드라인 벗어남: 실패 모달 표시
+        setIsSuccess(false);
+        setSuccessMessage('');
+        setErrorMessage(guideRes.message || '얼굴을 가이드라인에 맞춰주세요');
+        setModalVisible(true);
+        setLoading(false);
+        return;
+      }
+      // 2. 얼굴 인증 요청 (서버에 이미지 전송)
+      // FaceAuth API는 AWS Rekognition에서 user_{user_id}_ticket_{ticket_id}로 등록된 얼굴과만 비교하여 인증합니다.
+      // 응답 예시:
+      //  - 성공: { message: "얼굴 인증 성공", FaceId, ExternalImageId, Similarity }
+      //  - 실패(유사도 낮음): { message: "얼굴이 일치하지 않습니다. (등록된 얼굴이지만 다른 사람)", Similarity, ExternalImageId }
+      //  - 등록된 얼굴 없음: { message: "등록된 얼굴이 없습니다. (등록된 FaceId 없음)", Similarity: 0 }
+      //  - 다른 사람의 얼굴: { message: "해당 티켓에 등록되지 않은 사용자입니다.", Similarity }
+      //  - 입력값 오류: { message: "image가 필요합니다." }
+      //  - 서버 오류: { message: "AWS Rekognition 처리 중 오류", error }
+      const authRes: FaceAuthResponse = await FaceAuth(ticketId, { image: imageBase64 });
+      // 인증 결과 처리
+      if (authRes.message && authRes.message.includes('성공')) {
+        // 성공 케이스 (메시지에 '성공'이 포함된 경우만)
+        setIsSuccess(true);
+        setSuccessMessage(authRes.message || '얼굴 인증이 성공적으로 완료되었습니다.');
+        setErrorMessage('');
+      } else {
+        // 실패 케이스 (유사도 부족, 등록된 얼굴 없음, 다른 사람의 얼굴 등)
+        setIsSuccess(false);
+        setSuccessMessage('');
+        setErrorMessage(authRes.message || '인증에 실패했습니다.');
+      }
       setModalVisible(true);
+      setLoading(false);
+      return;
     } catch (e: any) {
-      setError(e.message || "인증 중 오류가 발생했습니다.");
+      // 예외 발생 시 실패 처리
       setIsSuccess(false);
+      setSuccessMessage('');
+      let msg = "인증 중 오류가 발생했습니다.";
+      if (e.response && e.response.data) {
+        msg = e.response.data.message || e.response.data.error || JSON.stringify(e.response.data);
+      } else if (e.message) {
+        msg = e.message;
+      }
+      setErrorMessage(msg);
       setModalVisible(true);
     } finally {
-      setLoading(false);
+      setLoading(false); // 로딩 종료
     }
   };
 
@@ -97,15 +142,18 @@ export default function FaceAuthScreen({ navigation, route }: any) {
             </View>
             <Text style={styles.modalTitle}>{isSuccess ? "인증 성공" : "인증 실패"}</Text>
             <Text style={styles.modalDesc}>
-              {isSuccess
-                ? "얼굴 인증이 성공적으로 완료되었습니다."
-                : "얼굴을 가이드라인에 맞추어 다시 촬영해주세요."}
+              {isSuccess ? successMessage : errorMessage}
             </Text>
             <TouchableOpacity
               style={styles.modalButton}
               onPress={() => {
                 setModalVisible(false);
-                if (isSuccess) navigation.goBack();
+                if (isSuccess) {
+                  if (route.params?.onAuthSuccess) {
+                    route.params.onAuthSuccess(ticketId);
+                  }
+                  navigation.goBack();
+                }
               }}
             >
               <Text style={styles.modalButtonText}>확인</Text>
