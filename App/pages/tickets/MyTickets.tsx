@@ -40,14 +40,20 @@ const TicketCard = ({
     }
   };
 
+  // TicketCard 내 상태 뱃지 색상 조건
   const statusStyle =
-    ticket.ticket_statusText === "인증완료"
+    ticket.ticket_status === "booked" && ticket.face_verified
       ? [styles.statusBadge, { backgroundColor: "#dcfce7" }]
-      : [styles.statusBadge, { backgroundColor: "#fef9c2" }];
+      : ticket.ticket_status === "booked"
+      ? [styles.statusBadge, { backgroundColor: "#fef9c2" }]
+      : [styles.statusBadge, { backgroundColor: "#f3f4f6" }];
+
   const statusTextColor =
-    ticket.ticket_statusText === "인증완료"
+    ticket.ticket_status === "booked" && ticket.face_verified
       ? { color: "#16a34a" }
-      : { color: "#eab308" };
+      : ticket.ticket_status === "booked"
+      ? { color: "#eab308" }
+      : { color: "#888" };
 
   return (
     <View style={styles.card}>
@@ -173,20 +179,20 @@ export interface TicketType {
   authDate?: string;
 }
 function mapTicketToTicketType(ticket: any): TicketType {
+  // booked 상태만 남기고, 상태 텍스트는 얼굴 인증 여부에 따라 세팅
+  let ticket_statusText = "";
+  if (ticket.ticket_status === "booked") {
+    ticket_statusText = ticket.face_verified ? "인증완료" : "인증필요";
+  }
   let primaryButton = "";
   let primaryButtonAction = "";
-
-  // 얼굴 인증 안 됐고 예매완료 상태면 '얼굴 인증하기' 버튼
   if (!ticket.face_verified && ticket.ticket_status === "booked") {
     primaryButton = "얼굴 인증하기";
     primaryButtonAction = "verify";
-  }
-  // 얼굴 인증 완료 && 예매완료 상태면 'QR코드 보기' 버튼
-  else if (ticket.face_verified && ticket.ticket_status === "booked") {
+  } else if (ticket.face_verified && ticket.ticket_status === "booked") {
     primaryButton = "QR코드 보기";
     primaryButtonAction = "qr";
   }
-
   return {
     id: ticket.id,
     name: ticket.event_name ?? "",
@@ -198,8 +204,7 @@ function mapTicketToTicketType(ticket: any): TicketType {
     seat_number: ticket.seat_number ?? "",
     seat_grade: ticket.seat_rank ?? "",
     ticket_status: ticket.ticket_status,
-    ticket_statusText:
-      ticket.ticket_status === "booked" ? "예매완료" : ticket.ticket_status,
+    ticket_statusText,
     face_verified: ticket.face_verified ?? false,
     primaryButton,
     primaryButtonAction,
@@ -332,9 +337,9 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
     return ticketDate < todayStr;
   }
 
-  // 티켓 정보가 없는(필드가 'null'인) 데이터는 리스트에서 제외
+  // 티켓 정보가 없는(필드가 'null'인) 데이터는 리스트에서 제외 + booked 상태만 남김
   let filteredTickets = tickets.filter(
-    (ticket: any) => ticket.ticket_status !== "null"
+    (ticket: any) => ticket.ticket_status === "booked"
   );
 
   if (activeFilter === "예정") {
