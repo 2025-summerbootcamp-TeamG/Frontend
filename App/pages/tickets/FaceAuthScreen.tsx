@@ -11,6 +11,8 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import axios from "axios";
+import { FaceGuideCheck, FaceAuth } from '../../services/TicketService';
+import type { GuideLineCheckResponse, FaceRegisterResponse } from '../../services/Types';
 
 export default function FaceAuthScreen({ navigation, route }: any) {
   const ticketId = route?.params?.ticketId;
@@ -20,6 +22,8 @@ export default function FaceAuthScreen({ navigation, route }: any) {
   const [permission, requestPermission] = useCameraPermissions();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   if (!permission) return <View />;
   if (!permission.granted) {
@@ -37,21 +41,47 @@ export default function FaceAuthScreen({ navigation, route }: any) {
   const handleAuth = async () => {
     setLoading(true);
     setError("");
+    setSuccessMessage('');
+    setErrorMessage('');
     try {
-      // 실제 API 연동 대신 50% 확률로 성공/실패
-      // 사진 촬영 등 실제 코드 주석 처리
-      // if (!cameraRef.current) throw new Error("카메라를 찾을 수 없습니다.");
-      // const photo = await cameraRef.current.takePictureAsync({ base64: true, quality: 0.3 });
-      // const imageBase64 = photo.base64;
-      // const checkRes = await axios.post("http://192.168.55.4:8000/api/v1/face/check/", { image: imageBase64 });
-      // if (!checkRes.data.is_in_guide) { ... }
-      // const authRes = await axios.post(`http://192.168.55.4:8000/api/v1/tickets/${ticketId}/aws-auth/`, { image: imageBase64 });
-      const success = Math.random() > 0.5;
-      setIsSuccess(success);
+      if (!cameraRef.current) throw new Error("카메라를 찾을 수 없습니다.");
+      // @ts-ignore
+      const photo = await cameraRef.current.takePictureAsync({ base64: true, quality: 0.3 });
+      const imageBase64 = photo.base64;
+      // 1. 가이드라인 체크
+      const guideRes: GuideLineCheckResponse = await FaceGuideCheck({ image: imageBase64 });
+      if (!guideRes.is_in_guide) {
+        setIsSuccess(false);
+        setSuccessMessage('');
+        setErrorMessage(guideRes.message || '얼굴을 가이드라인에 맞춰주세요');
+        setModalVisible(true);
+        setLoading(false);
+        return;
+      }
+      // 2. 인증 요청
+      const authRes: FaceRegisterResponse = await FaceAuth(ticketId, { image: imageBase64 });
+      if (authRes.success === false) {
+        setIsSuccess(false);
+        setSuccessMessage('');
+        setErrorMessage(authRes.message || '인증에 실패했습니다.');
+        setModalVisible(true);
+        setLoading(false);
+        return;
+      }
+      setIsSuccess(true);
+      setSuccessMessage(authRes.message || '얼굴 인증이 성공적으로 완료되었습니다.');
+      setErrorMessage('');
       setModalVisible(true);
     } catch (e: any) {
-      setError(e.message || "인증 중 오류가 발생했습니다.");
       setIsSuccess(false);
+      setSuccessMessage('');
+      let msg = "인증 중 오류가 발생했습니다.";
+      if (e.response && e.response.data) {
+        msg = e.response.data.message || e.response.data.error || JSON.stringify(e.response.data);
+      } else if (e.message) {
+        msg = e.message;
+      }
+      setErrorMessage(msg);
       setModalVisible(true);
     } finally {
       setLoading(false);
@@ -97,9 +127,7 @@ export default function FaceAuthScreen({ navigation, route }: any) {
             </View>
             <Text style={styles.modalTitle}>{isSuccess ? "인증 성공" : "인증 실패"}</Text>
             <Text style={styles.modalDesc}>
-              {isSuccess
-                ? "얼굴 인증이 성공적으로 완료되었습니다."
-                : "얼굴을 가이드라인에 맞추어 다시 촬영해주세요."}
+              {isSuccess ? successMessage : errorMessage}
             </Text>
             <TouchableOpacity
               style={styles.modalButton}

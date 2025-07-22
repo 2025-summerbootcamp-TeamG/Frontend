@@ -29,6 +29,15 @@ export const AWSFaceRecognitionRegister = async (
 export const FaceRegister = async (
   ticketId: number,
   data: { face_verified: boolean }
-): Promise<AxiosResponse<SaveFaceToDBResponse>> => {
+): Promise<SaveFaceToDBResponse> => {
   return await apiClient.patch(`tickets/${ticketId}/register/`, data);
+};
+
+// 얼굴 인증 (AWS Rekognition)
+export const FaceAuth = async (
+  ticketId: number,
+  data: FaceRegisterRequest
+): Promise<FaceRegisterResponse> => {
+  const response = await apiClient.post(`tickets/${ticketId}/aws-auth/`, data);
+  return response.data;
 };
