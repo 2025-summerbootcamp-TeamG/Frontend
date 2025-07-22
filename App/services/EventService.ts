@@ -28,11 +28,19 @@ export const getEventsByGenre = async (
   return response.data;
 };
 
+
 export const getSeatsByZone = async (
   zoneId: number
 ): Promise<ZoneSeatsResponse> => {
   const response = await apiClient.get<ZoneSeatsResponse>(
     `events/${zoneId}/seats/`
   );
+  return response.data;
+};
+
+export const searchEvents = async (keyword: string, page = 1, limit = 20) => {
+  const response = await apiClient.get("events/view/", {
+    params: { keyword, page, limit },
+  });
   return response.data;
 };
