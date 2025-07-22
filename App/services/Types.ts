@@ -24,10 +24,10 @@ export interface EventListResponse {
 }
 
 export type PayRequest = {
-    name: string;
-    phone: string;
-    email: string;
-  };
+  name: string;
+  phone: string;
+  email: string;
+};
 export interface GuideLineCheckRequest {
   image: string; // base64 등
 }
@@ -55,4 +55,48 @@ export interface SaveFaceToDBRequest {
 export interface SaveFaceToDBResponse {
   success: boolean;
   message: string;
+}
+export interface Seat {
+  seat_id: number;
+  seat_number: string;
+  price: number;
+  seat_status: string;
+  event_time_id: number;
+  available_count?: number; // available_count 추가
+  event_date?: string; // ← 추가
+  start_time?: string; // ← 추가
+}
+
+export interface ZoneSeatsResponse {
+  statusCode: number;
+  message: string;
+  // data가 객체가 아닌 Seat 배열을 직접 담고 있도록 수정
+  data: Seat[];
+}
+// 티켓 목록(내 티켓) 응답 타입
+export interface Ticket {
+  id: number;
+  ticket_status: string;
+  booked_at: string;
+  face_verified: boolean;
+  verified_at: string;
+  created_at: string;
+  updated_at: string;
+  is_deleted: boolean;
+  user: number;
+  seat: number;
+  purchase: number;
+}
+// 티켓 상세정보 응답 타입
+export interface TicketDetail {
+  id: number;
+  user: number;
+  ticket_status: string;
+  seat: number;
+  purchase: number;
+  face_verified: boolean;
+  verified_at: string;
+  created_at: string;
+  updated_at: string;
+  is_deleted: boolean;
 }

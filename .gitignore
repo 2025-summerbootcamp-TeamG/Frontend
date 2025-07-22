@@ -34,4 +34,3 @@ yarn-error.*
 App/.env
 # typescript
 *.tsbuildinfo
-
