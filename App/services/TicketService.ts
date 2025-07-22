@@ -36,3 +36,9 @@ export const FaceRegister = async (
 ): Promise<AxiosResponse<SaveFaceToDBResponse>> => {
   return await apiClient.patch(`tickets/${ticketId}/register/`, data);
 };
+
+export const TicketQRcode = async (
+  ticketId: number) => {
+  const response = await apiClient.get(`tickets/${ticketId}/qr`);
+  return response.data;
+};

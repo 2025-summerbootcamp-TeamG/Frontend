@@ -13,6 +13,7 @@ import QRCodeModal from "./QRCodeModal";
 import TicketInfoModal from "./TicketInfoModal";
 import { events } from "../../assets/events/EventsMock";
 import { useFocusEffect } from "@react-navigation/native";
+import { TicketQRcode } from "../../services/TicketService";
 
 // 티켓 카드 컴포넌트 (각 티켓 정보를 카드 형태로 렌더링)
 interface TicketCardProps {
@@ -172,6 +173,10 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
   const [infoModalVisible, setInfoModalVisible] = useState<boolean>(false);
   const [infoTicket, setInfoTicket] = useState<TicketType | null>(null);
 
+  const [qrData, setQrData] = useState<any>(null);
+  const [qrLoading, setQrLoading] = useState(false);
+  const [qrError, setQrError] = useState("");
+
   useFocusEffect(
     React.useCallback(() => {
       setQrModalVisible(false);
@@ -240,9 +245,20 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
     setTickets((prev) => prev.filter((t) => t.id !== ticketId));
   };
 
-  const handleQrPress = (ticket: TicketType) => {
-    setSelectedTicket(ticket);
-    setQrModalVisible(true);
+  const handleQrPress = async (ticket: TicketType) => {
+    setQrLoading(true);
+    setQrError("");
+    try {
+      const data = await TicketQRcode(ticket.id!);
+      setQrData(data);
+      setSelectedTicket(ticket);
+      setQrModalVisible(true);
+    } catch (e : any) {
+      setQrError("QR 코드 생성에 실패했습니다.");
+      setQrModalVisible(true);
+    } finally {
+      setQrLoading(false);
+    }
   };
 
   const handleDetailPress = (ticket: TicketType) => {
@@ -306,7 +322,14 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
       >
         <QRCodeModal
           ticket={selectedTicket}
-          onClose={() => setQrModalVisible(false)}
+          qrData={qrData}
+          loading={qrLoading}
+          error={qrError}
+          onClose={() => {
+            setQrModalVisible(false);
+            setQrData(null);
+            setQrError("");
+          }}
         />
       </Modal>
       <TicketInfoModal
