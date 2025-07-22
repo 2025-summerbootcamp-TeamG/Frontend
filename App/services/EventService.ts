@@ -26,3 +26,10 @@ export const getEventsByGenre = async (genre: string): Promise<EventListResponse
   return response.data;
 };
 
+export const searchEvents = async (keyword: string, page = 1, limit = 20) => {
+  const response = await apiClient.get("events/view/", {
+    params: { keyword, page, limit },
+  });
+  return response.data;
+};
+
