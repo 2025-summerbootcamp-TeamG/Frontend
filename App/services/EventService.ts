@@ -17,3 +17,12 @@ export const getEventDetail = async (eventId: number) => {
   const response = await apiClient.get(`events/${eventId}/`);
   return response.data;
 };
+
+export const getEventsByGenre = async (genre: string): Promise<EventListResponse> => {
+  // category 파라미터로 요청해야 백엔드에서 genre 필드로 필터링함
+  const response = await apiClient.get<EventListResponse>("events/view/", {
+    params: { category: genre }
+  });
+  return response.data;
+};
+
