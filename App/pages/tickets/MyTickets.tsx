@@ -456,7 +456,6 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
         onClose={() => setLoginModalVisible(false)}
         onLoginSuccess={handleLoginSuccess}
       />
-      {/* 로그인 안 했으면 티켓 목록 등 UI 숨김 */}
       {isLoggedIn && (
         <>
           <View style={{ width: "100%", padding: 16, backgroundColor: "#fff" }}>
@@ -514,7 +513,14 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
           >
             <QRCodeModal
               ticket={selectedTicket}
-              onClose={() => setQrModalVisible(false)}
+              qrData={qrData}
+              loading={qrLoading}
+              error={qrError}
+              onClose={() => {
+                setQrModalVisible(false);
+                setQrData(null);
+                setQrError("");
+              }}
             />
           </Modal>
           <TicketInfoModal
@@ -527,77 +533,6 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
           />
         </>
       )}
-      <View style={{ width: "100%", padding: 16, backgroundColor: "#fff" }}>
-        <View style={styles.headerRow}>
-          <Text style={styles.headerTitle}>내 티켓</Text>
-          <View style={styles.filterRow}>
-            {filterOptions.map((option) => (
-              <TouchableOpacity
-                key={option.value}
-                style={[
-                  styles.filterButton,
-                  activeFilter === option.value && styles.filterButtonActive,
-                ]}
-                onPress={() => setActiveFilter(option.value)}
-              >
-                <Text
-                  style={[
-                    styles.filterButtonText,
-                    activeFilter === option.value &&
-                      styles.filterButtonTextActive,
-                  ]}
-                >
-                  {option.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-      </View>
-      <ScrollView
-        style={{ backgroundColor: "#fff", flex: 1 }}
-        contentContainerStyle={{
-          paddingBottom: 80,
-          alignItems: "center",
-          paddingTop: 0,
-        }}
-      >
-        {filteredTickets.map((ticket: any) => (
-          <TicketCard
-            key={ticket.id}
-            ticket={ticket}
-            onQrPress={handleQrPress}
-            onDetailPress={handleDetailPress}
-            navigation={navigation}
-          />
-        ))}
-      </ScrollView>
-      <Modal
-        visible={qrModalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setQrModalVisible(false)}
-      >
-        <QRCodeModal
-          ticket={selectedTicket}
-          qrData={qrData}
-          loading={qrLoading}
-          error={qrError}
-          onClose={() => {
-            setQrModalVisible(false);
-            setQrData(null);
-            setQrError("");
-          }}
-        />
-      </Modal>
-      <TicketInfoModal
-        visible={infoModalVisible}
-        ticket={infoTicket}
-        onClose={() => setInfoModalVisible(false)}
-        navigation={navigation}
-        onCancelSuccess={handleCancelSuccess}
-        isTicketActive={!!tickets.find((t) => t.id === infoTicket?.id)}
-      />
     </>
   );
 }
