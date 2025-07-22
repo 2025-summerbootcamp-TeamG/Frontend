@@ -16,7 +16,7 @@ import { events } from "../../assets/events/EventsMock";
 import { useFocusEffect } from "@react-navigation/native";
 import LoginModal from "../user/LoginModal";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { getMyTickets, getTicketDetail } from "../../services/TicketService";
+import { getMyTickets, getTicketDetail, getTicketFaceAuth, certifyTicket } from "../../services/TicketService";
 
 // 티켓 카드 컴포넌트 (각 티켓 정보를 카드 형태로 렌더링)
 interface TicketCardProps {
@@ -24,6 +24,7 @@ interface TicketCardProps {
   navigation?: any;
   onQrPress: (ticket: TicketType) => void;
   onDetailPress: (ticket: TicketType) => void;
+  onPrimaryButtonPress: (ticket: TicketType) => void;
 }
 
 const TicketCard = ({
@@ -31,18 +32,8 @@ const TicketCard = ({
   navigation,
   onQrPress,
   onDetailPress,
+  onPrimaryButtonPress,
 }: TicketCardProps) => {
-  const handlePrimaryButtonPress = (ticket: TicketType) => {
-    if (ticket.primaryButtonAction === "qr") {
-      onQrPress(ticket);
-    } else if (ticket.primaryButtonAction === "verify" && navigation) {
-      navigation.navigate("FaceAuthScreen", {
-        fromMyTickets: true,
-        ticketId: ticket.id, // 선택한 티켓의 고유 ID를 ticketId로 전달
-      });
-    }
-  };
-
   const statusStyle =
     ticket.ticket_statusText === "인증완료"
       ? [styles.statusBadge, { backgroundColor: "#dcfce7" }]
@@ -105,7 +96,7 @@ const TicketCard = ({
           <View style={styles.div39}>
             <TouchableOpacity
               style={styles.showqrcode140}
-              onPress={() => handlePrimaryButtonPress(ticket)}
+              onPress={() => onPrimaryButtonPress(ticket)}
             >
               <Text style={styles.qr42} numberOfLines={1} ellipsizeMode="tail">
                 {ticket.primaryButton !== "null" ? ticket.primaryButton : ""}
@@ -174,40 +165,47 @@ export interface TicketType {
   genre?: string;
   reservationNo?: string;
   authDate?: string;
+  verified_at?: string; // 추가
 }
 function mapTicketToTicketType(ticket: any): TicketType {
-  // face_verified 값이 boolean 또는 문자열("true"/"false")로 올 수 있으니 보완
-  const isFaceVerified =
-    ticket.face_verified === true || ticket.face_verified === "true";
-  const isFaceNotVerified =
-    ticket.face_verified === false ||
-    ticket.face_verified === "false" ||
-    !ticket.face_verified;
-  let primaryButton = "";
-  let primaryButtonAction = "";
-  if (isFaceNotVerified && ticket.ticket_status === "booked") {
-    primaryButton = "얼굴 인증하기";
-    primaryButtonAction = "verify";
-  } else if (isFaceVerified && ticket.ticket_status === "booked") {
-    primaryButton = "QR코드 보기";
-    primaryButtonAction = "qr";
+  let ticket_statusText = ticket.ticket_statusText;
+  let primaryButton = ticket.primaryButton;
+  let primaryButtonAction = ticket.primaryButtonAction;
+
+  // 목데이터에 값이 없으면 ticket_status 기준으로 fallback
+  if (!ticket_statusText) {
+    if (ticket.ticket_status === "pending") ticket_statusText = "인증필요";
+    else if (ticket.ticket_status === "reserved") ticket_statusText = "예매완료";
+    else if (["verified", "checked_in"].includes(ticket.ticket_status)) ticket_statusText = "인증완료";
+    else ticket_statusText = ticket.ticket_status;
   }
+  if (!primaryButton) {
+    if (["pending", "reserved"].includes(ticket.ticket_status)) primaryButton = "얼굴 인증하기";
+    else if (["verified", "checked_in"].includes(ticket.ticket_status)) primaryButton = "QR코드 보기";
+    else primaryButton = "";
+  }
+  if (!primaryButtonAction) {
+    if (["pending", "reserved"].includes(ticket.ticket_status)) primaryButtonAction = "verify";
+    else if (["verified", "checked_in"].includes(ticket.ticket_status)) primaryButtonAction = "qr";
+    else primaryButtonAction = "";
+  }
+
   return {
     id: ticket.id,
-    name: ticket.event_name ?? "",
-    artist: "",
-    date: ticket.event_date ?? ticket.booked_at ?? "",
-    location: ticket.event_location ?? "",
-    price: ticket.ticket_price ? Number(ticket.ticket_price) : 0,
+    name: ticket.event_name ?? ticket.name ?? "",
+    artist: ticket.artist ?? "",
+    date: ticket.event_date ?? ticket.date ?? ticket.booked_at ?? "",
+    location: ticket.event_location ?? ticket.location ?? "",
+    price: ticket.ticket_price ? Number(ticket.ticket_price) : ticket.price ?? 0,
     image_url: ticket.image_url ?? "",
     seat_number: ticket.seat_number ?? "",
-    seat_grade: ticket.seat_rank ?? "",
+    seat_grade: ticket.seat_rank ?? ticket.seat_grade ?? "",
     ticket_status: ticket.ticket_status,
-    ticket_statusText:
-      ticket.ticket_status === "booked" ? "예매완료" : ticket.ticket_status,
+    ticket_statusText,
     face_verified: ticket.face_verified ?? false,
     primaryButton,
     primaryButtonAction,
+    verified_at: ticket.verified_at ?? new Date().toISOString(), // 추가
   };
 }
 
@@ -273,6 +271,28 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
       checkLoginAndFetch();
     }, [])
   );
+
+  // 티켓 목록 불러온 후 각 티켓의 face_verified 상태를 DB에서 동기화
+  useEffect(() => {
+    if (tickets.length === 0) return;
+    let isMounted = true;
+    const fetchFaceAuthStatus = async () => {
+      const updatedTickets = await Promise.all(
+        tickets.map(async (ticket) => {
+          try {
+            const res = await getTicketFaceAuth(ticket.id);
+            const face_verified = res.data?.face_verified ?? false;
+            return { ...ticket, face_verified };
+          } catch {
+            return ticket; // 실패 시 기존 값 유지
+          }
+        })
+      );
+      if (isMounted) setTickets(updatedTickets);
+    };
+    fetchFaceAuthStatus();
+    return () => { isMounted = false; };
+  }, [tickets.length]);
 
   // 티켓 목록을 state로 관리
   // const [tickets, setTickets] = useState(events);
@@ -371,6 +391,46 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
     }
   };
 
+  const handlePrimaryButtonPress = (ticket: TicketType) => {
+    if (ticket.primaryButtonAction === "qr") {
+      handleQrPress(ticket);
+    } else if (ticket.primaryButtonAction === "verify" && navigation) {
+      navigation.navigate("FaceAuthScreen", {
+        fromMyTickets: true,
+        ticketId: ticket.id,
+        onAuthSuccess: async (ticketId: number) => {
+          try {
+            // 1. 티켓 상태 checked_in으로 변경
+            const res = await certifyTicket(ticketId);
+            // 2. 프론트 상태 즉시 반영
+            setTickets((prev: TicketType[]) =>
+              prev.map((t) =>
+                t.id === ticketId
+                  ? {
+                      ...t,
+                      ticket_status: res.ticket.ticket_status,
+                      ticket_statusText: res.ticket.ticket_status === "checked_in" ? "인증완료" : res.ticket.ticket_status,
+                      primaryButton: res.ticket.ticket_status === "checked_in" ? "QR코드 보기" : t.primaryButton,
+                      primaryButtonAction: res.ticket.ticket_status === "checked_in" ? "qr" : t.primaryButtonAction,
+                      verified_at: res.ticket.verified_at ?? new Date().toISOString(), // 응답값이 있으면 사용, 없으면 현재시간
+                    }
+                  : t
+              )
+            );
+            // 3. 필요시 서버에서 전체 동기화
+            const data = await getMyTickets();
+            const validTickets = data.filter(
+              (ticket) => ticket.id !== undefined && ticket.id !== null && ticket.id > 0
+            );
+            setTickets(validTickets.map(mapTicketToTicketType));
+          } catch (e) {
+            Alert.alert("상태 변경 실패", "티켓 상태 변경에 실패했습니다.");
+          }
+        },
+      });
+    }
+  };
+
   return (
     <>
       <MainHeader />
@@ -425,6 +485,7 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
                 onQrPress={handleQrPress}
                 onDetailPress={handleDetailPress}
                 navigation={navigation}
+                onPrimaryButtonPress={handlePrimaryButtonPress}
               />
             ))}
           </ScrollView>
@@ -630,5 +691,17 @@ const styles = StyleSheet.create({
     fontFamily: "Roboto-Regular",
     lineHeight: 16,
     fontSize: 12,
+  },
+  statusGreen: {
+    color: "#16a34a",
+  },
+  statusYellow: {
+    color: "#eab308",
+  },
+  statusBgGreen: {
+    backgroundColor: "#dcfce7",
+  },
+  statusBgYellow: {
+    backgroundColor: "#fef9c2",
   },
 });

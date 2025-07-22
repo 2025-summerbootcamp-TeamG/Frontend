@@ -148,7 +148,12 @@ export default function FaceAuthScreen({ navigation, route }: any) {
               style={styles.modalButton}
               onPress={() => {
                 setModalVisible(false);
-                if (isSuccess) navigation.goBack();
+                if (isSuccess) {
+                  if (route.params?.onAuthSuccess) {
+                    route.params.onAuthSuccess(ticketId);
+                  }
+                  navigation.goBack();
+                }
               }}
             >
               <Text style={styles.modalButtonText}>확인</Text>

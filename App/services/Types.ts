@@ -109,3 +109,12 @@ export interface TicketDetail {
   updated_at: string;
   is_deleted: boolean;
 }
+
+export interface TicketCertificationResponse {
+  message: string;
+  ticket: {
+    id: number;
+    ticket_status: string;
+    verified_at?: string; // 추가
+  };
+}
