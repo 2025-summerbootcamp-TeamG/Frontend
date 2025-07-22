@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -7,12 +7,16 @@ import {
   StyleSheet,
   Modal,
   Image,
+  Alert,
 } from "react-native";
 import MainHeader from "../../components/common/MainHeader";
 import QRCodeModal from "./QRCodeModal";
 import TicketInfoModal from "./TicketInfoModal";
 import { events } from "../../assets/events/EventsMock";
 import { useFocusEffect } from "@react-navigation/native";
+import LoginModal from "../user/LoginModal";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getMyTickets, getTicketDetail } from "../../services/TicketService";
 
 // 티켓 카드 컴포넌트 (각 티켓 정보를 카드 형태로 렌더링)
 interface TicketCardProps {
@@ -147,25 +151,64 @@ const filterOptions = [
 
 // TicketType에 실제 사용하는 필드 추가
 export interface TicketType {
-  id?: number;
-  artist?: string;
+  id: number;
   name?: string;
+  artist?: string;
   date?: string;
   location?: string;
   price?: number;
-  status?: string;
   image_url?: string;
+  seat_number?: string;
+  seat_grade?: string;
+  ticket_status?: string;
+  ticket_statusText?: string;
+  status?: string;
   type?: string;
   title?: string;
   ticket_date?: string;
-  seat_grade?: string;
-  seat_number?: string;
-  ticket_status?: string;
-  ticket_statusText?: string;
   primaryButton?: string;
   primaryButtonAction?: string;
   isExpired?: boolean;
-  event_times?: any[]; // event_times 필드 추가
+  event_times?: any[];
+  face_verified?: boolean;
+  genre?: string;
+  reservationNo?: string;
+  authDate?: string;
+}
+function mapTicketToTicketType(ticket: any): TicketType {
+  // face_verified 값이 boolean 또는 문자열("true"/"false")로 올 수 있으니 보완
+  const isFaceVerified =
+    ticket.face_verified === true || ticket.face_verified === "true";
+  const isFaceNotVerified =
+    ticket.face_verified === false ||
+    ticket.face_verified === "false" ||
+    !ticket.face_verified;
+  let primaryButton = "";
+  let primaryButtonAction = "";
+  if (isFaceNotVerified && ticket.ticket_status === "booked") {
+    primaryButton = "얼굴 인증하기";
+    primaryButtonAction = "verify";
+  } else if (isFaceVerified && ticket.ticket_status === "booked") {
+    primaryButton = "QR코드 보기";
+    primaryButtonAction = "qr";
+  }
+  return {
+    id: ticket.id,
+    name: ticket.event_name ?? "",
+    artist: "",
+    date: ticket.event_date ?? ticket.booked_at ?? "",
+    location: ticket.event_location ?? "",
+    price: ticket.ticket_price ? Number(ticket.ticket_price) : 0,
+    image_url: ticket.image_url ?? "",
+    seat_number: ticket.seat_number ?? "",
+    seat_grade: ticket.seat_rank ?? "",
+    ticket_status: ticket.ticket_status,
+    ticket_statusText:
+      ticket.ticket_status === "booked" ? "예매완료" : ticket.ticket_status,
+    face_verified: ticket.face_verified ?? false,
+    primaryButton,
+    primaryButtonAction,
+  };
 }
 
 export default function MyTickets({ navigation }: MyTicketsProps) {
@@ -174,18 +217,65 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
   const [selectedTicket, setSelectedTicket] = useState<TicketType | null>(null);
   const [infoModalVisible, setInfoModalVisible] = useState<boolean>(false);
   const [infoTicket, setInfoTicket] = useState<TicketType | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [loginModalVisible, setLoginModalVisible] = useState<boolean>(false);
+  const [tickets, setTickets] = useState<TicketType[]>([]); // 초기값 빈 배열, 서버 데이터만 사용
+  const [loadingDetail, setLoadingDetail] = useState(false);
 
+  // 로그인 상태 확인
+  useEffect(() => {
+    const checkLogin = async () => {
+      const token = await AsyncStorage.getItem("accessToken");
+      setIsLoggedIn(!!token);
+      if (!token) setLoginModalVisible(true);
+    };
+    checkLogin();
+  }, []);
+
+  // 로그인 성공 시 티켓 목록 불러오기
+  const handleLoginSuccess = async () => {
+    setIsLoggedIn(true);
+    setLoginModalVisible(false);
+    try {
+      const data = await getMyTickets();
+      const validTickets = data.filter(
+        (ticket) =>
+          ticket.id !== undefined && ticket.id !== null && ticket.id > 0
+      );
+      setTickets(validTickets.map(mapTicketToTicketType));
+    } catch (e) {
+      Alert.alert(
+        "티켓 불러오기 실패",
+        "서버에서 티켓 목록을 가져오지 못했습니다."
+      );
+    }
+  };
+
+  // 내 티켓 페이지가 포커스될 때마다 로그인 상태와 티켓 목록을 새로 불러오기
   useFocusEffect(
     React.useCallback(() => {
-      setQrModalVisible(false);
-      setInfoModalVisible(false);
-      setSelectedTicket(null);
-      setInfoTicket(null);
+      const checkLoginAndFetch = async () => {
+        const token = await AsyncStorage.getItem("accessToken");
+        setIsLoggedIn(!!token);
+        if (token) {
+          try {
+            const data = await getMyTickets();
+            const validTickets = data.filter(
+              (ticket) =>
+                ticket.id !== undefined && ticket.id !== null && ticket.id > 0
+            );
+            setTickets(validTickets.map(mapTicketToTicketType));
+          } catch (e) {
+            // 에러 처리 (필요시 Alert 등)
+          }
+        }
+      };
+      checkLoginAndFetch();
     }, [])
   );
 
   // 티켓 목록을 state로 관리
-  const [tickets, setTickets] = useState(events);
+  // const [tickets, setTickets] = useState(events);
 
   // 모달자동삭제: 상세정보 모달이 열려 있을 때, 해당 티켓이 목록에 없으면 자동으로 닫기
   // React.useEffect(() => {
@@ -248,78 +338,117 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
     setQrModalVisible(true);
   };
 
-  const handleDetailPress = (ticket: TicketType) => {
-    setInfoTicket(ticket);
-    setInfoModalVisible(true);
+  const handleDetailPress = async (ticket: TicketType) => {
+    console.log("상세정보 요청 id:", ticket.id);
+    setLoadingDetail(true);
+    try {
+      const detail = await getTicketDetail(ticket.id);
+      setInfoTicket({
+        id: detail.id,
+        name: detail.event_name,
+        date: detail.event_date,
+        location: detail.event_location,
+        seat_grade: detail.seat_rank,
+        seat_number: detail.seat_number,
+        ticket_status: ticket.ticket_status, // 목록에서 가져옴
+        ticket_statusText: ticket.ticket_statusText, // 목록에서 가져옴
+        face_verified: detail.face_verified,
+        image_url: detail.image_url,
+        price: Number(detail.ticket_price) || 0,
+        // 기타 필요한 필드 추가
+        // reservationNo: detail.reservation_number,
+        // total_price: detail.total_price,
+        // ...
+      });
+      setInfoModalVisible(true);
+    } catch (e) {
+      Alert.alert(
+        "상세정보 불러오기 실패",
+        "서버에서 상세정보를 가져오지 못했습니다."
+      );
+    } finally {
+      setLoadingDetail(false);
+    }
   };
 
   return (
     <>
       <MainHeader />
-      <View style={{ width: "100%", padding: 16, backgroundColor: "#fff" }}>
-        <View style={styles.headerRow}>
-          <Text style={styles.headerTitle}>내 티켓</Text>
-          <View style={styles.filterRow}>
-            {filterOptions.map((option) => (
-              <TouchableOpacity
-                key={option.value}
-                style={[
-                  styles.filterButton,
-                  activeFilter === option.value && styles.filterButtonActive,
-                ]}
-                onPress={() => setActiveFilter(option.value)}
-              >
-                <Text
-                  style={[
-                    styles.filterButtonText,
-                    activeFilter === option.value &&
-                      styles.filterButtonTextActive,
-                  ]}
-                >
-                  {option.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-      </View>
-      <ScrollView
-        style={{ backgroundColor: "#fff", flex: 1 }}
-        contentContainerStyle={{
-          paddingBottom: 80,
-          alignItems: "center",
-          paddingTop: 0,
-        }}
-      >
-        {filteredTickets.map((ticket: any) => (
-          <TicketCard
-            key={ticket.id}
-            ticket={ticket}
-            onQrPress={handleQrPress}
-            onDetailPress={handleDetailPress}
-            navigation={navigation}
-          />
-        ))}
-      </ScrollView>
-      <Modal
-        visible={qrModalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setQrModalVisible(false)}
-      >
-        <QRCodeModal
-          ticket={selectedTicket}
-          onClose={() => setQrModalVisible(false)}
-        />
-      </Modal>
-      <TicketInfoModal
-        visible={infoModalVisible}
-        ticket={infoTicket}
-        onClose={() => setInfoModalVisible(false)}
-        navigation={navigation}
-        onCancelSuccess={handleCancelSuccess}
-        isTicketActive={!!tickets.find((t) => t.id === infoTicket?.id)}
+      <LoginModal
+        visible={loginModalVisible}
+        onClose={() => setLoginModalVisible(false)}
+        onLoginSuccess={handleLoginSuccess}
       />
+      {/* 로그인 안 했으면 티켓 목록 등 UI 숨김 */}
+      {isLoggedIn && (
+        <>
+          <View style={{ width: "100%", padding: 16, backgroundColor: "#fff" }}>
+            <View style={styles.headerRow}>
+              <Text style={styles.headerTitle}>내 티켓</Text>
+              <View style={styles.filterRow}>
+                {filterOptions.map((option) => (
+                  <TouchableOpacity
+                    key={option.value}
+                    style={[
+                      styles.filterButton,
+                      activeFilter === option.value &&
+                        styles.filterButtonActive,
+                    ]}
+                    onPress={() => setActiveFilter(option.value)}
+                  >
+                    <Text
+                      style={[
+                        styles.filterButtonText,
+                        activeFilter === option.value &&
+                          styles.filterButtonTextActive,
+                      ]}
+                    >
+                      {option.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          </View>
+          <ScrollView
+            style={{ backgroundColor: "#fff", flex: 1 }}
+            contentContainerStyle={{
+              paddingBottom: 80,
+              alignItems: "center",
+              paddingTop: 0,
+            }}
+          >
+            {filteredTickets.map((ticket: any) => (
+              <TicketCard
+                key={ticket.id}
+                ticket={ticket}
+                onQrPress={handleQrPress}
+                onDetailPress={handleDetailPress}
+                navigation={navigation}
+              />
+            ))}
+          </ScrollView>
+          <Modal
+            visible={qrModalVisible}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setQrModalVisible(false)}
+          >
+            <QRCodeModal
+              ticket={selectedTicket}
+              onClose={() => setQrModalVisible(false)}
+            />
+          </Modal>
+          <TicketInfoModal
+            visible={infoModalVisible}
+            ticket={infoTicket}
+            onClose={() => setInfoModalVisible(false)}
+            navigation={navigation}
+            onCancelSuccess={handleCancelSuccess}
+            isTicketActive={!!tickets.find((t) => t.id === infoTicket?.id)}
+          />
+        </>
+      )}
     </>
   );
 }
