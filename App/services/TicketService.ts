@@ -64,11 +64,6 @@ export async function cancelTicket(ticketId: number): Promise<TicketDetail> {
   return res.data;
 }
 
-export const TicketQRcode = async (
-  ticketId: number) => {
-  const response = await api.get(`tickets/${ticketId}/qr`);
-  return response.data;
-};
 // 티켓 얼굴 등록 상태 조회
 export async function getTicketFaceAuth(ticketId: number) {
   const res = await api.get(`tickets/${ticketId}/auth/`);
@@ -81,3 +76,8 @@ export async function certifyTicket(ticketId: number): Promise<TicketCertificati
   return res.data;
 }
 
+export const TicketQRcode = async (
+  ticketId: number) => {
+  const response = await api.get(`tickets/${ticketId}/qr`);
+  return response.data;
+};

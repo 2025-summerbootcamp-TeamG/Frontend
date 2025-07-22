@@ -108,6 +108,14 @@ export interface TicketDetail {
   created_at: string;
   updated_at: string;
   is_deleted: boolean;
+  // 상세정보 매핑에 필요한 필드 추가
+  ticket_price: number;
+  image_url: string;
+  event_name: string;
+  event_date: string;
+  event_location: string;
+  seat_rank: string;
+  seat_number: string;
 }
 
 export interface TicketCertificationResponse {
