@@ -16,7 +16,9 @@ import { events } from "../../assets/events/EventsMock";
 import { useFocusEffect } from "@react-navigation/native";
 import LoginModal from "../user/LoginModal";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { getMyTickets, getTicketDetail, getTicketFaceAuth, certifyTicket } from "../../services/TicketService";
+
+import { getMyTickets, getTicketDetail, getTicketFaceAuth, certifyTicket, TicketQRcode } from "../../services/TicketService";
+
 
 // 티켓 카드 컴포넌트 (각 티켓 정보를 카드 형태로 렌더링)
 interface TicketCardProps {
@@ -250,6 +252,11 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
   };
 
   // 내 티켓 페이지가 포커스될 때마다 로그인 상태와 티켓 목록을 새로 불러오기
+
+  const [qrData, setQrData] = useState<any>(null);
+  const [qrLoading, setQrLoading] = useState(false);
+  const [qrError, setQrError] = useState("");
+
   useFocusEffect(
     React.useCallback(() => {
       const checkLoginAndFetch = async () => {
@@ -353,9 +360,20 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
     setTickets((prev) => prev.filter((t) => t.id !== ticketId));
   };
 
-  const handleQrPress = (ticket: TicketType) => {
-    setSelectedTicket(ticket);
-    setQrModalVisible(true);
+  const handleQrPress = async (ticket: TicketType) => {
+    setQrLoading(true);
+    setQrError("");
+    try {
+      const data = await TicketQRcode(ticket.id!);
+      setQrData(data);
+      setSelectedTicket(ticket);
+      setQrModalVisible(true);
+    } catch (e : any) {
+      setQrError("QR 코드 생성에 실패했습니다.");
+      setQrModalVisible(true);
+    } finally {
+      setQrLoading(false);
+    }
   };
 
   const handleDetailPress = async (ticket: TicketType) => {
@@ -510,6 +528,77 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
           />
         </>
       )}
+      <View style={{ width: "100%", padding: 16, backgroundColor: "#fff" }}>
+        <View style={styles.headerRow}>
+          <Text style={styles.headerTitle}>내 티켓</Text>
+          <View style={styles.filterRow}>
+            {filterOptions.map((option) => (
+              <TouchableOpacity
+                key={option.value}
+                style={[
+                  styles.filterButton,
+                  activeFilter === option.value && styles.filterButtonActive,
+                ]}
+                onPress={() => setActiveFilter(option.value)}
+              >
+                <Text
+                  style={[
+                    styles.filterButtonText,
+                    activeFilter === option.value &&
+                      styles.filterButtonTextActive,
+                  ]}
+                >
+                  {option.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      </View>
+      <ScrollView
+        style={{ backgroundColor: "#fff", flex: 1 }}
+        contentContainerStyle={{
+          paddingBottom: 80,
+          alignItems: "center",
+          paddingTop: 0,
+        }}
+      >
+        {filteredTickets.map((ticket: any) => (
+          <TicketCard
+            key={ticket.id}
+            ticket={ticket}
+            onQrPress={handleQrPress}
+            onDetailPress={handleDetailPress}
+            navigation={navigation}
+          />
+        ))}
+      </ScrollView>
+      <Modal
+        visible={qrModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setQrModalVisible(false)}
+      >
+        <QRCodeModal
+          ticket={selectedTicket}
+          qrData={qrData}
+          loading={qrLoading}
+          error={qrError}
+          onClose={() => {
+            setQrModalVisible(false);
+            setQrData(null);
+            setQrError("");
+          }}
+        />
+      </Modal>
+      <TicketInfoModal
+        visible={infoModalVisible}
+        ticket={infoTicket}
+        onClose={() => setInfoModalVisible(false)}
+        navigation={navigation}
+        onCancelSuccess={handleCancelSuccess}
+        isTicketActive={!!tickets.find((t) => t.id === infoTicket?.id)}
+      />
     </>
   );
 }
