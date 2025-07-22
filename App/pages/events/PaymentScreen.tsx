@@ -74,6 +74,10 @@ export default function PaymentScreen() {
   const total = seatPrice + fee;
 
   const purchaseId = "1"; // 또는 "test-id" 등 임의의 값
+  const tempTicketId = 1; // 임시로 지정한 티켓 고유 ID(실제 결제 후에는 서버에서 발급됨)
+
+  // 결제 후 발급받은 티켓의 고유 ID를 저장하는 상태
+  const [ticketId, setTicketId] = useState<number | null>(null); // ticketId: 결제/예매가 완료된 티켓의 고유 식별자(서버에서 발급)
 
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
@@ -259,9 +263,15 @@ export default function PaymentScreen() {
                 email: buyerEmail,
               });
               // 결제 성공 시 처리 (AxiosResponse 구조 반영)
+
               navigation.navigate("내 티켓", {
                 screen: "FaceRegisterScreen",
                 params: { ticketId: 1, seatInfos },
+              setTicketId(result.data.ticketId); // 결제 API 응답에서 발급된 ticketId(티켓 고유 ID)를 상태로 저장
+              navigation.navigate('내 티켓', { // 내 티켓 화면으로 이동
+                screen: 'FaceRegisterScreen', // FaceRegisterScreen으로 이동
+                params: { ticketId: tempTicketId, seatInfos } // ticketId: 임시로 1로 고정하여 전달, seatInfos: 선택한 좌석 정보 배열을 FaceRegisterScreen으로 전달
+
               });
             } catch (e) {
               setErrorMsg("결제 처리 중 오류가 발생했습니다.");
