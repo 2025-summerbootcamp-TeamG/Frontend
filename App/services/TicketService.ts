@@ -1,4 +1,4 @@
-import apiClient from "./apiClient";
+import api from "./apiClient";
 import {
   GuideLineCheckRequest,
   GuideLineCheckResponse,
@@ -14,7 +14,7 @@ import type { Ticket, TicketDetail } from "./Types";
 export const FaceGuideCheck = async (
   data: GuideLineCheckRequest
 ): Promise<GuideLineCheckResponse> => {
-  const response = await apiClient.post("face/check/", data);
+  const response = await api.post("face/check/", data);
   return response.data;
 };
 
@@ -23,10 +23,7 @@ export const AWSFaceRecognitionRegister = async (
   ticketId: number,
   data: FaceRegisterRequest
 ): Promise<FaceRegisterResponse> => {
-  const response = await apiClient.post(
-    `tickets/${ticketId}/aws-register/`,
-    data
-  );
+  const response = await api.post(`tickets/${ticketId}/aws-register/`, data);
   return response.data;
 };
 
@@ -35,7 +32,7 @@ export const FaceRegister = async (
   ticketId: number,
   data: { face_verified: boolean }
 ): Promise<AxiosResponse<SaveFaceToDBResponse>> => {
-  return await apiClient.patch(`tickets/${ticketId}/register/`, data);
+  return await api.patch(`tickets/${ticketId}/register/`, data);
 };
 // 내 티켓 목록 조회 (로그인 필요)
 export async function getMyTickets(): Promise<Ticket[]> {
