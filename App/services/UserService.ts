@@ -20,3 +20,9 @@ export async function logout(refresh: string) {
   );
   return res.data;
 }
+
+// 내 티켓 목록 조회 (인증 필요)
+export async function getMyTickets() {
+  const res = await api.get('tickets/'); // 실제 엔드포인트에 맞게 수정
+  return res.data;
+}
