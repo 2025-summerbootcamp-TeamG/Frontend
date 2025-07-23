@@ -9,8 +9,8 @@ export default function EventCardSearch({
   event: any; // API 응답에 맞게 any로
   onPress?: () => void;
 }) {
-  // 이미지 URL 우선순위: thumbnail > image_url
-  const imageUrl = event.thumbnail || event.image_url;
+  // 이미지 URL: thumbnail
+  const imageUrl = event.thumbnail 
 
   // 가격: 문자열이면 그대로, 숫자면 포맷팅
   let priceText = "";

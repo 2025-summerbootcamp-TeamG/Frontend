@@ -11,12 +11,7 @@ export default function CategoryPage({ route }: any) {
   useEffect(() => {
     getEventsByGenre(categoryName)
       .then((res) => {
-        // 백엔드 데이터에서 image_url을 thumbnail로 매핑
-        const mapped = res.events.map((e: any) => ({
-          ...e,
-          thumbnail: e.thumbnail || e.image_url || "", // image_url이 있으면 thumbnail로 사용
-        }));
-        setEvents(mapped);
+        setEvents(res.events);
       })
       .catch(() => setEvents([]));
   }, [categoryName]);
