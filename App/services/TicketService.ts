@@ -10,8 +10,7 @@ import {
   Ticket,
   TicketDetail,
   TicketCertificationResponse,
-
-  ShareRequest
+  ShareRequest,
 } from "./Types";
 import type { AxiosResponse } from "axios";
 
@@ -61,7 +60,7 @@ export async function getTicketDetail(ticketId: number): Promise<TicketDetail> {
 }
 
 // 티켓 취소 (로그인 필요)
-export async function cancelTicket(ticketId: number): Promise<TicketDetail> {
+export async function cancelTicket(ticketId: number): Promise<any> {
   const res = await api.delete(`tickets/${ticketId}/`);
   return res.data;
 }
@@ -85,9 +84,6 @@ export const TicketQRcode = async (ticketId: number) => {
   return response.data;
 };
 
-export const ShareTicket = async (
-    purchaseId: string,
-    data: ShareRequest
-  ) => {
-    return api.post(`tickets/${purchaseId}/share/`, data);
-  };
+export const ShareTicket = async (purchaseId: string, data: ShareRequest) => {
+  return api.post(`tickets/${purchaseId}/share/`, data);
+};

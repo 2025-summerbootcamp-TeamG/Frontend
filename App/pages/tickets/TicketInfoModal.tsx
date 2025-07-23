@@ -10,6 +10,7 @@ import {
 import Cancel from "../../assets/tickets/Cancel.svg";
 import TicketCancel from "./TicketCancelModal";
 import type { TicketType } from "./MyTickets";
+import { cancelTicket } from "../../services/TicketService";
 
 interface TicketInfoProps {
   visible: boolean;
@@ -214,9 +215,14 @@ export default function TicketInfoModal({
       <TicketCancel
         visible={cancelModalVisible}
         onClose={() => setCancelModalVisible(false)}
-        onConfirm={() => {
-          if (onCancelSuccess && ticket && ticket.id) {
-            onCancelSuccess(ticket.id);
+        onConfirm={async () => {
+          if (ticket && ticket.id) {
+            try {
+              await cancelTicket(ticket.id);
+              if (onCancelSuccess) onCancelSuccess(ticket.id);
+            } catch (e) {
+              Alert.alert("요청 실패", "티켓 취소에 실패했습니다.");
+            }
           }
         }}
       />
