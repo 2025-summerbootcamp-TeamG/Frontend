@@ -98,6 +98,9 @@ export default function EventDetailPage() {
     return !!token;
   };
 
+  // 대표 이미지 URL: thumbnail
+  const imageUrl = event.thumbnail
+
   // handleReserve 함수 수정
   const handleReserve = async () => {
     const hasToken = await checkToken();
@@ -127,7 +130,7 @@ export default function EventDetailPage() {
         )}
       >
         <Animated.Image
-          source={{ uri: event.image_url }}
+          source={{ uri: imageUrl }}
           style={{
             width: "100%",
             height: scrollY.interpolate({
