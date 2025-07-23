@@ -6,11 +6,13 @@ import {
   StyleSheet,
   SafeAreaView,
   Modal,
+  Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { FaceGuideCheck, AWSFaceRecognitionRegister, FaceRegister } from '../../services/TicketService';
 import type { GuideLineCheckResponse, FaceRegisterResponse, SaveFaceToDBResponse } from '../../services/Types';
+import * as LocalAuthentication from 'expo-local-authentication';
 
 // 응답 객체에서 message를 안전하게 추출하는 함수
 function extractMessage(res: any): string {
@@ -65,6 +67,20 @@ export default function FaceRegisterScreen({ navigation, route }: any) {
 
   // 얼굴 등록 처리 함수
   const handleRegister = async () => {
+    // iOS에서만 Face ID 인증
+    if (Platform.OS === 'ios') {
+      const hasHardware = await LocalAuthentication.hasHardwareAsync();
+      const enrolled = await LocalAuthentication.isEnrolledAsync();
+      if (!hasHardware || !enrolled) {
+        alert('Face ID가 설정되어 있지 않습니다.');
+        return;
+      }
+      const result = await LocalAuthentication.authenticateAsync({
+        promptMessage: 'Face ID로 인증해 주세요',
+        fallbackLabel: '비밀번호 입력',
+      });
+      if (!result.success) return;
+    }
     setLoading(true); // 로딩 시작
     setError("");
     try {
