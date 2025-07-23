@@ -10,9 +10,29 @@ import {
   Modal,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { ShareTicket } from '../../services/TicketService';
 
 export default function CompanionRegisterScreen({ route, navigation }: any) {
-  const seatInfos = route.params?.seatInfos || [];
+  // FaceRegisterScreen에서 받은 파라미터들 모두 추출
+  const {
+    event,
+    event_time,
+    selected,
+    purchase_id,
+    ticketIds = [],
+    seatInfos = [],
+  } = route?.params || {};
+
+  React.useEffect(() => {
+    console.log('CompanionRegisterScreen params:', route?.params);
+    console.log('event:', event);
+    console.log('event_time:', event_time);
+    console.log('selected:', selected);
+    console.log('purchase_id:', purchase_id);
+    console.log('ticketIds:', ticketIds);
+    console.log('seatInfos:', seatInfos);
+  }, [route?.params]);
+
   const companionCount = Math.max((seatInfos.length || 1) - 1, 1);
   const [companions, setCompanions] = useState(Array(companionCount).fill(""));
   const maxCompanions = 3;
@@ -33,14 +53,20 @@ export default function CompanionRegisterScreen({ route, navigation }: any) {
   }
 
   // 등록 완료 버튼 클릭 시 모달 표시
-  function handleRegisterComplete() {
+  async function handleRegisterComplete() {
     // 하나라도 비어 있으면 에러 메시지
     if (companions.some((email) => !email.trim())) {
       setErrorMsg("모든 동행자의 ID를 등록해주세요");
       return;
     }
     setErrorMsg("");
-    setModalVisible(true);
+    try {
+      // ShareTicket API 호출
+      await ShareTicket(String(purchase_id), { ticket_user_emails: companions });
+      setModalVisible(true);
+    } catch (e) {
+      setErrorMsg("동행자 등록 중 오류가 발생했습니다.");
+    }
   }
 
   // 모달 확인 버튼 클릭 시 MyTickets로 이동
@@ -95,8 +121,7 @@ export default function CompanionRegisterScreen({ route, navigation }: any) {
         <View>
           <Text style={styles.companionInfoTitle}>동행자 등록 안내</Text>
           <Text style={styles.companionInfoDesc}>
-            동행자는 최대 3명까지 등록 가능하며, 모든 동행자는 24시간 이내에
-            얼굴 등록을 완료해야 합니다.
+            모든 동행자는 24시간 이내에 얼굴 등록을 완료해야 합니다.
           </Text>
         </View>
       </View>
