@@ -16,11 +16,16 @@ export default {
     },
     ios: {
       supportsTablet: true,
+      bundleIdentifier: "com.eunseokyoon.ticketing",
       infoPlist: {
+        NSAppTransportSecurity: {
+          NSAllowsArbitraryLoads: true, // 모든 도메인 허용 (개발용)
+        },
         NSCameraUsageDescription: "얼굴 인증을 위해 카메라 접근이 필요합니다.",
       },
     },
     android: {
+      package: "com.eunseokyoon.App", // ★ 추가!
       adaptiveIcon: {
         foregroundImage: "./assets/adaptive-icon.png",
         backgroundColor: "#ffffff",
@@ -38,6 +43,9 @@ export default {
     ],
     extra: {
       API_BASE_URL: process.env.API_BASE_URL,
+      eas: {
+        projectId: "076e8d6c-efe7-4e38-ab4f-7d8721539085"
+      }
     },
   },
 };
