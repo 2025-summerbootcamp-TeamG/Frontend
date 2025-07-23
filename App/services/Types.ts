@@ -126,3 +126,7 @@ export interface TicketCertificationResponse {
     verified_at?: string; // 추가
   };
 }
+
+export type ShareRequest = {
+    ticket_user_emails: string[];
+  };

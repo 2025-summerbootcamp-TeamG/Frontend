@@ -137,9 +137,13 @@ export default function SeatSelectPage() {
       const seatIds = filteredSeats
         .filter((seat) => selected.includes(seat.seat_number))
         .map((seat) => seat.seat_id);
-      const seatInfos = filteredSeats.filter((seat) =>
-        seatIds.includes(seat.seat_id)
-      );
+      const seatInfos = filteredSeats
+        .filter((seat) => seatIds.includes(seat.seat_id))
+        .map((seat) => ({
+          zone: seat.seat_number.split('-')[0],
+          name: seat.seat_number,
+          price: seat.price,
+        }));
       console.log("event.id:", event.id);
       console.log("event_time_id:", event_time.event_time_id);
       console.log("seatIds:", seatIds);
