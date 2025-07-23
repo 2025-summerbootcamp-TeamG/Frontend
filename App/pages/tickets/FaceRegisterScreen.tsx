@@ -6,11 +6,13 @@ import {
   StyleSheet,
   SafeAreaView,
   Modal,
+  Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { FaceGuideCheck, AWSFaceRecognitionRegister, FaceRegister } from '../../services/TicketService';
 import type { GuideLineCheckResponse, FaceRegisterResponse, SaveFaceToDBResponse } from '../../services/Types';
+import * as LocalAuthentication from 'expo-local-authentication';
 
 // 응답 객체에서 message를 안전하게 추출하는 함수
 function extractMessage(res: any): string {
@@ -21,8 +23,16 @@ function extractMessage(res: any): string {
 }
 
 export default function FaceRegisterScreen({ navigation, route }: any) {
-  // 티켓 ID 및 좌석 정보 등 route 파라미터에서 추출
-  const ticketId = route?.params?.ticketId;
+  // PaymentScreen에서 받은 파라미터들 모두 추출
+  const {
+    event,
+    event_time,
+    selected,
+    purchase_id,
+    ticketIds = [],
+    seatInfos = [],
+  } = route?.params || {};
+  const ticketId = ticketIds.length > 0 ? ticketIds[0] : null;
   const [modalVisible, setModalVisible] = useState(false); // 모달 표시 여부
   const [isSuccess, setIsSuccess] = useState(true); // 등록 성공/실패 여부
   const cameraRef = useRef<any>(null); // 카메라 ref
@@ -31,8 +41,49 @@ export default function FaceRegisterScreen({ navigation, route }: any) {
   const [error, setError] = useState(""); // 에러 메시지
   const [successMessage, setSuccessMessage] = useState(''); // 성공 메시지
   const [errorMessage, setErrorMessage] = useState(''); // 실패 메시지
-  const selectedSeats = route?.params?.selected_seats || []; // 선택된 좌석 정보
-  const seatInfos = route?.params?.seatInfos || []; // 좌석 상세 정보
+  const [biometricPassed, setBiometricPassed] = useState(false); // 생체인증 성공 여부
+
+  useEffect(() => {
+    // 기존 로그 출력 유지
+    console.log('FaceRegisterScreen params:', route?.params);
+    console.log('event:', route?.params?.event);
+    console.log('event_time:', route?.params?.event_time);
+    console.log('selected:', route?.params?.selected);
+    console.log('purchase_id:', route?.params?.purchase_id);
+    console.log('ticketIds:', route?.params?.ticketIds);
+    console.log('seatInfos:', route?.params?.seatInfos);
+    // 안드로이드에서만 생체인증 실행, 그 외는 바로 통과
+    if (Platform.OS !== 'android') {
+      setBiometricPassed(true);
+      return;
+    }
+    // 생체인증 자동 실행
+    const runBiometric = async () => {
+      setError("");
+      setLoading(true);
+      try {
+        const hasHardware = await LocalAuthentication.hasHardwareAsync();
+        const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+        if (!hasHardware || !isEnrolled) {
+          setError("생체인증이 지원되지 않거나 등록되어 있지 않습니다.");
+          setLoading(false);
+          return;
+        }
+        const result = await LocalAuthentication.authenticateAsync({ promptMessage: '생체인증을 진행해 주세요.' });
+        if (!result.success) {
+          setError("생체인증에 실패했습니다.");
+          setLoading(false);
+          return;
+        }
+        setBiometricPassed(true);
+        setLoading(false);
+      } catch (e) {
+        setError("생체인증 중 오류가 발생했습니다.");
+        setLoading(false);
+      }
+    };
+    runBiometric();
+  }, [route?.params]);
 
   // 카메라 권한이 없을 때 권한 요청 UI 표시
   if (!permission) return <View />;
@@ -49,6 +100,20 @@ export default function FaceRegisterScreen({ navigation, route }: any) {
 
   // 얼굴 등록 처리 함수
   const handleRegister = async () => {
+    // iOS에서만 Face ID 인증
+    if (Platform.OS === 'ios') {
+      const hasHardware = await LocalAuthentication.hasHardwareAsync();
+      const enrolled = await LocalAuthentication.isEnrolledAsync();
+      if (!hasHardware || !enrolled) {
+        alert('Face ID가 설정되어 있지 않습니다.');
+        return;
+      }
+      const result = await LocalAuthentication.authenticateAsync({
+        promptMessage: 'Face ID로 인증해 주세요',
+        fallbackLabel: '비밀번호 입력',
+      });
+      if (!result.success) return;
+    }
     setLoading(true); // 로딩 시작
     setError("");
     try {
@@ -141,6 +206,41 @@ export default function FaceRegisterScreen({ navigation, route }: any) {
     }
   };
 
+  // 버튼 클릭 시 생체인증 먼저 진행
+  const handleBiometricAndRegister = async () => {
+    setError("");
+    setLoading(true);
+    try {
+      const hasHardware = await LocalAuthentication.hasHardwareAsync();
+      const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+      if (!hasHardware || !isEnrolled) {
+        setError("생체인증이 지원되지 않거나 등록되어 있지 않습니다.");
+        setLoading(false);
+        return;
+      }
+      const result = await LocalAuthentication.authenticateAsync({ promptMessage: '생체인증을 진행해 주세요.' });
+      if (!result.success) {
+        setError("생체인증에 실패했습니다.");
+        setLoading(false);
+        return;
+      }
+      // 생체인증 성공 시 기존 등록 로직 실행
+      await handleRegister();
+    } catch (e) {
+      setError("생체인증 중 오류가 발생했습니다.");
+      setLoading(false);
+    }
+  };
+
+  if (!biometricPassed) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Text style={{textAlign:'center', marginTop:40, color:'gray'}}>본인 확인을 위해 생체인증이 필요합니다.</Text>
+        {error ? <Text style={{ color: "red", textAlign: "center", marginTop:16 }}>{error}</Text> : null}
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       {/* 안내 문구 */}
@@ -205,9 +305,15 @@ export default function FaceRegisterScreen({ navigation, route }: any) {
                   if (seatInfos.length >= 2) {
                     // 좌석 정보가 2개 이상인 경우(동반자 좌석이 있는 경우)
                     // CompanionRegisterScreen(동반자 등록 화면)으로 이동
-                    // ticketId: 현재 티켓의 고유 ID
-                    // seatInfos: 선택된 좌석들의 상세 정보 배열
-                    navigation.navigate('CompanionRegisterScreen', { ticketId, seatInfos });
+                    // PaymentScreen에서 받았던 파라미터들을 그대로 넘김
+                    navigation.navigate('CompanionRegisterScreen', {
+                      event,
+                      event_time,
+                      selected,
+                      purchase_id,
+                      ticketIds,
+                      seatInfos,
+                    });
                   } else {
                     // 좌석이 1개뿐인 경우(동반자 없음)
                     // MyTickets(내 티켓 목록) 화면으로 이동

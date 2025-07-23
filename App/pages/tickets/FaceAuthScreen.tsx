@@ -7,12 +7,14 @@ import {
   StyleSheet,
   SafeAreaView,
   Modal,
+  Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import axios from "axios";
 import { FaceGuideCheck, FaceAuth } from '../../services/TicketService';
 import type { GuideLineCheckResponse, FaceAuthResponse } from '../../services/Types';
+import * as LocalAuthentication from 'expo-local-authentication';
 
 export default function FaceAuthScreen({ navigation, route }: any) {
   const ticketId = route?.params?.ticketId;
@@ -24,6 +26,41 @@ export default function FaceAuthScreen({ navigation, route }: any) {
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [biometricPassed, setBiometricPassed] = useState(false); // 생체인증 성공 여부
+
+  React.useEffect(() => {
+    // 안드로이드에서만 생체인증 실행, 그 외는 바로 통과
+    if (Platform.OS !== 'android') {
+      setBiometricPassed(true);
+      return;
+    }
+    // 생체인증 자동 실행
+    const runBiometric = async () => {
+      setError("");
+      setLoading(true);
+      try {
+        const hasHardware = await LocalAuthentication.hasHardwareAsync();
+        const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+        if (!hasHardware || !isEnrolled) {
+          setError("생체인증이 지원되지 않거나 등록되어 있지 않습니다.");
+          setLoading(false);
+          return;
+        }
+        const result = await LocalAuthentication.authenticateAsync({ promptMessage: '생체인증을 진행해 주세요.' });
+        if (!result.success) {
+          setError("생체인증에 실패했습니다.");
+          setLoading(false);
+          return;
+        }
+        setBiometricPassed(true);
+        setLoading(false);
+      } catch (e) {
+        setError("생체인증 중 오류가 발생했습니다.");
+        setLoading(false);
+      }
+    };
+    runBiometric();
+  }, [route?.params]);
 
   if (!permission) return <View />;
   if (!permission.granted) {
@@ -37,8 +74,31 @@ export default function FaceAuthScreen({ navigation, route }: any) {
     );
   }
 
+  if (!biometricPassed) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Text style={{textAlign:'center', marginTop:40, color:'gray'}}>본인 확인을 위해 생체인증이 필요합니다.</Text>
+        {error ? <Text style={{ color: "red", textAlign: "center", marginTop:16 }}>{error}</Text> : null}
+      </SafeAreaView>
+    );
+  }
+
   // 사진 촬영 및 얼굴 인증 처리 함수
   const handleAuth = async () => {
+    // iOS에서만 Face ID 인증
+    if (Platform.OS === 'ios') {
+      const hasHardware = await LocalAuthentication.hasHardwareAsync();
+      const enrolled = await LocalAuthentication.isEnrolledAsync();
+      if (!hasHardware || !enrolled) {
+        alert('Face ID가 설정되어 있지 않습니다.');
+        return;
+      }
+      const result = await LocalAuthentication.authenticateAsync({
+        promptMessage: 'Face ID로 인증해 주세요',
+        fallbackLabel: '비밀번호 입력',
+      });
+      if (!result.success) return;
+    }
     setLoading(true); // 로딩 시작
     setError("");
     setSuccessMessage('');
@@ -100,6 +160,32 @@ export default function FaceAuthScreen({ navigation, route }: any) {
       setModalVisible(true);
     } finally {
       setLoading(false); // 로딩 종료
+    }
+  };
+
+  // 버튼 클릭 시 생체인증 먼저 진행
+  const handleBiometricAndAuth = async () => {
+    setError("");
+    setLoading(true);
+    try {
+      const hasHardware = await LocalAuthentication.hasHardwareAsync();
+      const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+      if (!hasHardware || !isEnrolled) {
+        setError("생체인증이 지원되지 않거나 등록되어 있지 않습니다.");
+        setLoading(false);
+        return;
+      }
+      const result = await LocalAuthentication.authenticateAsync({ promptMessage: '생체인증을 진행해 주세요.' });
+      if (!result.success) {
+        setError("생체인증에 실패했습니다.");
+        setLoading(false);
+        return;
+      }
+      // 생체인증 성공 시 기존 인증 로직 실행
+      await handleAuth();
+    } catch (e) {
+      setError("생체인증 중 오류가 발생했습니다.");
+      setLoading(false);
     }
   };
 
