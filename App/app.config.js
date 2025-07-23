@@ -18,6 +18,8 @@ export default {
       supportsTablet: true,
       infoPlist: {
         NSCameraUsageDescription: "얼굴 인증을 위해 카메라 접근이 필요합니다.",
+        NSFaceIDUsageDescription:
+          "이 앱은 본인 확인을 위해 Face ID를 사용합니다.",
       },
     },
     android: {

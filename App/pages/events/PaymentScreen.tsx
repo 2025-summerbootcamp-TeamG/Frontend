@@ -16,6 +16,7 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { events } from "../../assets/events/EventsMock";
 import { payForTicket } from "../../services/EventService";
 import { buyTickets } from "../../services/EventService";
+import * as LocalAuthentication from "expo-local-authentication";
 
 const HEADER_HEIGHT = 48;
 const STATUSBAR_HEIGHT =
@@ -24,7 +25,14 @@ const STATUSBAR_HEIGHT =
 export default function PaymentScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute();
-  const { event, event_time, selected, purchase_id, ticketIds, seatInfos: paramSeatInfos } = (route.params || {}) as {
+  const {
+    event,
+    event_time,
+    selected,
+    purchase_id,
+    ticketIds,
+    seatInfos: paramSeatInfos,
+  } = (route.params || {}) as {
     event: any;
     event_time?: any;
     selected?: string[];
@@ -52,9 +60,10 @@ export default function PaymentScreen() {
   const fee = 1000;
   const total = seatPrice + fee;
 
-
   // 결제 후 발급받은 티켓의 고유 ID를 저장하는 상태
-  const [ticketIdsState, setTicketIdsState] = useState<number[] | null>(ticketIds || null); // 여러 티켓 ID 지원
+  const [ticketIdsState, setTicketIdsState] = useState<number[] | null>(
+    ticketIds || null
+  ); // 여러 티켓 ID 지원
 
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
@@ -182,7 +191,7 @@ export default function PaymentScreen() {
           <View style={styles.priceRow}>
             <Text style={styles.priceLabel}>
               {seatInfos.length > 0
-                ? seatInfos.map((s) => `${String(s['zone'])} 석 x 1`).join(", ")
+                ? seatInfos.map((s) => `${String(s["zone"])} 석 x 1`).join(", ")
                 : "좌석 미선택"}
             </Text>
             <Text style={styles.priceValue}>
@@ -234,19 +243,24 @@ export default function PaymentScreen() {
             setErrorMsg("");
             try {
               if (!purchase_id) {
-                setErrorMsg("구매 정보가 올바르지 않습니다. 다시 시도해 주세요.");
+                setErrorMsg(
+                  "구매 정보가 올바르지 않습니다. 다시 시도해 주세요."
+                );
                 return;
               }
-              // payForTicket 함수 호출 (PayRequest 타입에 맞게 수정)
+              // 1. 결제 API 먼저 호출
               const result = await payForTicket(String(purchase_id), {
                 name: buyerName,
                 phone: buyerPhone,
                 email: buyerEmail,
               });
-              // 결제 성공 시 처리 (여러 티켓 ID 지원)
-              setTicketIdsState(result.data.ticketIds || result.data.ticket_ids || []); // ticketIds: 배열
-              navigation.navigate('내 티켓', {
-                screen: 'FaceRegisterScreen',
+              setTicketIdsState(
+                result.data.ticketIds || result.data.ticket_ids || []
+              ); // ticketIds: 배열
+              // iOS Face ID 인증 로직 완전히 제거 (안드로이드와 동일하게 FaceRegisterScreen에서만 실행)
+              // 3. 결제 성공 시 내 티켓(FaceRegisterScreen)으로 이동
+              navigation.navigate("내 티켓", {
+                screen: "FaceRegisterScreen",
                 params: {
                   event,
                   event_time,
