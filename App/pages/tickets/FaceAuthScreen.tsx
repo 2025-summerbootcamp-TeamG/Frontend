@@ -85,6 +85,20 @@ export default function FaceAuthScreen({ navigation, route }: any) {
 
   // 사진 촬영 및 얼굴 인증 처리 함수
   const handleAuth = async () => {
+    // iOS에서만 Face ID 인증
+    if (Platform.OS === 'ios') {
+      const hasHardware = await LocalAuthentication.hasHardwareAsync();
+      const enrolled = await LocalAuthentication.isEnrolledAsync();
+      if (!hasHardware || !enrolled) {
+        alert('Face ID가 설정되어 있지 않습니다.');
+        return;
+      }
+      const result = await LocalAuthentication.authenticateAsync({
+        promptMessage: 'Face ID로 인증해 주세요',
+        fallbackLabel: '비밀번호 입력',
+      });
+      if (!result.success) return;
+    }
     setLoading(true); // 로딩 시작
     setError("");
     setSuccessMessage('');
