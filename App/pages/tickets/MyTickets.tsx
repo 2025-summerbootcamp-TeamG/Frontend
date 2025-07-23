@@ -304,8 +304,8 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
       const fetchTickets = async () => {
         const myTickets = await getMyTickets();
         if (!isMounted) return;
-        // ticket_status가 'canceled'인 티켓은 제외
-        const filteredTickets = myTickets.filter(ticket => ticket.ticket_status !== 'canceled');
+        // ticket_status가 'canceled' 또는 'booked'인 티켓은 제외
+        const filteredTickets = myTickets.filter(ticket => ticket.ticket_status !== 'canceled' && ticket.ticket_status !== 'booked');
         const mappedTickets = filteredTickets.map(mapTicketToTicketType);
         setTickets(mappedTickets);
 
@@ -343,8 +343,6 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
         try {
           const res = await getTicketFaceAuth(ticket.id);
           const face_verified = res.data?.face_verified;
-          // getTicketFaceAuth 응답 콘솔 출력
-          console.log('getTicketFaceAuth 응답:', ticket.id, face_verified, res.data);
           return { id: ticket.id, face_verified };
         } catch {
           return { id: ticket.id, face_verified: ticket.face_verified };
@@ -358,7 +356,7 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
         return found ? { ...ticket, face_verified: found.face_verified } : ticket;
       });
       // 업데이트 직후 상태 로그
-      console.log('setTickets updated:', updatedTickets.map(t => ({ id: t.id, face_verified: t.face_verified, ticket_status: t.ticket_status })));
+      console.log({ id: t.id, face_verified: t.face_verified, ticket_status: t.ticket_status });
       setTickets(updatedTickets);
     });
     return () => {
