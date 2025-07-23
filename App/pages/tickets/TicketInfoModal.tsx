@@ -9,10 +9,11 @@ import {
 } from "react-native";
 import Cancel from "../../assets/tickets/Cancel.svg";
 import TicketCancel from "./TicketCancelModal";
+import type { TicketType } from "./MyTickets";
 
 interface TicketInfoProps {
   visible: boolean;
-  ticket: any; // 실제 타입 필요시 TicketType 등으로 교체
+  ticket: TicketType | null;
   onClose: () => void;
   navigation: any; // 추가
   onCancelSuccess?: (ticketId: number) => void;
@@ -29,37 +30,55 @@ export default function TicketInfoModal({
 }: TicketInfoProps) {
   const [cancelModalVisible, setCancelModalVisible] = React.useState(false);
   if (!ticket) return null;
-  // 공연 정보
+  // 공연 정보 (nested 구조에서 안전하게 추출)
+  const event = (ticket as any).seat?.zone?.event_time?.event;
+  const seat = (ticket as any).seat;
+  const zone = (ticket as any).seat?.zone;
   const performanceInfo = {
-    title: ticket.name || "NULL",
-    date: ticket.ticket_date || ticket.date || "NULL",
-    venue: ticket.location || "NULL",
+    title: event?.name || ticket.name || "NULL",
+    artist: event?.artist || "NULL",
+    date:
+      zone?.event_time?.event_date ||
+      ticket.ticket_date ||
+      ticket.date ||
+      "NULL",
+    venue: event?.location || ticket.location || "NULL",
+    image_url: event?.image_url || ticket.image_url || undefined,
   };
   // 티켓 정보
   const ticketInfo = [
     {
       label: "좌석 등급",
-      value: ticket.seat_grade || "NULL",
+      value: zone?.rank || ticket.seat_grade || "NULL",
     },
-    { label: "좌석 번호", value: ticket.seat_number || "NULL" },
-    { label: "예매 번호", value: ticket.reservationNo || "NULL" },
+    {
+      label: "좌석 번호",
+      value: seat?.seat_number || ticket.seat_number || "NULL",
+    },
+    { label: "예매 번호", value: ticket.reservationNo || ticket.id || "NULL" },
   ];
   // 결제 정보
   const paymentInfo = [
     {
       label: "티켓 금액",
-      value: ticket.price ? `₩${ticket.price.toLocaleString()}` : "NULL",
+      value: zone?.price
+        ? `₩${zone.price.toLocaleString()}`
+        : ticket.price
+        ? `₩${ticket.price.toLocaleString()}`
+        : "NULL",
       color: styles.textBlack,
     },
     {
       label: "예매 수수료",
-      value: ticket.fee ? `₩${ticket.fee.toLocaleString()}` : "₩1,000",
+      value: (ticket as any).fee
+        ? `₩${(ticket as any).fee.toLocaleString()}`
+        : "₩1,000",
       color: styles.textBlack,
     },
     {
       label: "총 결제 금액",
-      value: ticket.totalPrice
-        ? `₩${ticket.totalPrice.toLocaleString()}`
+      value: zone?.price
+        ? `₩${(zone.price + 1000).toLocaleString()}`
         : ticket.price
         ? `₩${(ticket.price + 1000).toLocaleString()}`
         : "NULL",
@@ -71,25 +90,20 @@ export default function TicketInfoModal({
   const authInfo = [
     {
       label: "인증 상태",
-      value: ticket.ticket_statusText || "NULL",
+      value: ticket.ticket_statusText || ticket.ticket_status || "NULL",
       isStatus: true,
       statusColor:
-        ticket.ticket_statusText === "인증완료"
+        (ticket.ticket_statusText || ticket.ticket_status) === "인증완료"
           ? styles.statusGreen
           : styles.statusYellow,
       statusBg:
-        ticket.ticket_statusText === "인증완료"
+        (ticket.ticket_statusText || ticket.ticket_status) === "인증완료"
           ? styles.statusBgGreen
           : styles.statusBgYellow,
     },
     {
       label: "인증 일시",
-      value:
-        (!ticket.authDate || ticket.authDate === "") &&
-        ticket.ticket_statusText === "인증필요"
-          ? "인증기록없음"
-          : ticket.authDate || "NULL",
-      isStatus: false,
+      value: (ticket as any).verified_at || "NULL",
     },
   ];
 

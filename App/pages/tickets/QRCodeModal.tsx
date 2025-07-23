@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Cancel from "../../assets/tickets/Cancel.svg";
+import { TicketQRcode } from '../../services/TicketService'; // 상단에 import
 
 interface TicketType {
   artist?: string;
@@ -11,14 +12,18 @@ interface TicketType {
   date?: string;
   seat_grade?: string;
   seat_number?: string;
+  id?: number; // Added id for fetchTicketQr
 }
 
 interface QRCodeModalProps {
   ticket?: TicketType | null;
+  qrData?: any;
+  loading?: boolean;
+  error?: string;
   onClose: () => void;
 }
 
-export default function QRCodeModal({ ticket, onClose }: QRCodeModalProps) {
+export default function QRCodeModal({ ticket, qrData, loading, error, onClose }: QRCodeModalProps) {
   const t = ticket || {};
   const [timer, setTimer] = useState<number>(60);
   useEffect(() => {
@@ -48,12 +53,17 @@ export default function QRCodeModal({ ticket, onClose }: QRCodeModalProps) {
           {/* QR코드 영역 (실제 QR코드 대신 회색 박스) */}
           <View style={styles.qrBoxWrap}>
             <View style={styles.qrBox}>
-              {timer === 0 && (
-                <View style={styles.qrExpiredBox}>
-                  <Text style={styles.qrExpiredText}>
-                    QR코드가 만료되었습니다
-                  </Text>
-                </View>
+              {loading ? (
+                <Text>로딩 중...</Text>
+              ) : error ? (
+                <Text style={{ color: 'red' }}>{error}</Text>
+              ) : qrData && qrData.qr_base64 ? (
+                <Image
+                  source={{ uri: `data:image/png;base64,${qrData.qr_base64}` }}
+                  style={{ width: 180, height: 180 }}
+                />
+              ) : (
+                <Text>QR 정보 없음</Text>
               )}
             </View>
           </View>
