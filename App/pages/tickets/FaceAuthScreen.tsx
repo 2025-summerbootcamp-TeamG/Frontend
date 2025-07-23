@@ -278,11 +278,6 @@ export default function FaceAuthScreen({ navigation, route }: any) {
               onPress={async () => {
                 setModalVisible(false);
                 if (isSuccess) {
-                  try {
-                    await certifyTicket(ticketId); // ticket_status를 checked_in으로 변경
-                  } catch (e) {
-                    // 실패해도 무시하고 이동
-                  }
                   if (route.params?.onAuthSuccess) {
                     route.params.onAuthSuccess(ticketId);
                   }
