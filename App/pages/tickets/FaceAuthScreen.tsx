@@ -12,7 +12,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import axios from "axios";
-import { FaceGuideCheck, FaceAuth } from "../../services/TicketService";
+import { FaceGuideCheck, FaceAuth, certifyTicket } from '../../services/TicketService';
 import type {
   GuideLineCheckResponse,
   FaceAuthResponse,
@@ -275,9 +275,14 @@ export default function FaceAuthScreen({ navigation, route }: any) {
             </Text>
             <TouchableOpacity
               style={styles.modalButton}
-              onPress={() => {
+              onPress={async () => {
                 setModalVisible(false);
                 if (isSuccess) {
+                  try {
+                    await certifyTicket(ticketId); // ticket_status를 checked_in으로 변경
+                  } catch (e) {
+                    // 실패해도 무시하고 이동
+                  }
                   if (route.params?.onAuthSuccess) {
                     route.params.onAuthSuccess(ticketId);
                   }

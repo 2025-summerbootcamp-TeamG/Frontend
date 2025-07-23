@@ -39,8 +39,11 @@ export default function FaceRegisterScreen({ navigation, route }: any) {
     purchase_id,
     ticketIds = [],
     seatInfos = [],
+    ticketId: paramTicketId, // 추가: route.params.ticketId
   } = route?.params || {};
-  const ticketId = ticketIds.length > 0 ? ticketIds[0] : null;
+
+  // ticketId 우선순위: paramTicketId → ticketIds[0] → null
+  const ticketId = paramTicketId ?? (ticketIds.length > 0 ? ticketIds[0] : null);
   const [modalVisible, setModalVisible] = useState(false); // 모달 표시 여부
   const [isSuccess, setIsSuccess] = useState(true); // 등록 성공/실패 여부
   const cameraRef = useRef<any>(null); // 카메라 ref
