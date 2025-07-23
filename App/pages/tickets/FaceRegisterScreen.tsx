@@ -47,10 +47,8 @@ export default function FaceRegisterScreen({ navigation, route }: any) {
   const [biometricPassed, setBiometricPassed] = useState(false); // 생체인증 성공 여부
 
   useEffect(() => {
-    // 기존 로그 출력 유지
-          setLoading(false);
-          return;
-        }
+    const runBiometric = async () => {
+      try {
         const result = await LocalAuthentication.authenticateAsync({ promptMessage: '생체인증을 진행해 주세요.' });
         if (!result.success) {
           setError("생체인증에 실패했습니다.");

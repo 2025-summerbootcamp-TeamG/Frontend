@@ -25,6 +25,13 @@ import {
   TicketQRcode,
 } from "../../services/TicketService";
 
+// 좌석 번호에서 '-' 이후의 값만 추출하는 함수 (컴포넌트 바깥에 위치)
+const displaySeatNumber = (seat_number: string) => {
+  if (!seat_number) return "";
+  const parts = seat_number.split("-");
+  return parts.length > 1 ? parts[1] : seat_number;
+};
+
 // 티켓 카드 컴포넌트 (각 티켓 정보를 카드 형태로 렌더링)
 interface TicketCardProps {
   ticket: TicketType & { [key: string]: any };
@@ -130,8 +137,13 @@ const TicketCard = ({
         <View style={styles.marginWrap1}>
           <View style={styles.p30}>
             <Text style={styles.cardInfo}>
-              {(ticket.seat_grade || "") +
-                (ticket.seat_number ? " " + ticket.seat_number : "")}
+              {ticket.seat_grade && ticket.seat_number
+                ? `${ticket.seat_grade}-${displaySeatNumber(
+                    ticket.seat_number
+                  )}`
+                : ticket.seat_number
+                ? displaySeatNumber(ticket.seat_number)
+                : ""}
             </Text>
           </View>
         </View>
@@ -265,7 +277,7 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
     const checkLogin = async () => {
       const token = await AsyncStorage.getItem("accessToken");
       setIsLoggedIn(!!token);
-      if (!token) setLoginModalVisible(true);
+      // if (!token) setLoginModalVisible(true); // 로그인 모달 띄우는 부분 주석 처리
     };
     checkLogin();
   }, []);
@@ -281,7 +293,9 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
           ticket.id !== undefined &&
           ticket.id !== null &&
           ticket.id > 0 &&
-          !ticket.is_deleted
+          !ticket.is_deleted &&
+          (ticket.ticket_status === "reserved" ||
+            ticket.ticket_status === "checked_in")
       );
       setTickets(validTickets.map(mapTicketToTicketType));
     } catch (e) {
@@ -302,10 +316,18 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
     React.useCallback(() => {
       let isMounted = true;
       const fetchTickets = async () => {
+        const token = await AsyncStorage.getItem("accessToken");
+        setIsLoggedIn(!!token);
+        if (!token) return;
         const myTickets = await getMyTickets();
         if (!isMounted) return;
-        // ticket_status가 'canceled' 또는 'booked'인 티켓은 제외
-        const filteredTickets = myTickets.filter(ticket => ticket.ticket_status !== 'canceled' && ticket.ticket_status !== 'booked');
+        // ticket_status가 'canceled' 또는 'booked'인 티켓은 제외, reserved/checked_in만 남김
+        const filteredTickets = myTickets.filter(
+          ticket =>
+            ticket.ticket_status !== 'canceled' &&
+            ticket.ticket_status !== 'booked' &&
+            (ticket.ticket_status === "reserved" || ticket.ticket_status === "checked_in")
+        );
         const mappedTickets = filteredTickets.map(mapTicketToTicketType);
         setTickets(mappedTickets);
 
@@ -355,8 +377,6 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
         const found = faceAuthResults.find(f => f.id === ticket.id);
         return found ? { ...ticket, face_verified: found.face_verified } : ticket;
       });
-      // 업데이트 직후 상태 로그
-      console.log({ id: t.id, face_verified: t.face_verified, ticket_status: t.ticket_status });
       setTickets(updatedTickets);
     });
     return () => {
@@ -450,12 +470,13 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
         date: detail.event_date,
         location: detail.event_location,
         seat_grade: detail.seat_rank,
-        seat_number: detail.seat_number,
+        seat_number: displaySeatNumber(detail.seat_number),
         ticket_status: ticket.ticket_status, // 목록에서 가져옴
         ticket_statusText: ticket.ticket_statusText, // 목록에서 가져옴
         face_verified: detail.face_verified,
         image_url: detail.image_url,
         price: Number(detail.ticket_price) || 0,
+        verified_at: detail.verified_at, // 인증 일시를 명확히 할당
         // 기타 필요한 필드 추가
         // reservationNo: detail.reservation_number,
         // total_price: detail.total_price,
@@ -472,121 +493,226 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
     }
   };
 
-  const handlePrimaryButtonPress = async (ticket: TicketType) => {
-    try {
-      // 버튼 클릭 시마다 최신 face_verified 값을 API로 받아옴
-      const res = await getTicketFaceAuth(ticket.id);
-      const face_verified = res.data?.face_verified;
-      // ticket_status는 이미 최신 상태라고 가정
+  const handlePrimaryButtonPress = (ticket: TicketType) => {
+    if (ticket.primaryButtonAction === "qr") {
+      handleQrPress(ticket);
+    } else if (ticket.primaryButtonAction === "verify" && navigation) {
+      navigation.navigate("FaceAuthScreen", {
+        fromMyTickets: true,
+        ticketId: ticket.id,
+        onAuthSuccess: async (ticketId: number) => {
+          try {
+            // 1. 티켓 상태 checked_in으로 변경
+            const res = await certifyTicket(ticketId);
+            // 2. 프론트 상태 즉시 반영
+            setTickets((prev: TicketType[]) =>
+              prev.map((t) =>
+                t.id === ticketId
+                  ? {
+                      ...t,
+                      ticket_status: res.ticket.ticket_status,
+                      ticket_statusText:
+                        res.ticket.ticket_status === "checked_in"
+                          ? "인증완료"
+                          : res.ticket.ticket_status,
+                      primaryButton:
+                        res.ticket.ticket_status === "checked_in"
+                          ? "QR코드 보기"
+                          : t.primaryButton,
+                      primaryButtonAction:
+                        res.ticket.ticket_status === "checked_in"
+                          ? "qr"
+                          : t.primaryButtonAction,
+                      verified_at:
+                        res.ticket.verified_at ?? new Date().toISOString(),
+                    }
+                  : t
+              )
+            );
+            // 3. 필요시 서버에서 전체 동기화
+            const data = await getMyTickets();
+            const validTickets = data.filter(
+              (ticket) =>
+                ticket.id !== undefined &&
+                ticket.id !== null &&
+                ticket.id > 0 &&
+                !ticket.is_deleted &&
+                (ticket.ticket_status === "reserved" ||
+                  ticket.ticket_status === "checked_in")
+            );
+            setTickets(validTickets.map(mapTicketToTicketType));
+          } catch (e) {
+            Alert.alert("상태 변경 실패", "티켓 상태 변경에 실패했습니다.");
+          }
+        },
+      });
+    } else if (ticket.primaryButtonAction === "register" && navigation) {
+      navigation.navigate("FaceRegisterScreen", { ticketId: ticket.id });
+    } else {
+      // fallback: face_verified와 status로 분기
       const status = ticket.ticket_status ?? "";
-
-      // 최신 face_verified 값에 따라 분기
-      if (face_verified === undefined) {
+      const verified = ticket.face_verified;
+      if (verified === undefined) {
         Alert.alert("로딩 중...", "얼굴 등록 상태를 불러오는 중입니다. 잠시 후 다시 시도해 주세요.");
         return;
-      } else if (face_verified === false) {
+      } else if (verified === false) {
         navigation.navigate("FaceRegisterScreen", { ticketId: ticket.id });
         return;
-      } else if (face_verified === true && status === "reserved") {
-        navigation.navigate("FaceAuthScreen", { ticketId: ticket.id });
+      } else if (verified === true && status === "reserved") {
+        navigation.navigate("FaceAuthScreen", {
+          fromMyTickets: true,
+          ticketId: ticket.id,
+          onAuthSuccess: async (ticketId: number) => {
+            try {
+              const res = await certifyTicket(ticketId);
+              setTickets((prev: TicketType[]) =>
+                prev.map((t) =>
+                  t.id === ticketId
+                    ? {
+                        ...t,
+                        ticket_status: res.ticket.ticket_status,
+                        ticket_statusText:
+                          res.ticket.ticket_status === "checked_in"
+                            ? "인증완료"
+                            : res.ticket.ticket_status,
+                        primaryButton:
+                          res.ticket.ticket_status === "checked_in"
+                            ? "QR코드 보기"
+                            : t.primaryButton,
+                        primaryButtonAction:
+                          res.ticket.ticket_status === "checked_in"
+                            ? "qr"
+                            : t.primaryButtonAction,
+                        verified_at:
+                          res.ticket.verified_at ?? new Date().toISOString(),
+                      }
+                    : t
+                )
+              );
+              const data = await getMyTickets();
+              const validTickets = data.filter(
+                (ticket) =>
+                  ticket.id !== undefined &&
+                  ticket.id !== null &&
+                  ticket.id > 0 &&
+                  !ticket.is_deleted &&
+                  (ticket.ticket_status === "reserved" ||
+                    ticket.ticket_status === "checked_in")
+              );
+              setTickets(validTickets.map(mapTicketToTicketType));
+            } catch (e) {
+              Alert.alert("상태 변경 실패", "티켓 상태 변경에 실패했습니다.");
+            }
+          },
+        });
         return;
-      } else if (face_verified === true && status === "checked_in") {
+      } else if (verified === true && status === "checked_in") {
         handleQrPress(ticket);
         return;
       } else {
         Alert.alert("알 수 없는 상태", "이 티켓은 현재 처리할 수 없는 상태입니다.");
         return;
       }
-    } catch (e) {
-      Alert.alert("오류", "티켓 정보를 불러오지 못했습니다.");
     }
   };
 
   return (
     <>
       <MainHeader />
-      <LoginModal
-        visible={loginModalVisible}
-        onClose={() => setLoginModalVisible(false)}
-        onLoginSuccess={handleLoginSuccess}
-      />
-      {isLoggedIn && (
-        <>
-          <View style={{ width: "100%", padding: 16, backgroundColor: "#fff" }}>
-            <View style={styles.headerRow}>
-              <Text style={styles.headerTitle}>내 티켓</Text>
-              <View style={styles.filterRow}>
-                {filterOptions.map((option) => (
-                  <TouchableOpacity
-                    key={option.value}
-                    style={[
-                      styles.filterButton,
-                      activeFilter === option.value &&
-                        styles.filterButtonActive,
-                    ]}
-                    onPress={() => setActiveFilter(option.value)}
-                  >
-                    <Text
-                      style={[
-                        styles.filterButtonText,
-                        activeFilter === option.value &&
-                          styles.filterButtonTextActive,
-                      ]}
-                    >
-                      {option.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-          </View>
-          <ScrollView
-            style={{ backgroundColor: "#fff", flex: 1 }}
-            contentContainerStyle={{
-              paddingBottom: 80,
-              alignItems: "center",
-              paddingTop: 0,
-            }}
-          >
-            {filteredTickets.map((ticket: any) => (
-              <TicketCard
-                key={ticket.id}
-                ticket={ticket}
-                onQrPress={handleQrPress}
-                onDetailPress={handleDetailPress}
-                navigation={navigation}
-                onPrimaryButtonPress={handlePrimaryButtonPress}
-              />
-            ))}
-          </ScrollView>
-          <Modal
-            visible={qrModalVisible}
-            transparent
-            animationType="fade"
-            onRequestClose={() => setQrModalVisible(false)}
-          >
-            <QRCodeModal
-              ticket={selectedTicket}
-              qrData={qrData}
-              loading={qrLoading}
-              error={qrError}
-              onClose={() => {
-                setQrModalVisible(false);
-                setQrData(null);
-                setQrError("");
-              }}
-            />
-          </Modal>
-          <TicketInfoModal
-            visible={infoModalVisible}
-            ticket={infoTicket}
-            onClose={() => setInfoModalVisible(false)}
-            navigation={navigation}
-            onCancelSuccess={handleCancelSuccess}
-            isTicketActive={!!tickets.find((t) => t.id === infoTicket?.id)}
-          />
-        </>
+      {isLoggedIn ? null : (
+        <LoginModal
+          visible={loginModalVisible}
+          onClose={() => setLoginModalVisible(false)}
+          onLoginSuccess={handleLoginSuccess}
+        />
       )}
+      <View style={{ width: "100%", padding: 16, backgroundColor: "#fff" }}>
+        <View style={styles.headerRow}>
+          <Text style={styles.headerTitle}>내 티켓</Text>
+          <View style={styles.filterRow}>
+            {filterOptions.map((option) => (
+              <TouchableOpacity
+                key={option.value}
+                style={[
+                  styles.filterButton,
+                  activeFilter === option.value && styles.filterButtonActive,
+                ]}
+                onPress={() => setActiveFilter(option.value)}
+              >
+                <Text
+                  style={[
+                    styles.filterButtonText,
+                    activeFilter === option.value &&
+                      styles.filterButtonTextActive,
+                  ]}
+                >
+                  {option.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      </View>
+      {isLoggedIn ? (
+        <ScrollView
+          style={{ backgroundColor: "#fff", flex: 1 }}
+          contentContainerStyle={{
+            paddingBottom: 80,
+            alignItems: "center",
+            paddingTop: 0,
+          }}
+        >
+          {filteredTickets.map((ticket: any) => (
+            <TicketCard
+              key={ticket.id}
+              ticket={ticket}
+              onQrPress={handleQrPress}
+              onDetailPress={handleDetailPress}
+              navigation={navigation}
+              onPrimaryButtonPress={handlePrimaryButtonPress}
+            />
+          ))}
+        </ScrollView>
+      ) : (
+        <View
+          style={{
+            flex: 1,
+            alignItems: "center",
+            justifyContent: "center",
+            marginTop: 40,
+          }}
+        >
+          <Text style={{ color: "#888", fontSize: 16 }}>
+            로그인 후 티켓을 확인할 수 있습니다.
+          </Text>
+        </View>
+      )}
+      <Modal
+        visible={qrModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setQrModalVisible(false)}
+      >
+        <QRCodeModal
+          ticket={selectedTicket}
+          qrData={qrData}
+          loading={qrLoading}
+          error={qrError}
+          onClose={() => {
+            setQrModalVisible(false);
+            setQrData(null);
+            setQrError("");
+          }}
+        />
+      </Modal>
+      <TicketInfoModal
+        visible={infoModalVisible}
+        ticket={infoTicket}
+        onClose={() => setInfoModalVisible(false)}
+        navigation={navigation}
+        onCancelSuccess={handleCancelSuccess}
+        isTicketActive={!!tickets.find((t) => t.id === infoTicket?.id)}
+      />
     </>
   );
 }
