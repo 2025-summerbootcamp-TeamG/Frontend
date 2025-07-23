@@ -31,8 +31,11 @@ export default function FaceRegisterScreen({ navigation, route }: any) {
     purchase_id,
     ticketIds = [],
     seatInfos = [],
+    ticketId: paramTicketId, // 추가: route.params.ticketId
   } = route?.params || {};
-  const ticketId = ticketIds.length > 0 ? ticketIds[0] : null;
+
+  // ticketId 우선순위: paramTicketId → ticketIds[0] → null
+  const ticketId = paramTicketId ?? (ticketIds.length > 0 ? ticketIds[0] : null);
   const [modalVisible, setModalVisible] = useState(false); // 모달 표시 여부
   const [isSuccess, setIsSuccess] = useState(true); // 등록 성공/실패 여부
   const cameraRef = useRef<any>(null); // 카메라 ref
@@ -52,6 +55,7 @@ export default function FaceRegisterScreen({ navigation, route }: any) {
     console.log('purchase_id:', route?.params?.purchase_id);
     console.log('ticketIds:', route?.params?.ticketIds);
     console.log('seatInfos:', route?.params?.seatInfos);
+    console.log('ticketId:', ticketId); // 추가: ticketId 값 로그 출력
     // 안드로이드에서만 생체인증 실행, 그 외는 바로 통과
     if (Platform.OS !== 'android') {
       setBiometricPassed(true);

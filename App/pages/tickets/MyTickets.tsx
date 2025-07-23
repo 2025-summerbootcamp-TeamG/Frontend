@@ -41,14 +41,49 @@ const TicketCard = ({
   onDetailPress,
   onPrimaryButtonPress,
 }: TicketCardProps) => {
-  const statusStyle =
-    ticket.ticket_statusText === "인증완료"
-      ? [styles.statusBadge, { backgroundColor: "#dcfce7" }]
-      : [styles.statusBadge, { backgroundColor: "#fef9c2" }];
-  const statusTextColor =
-    ticket.ticket_statusText === "인증완료"
-      ? { color: "#16a34a" }
-      : { color: "#eab308" };
+  // 상태 확인용 콘솔 로그 (매 렌더링마다 출력)
+  console.log(
+    'TicketCard 렌더링:',
+    'id:', ticket.id,
+    'face_verified:', ticket.face_verified,
+    'ticket_status:', ticket.ticket_status
+  );
+  const status = ticket.ticket_status ?? "";
+  const verified = ticket.face_verified;
+  // 박스 색상 및 텍스트 분기 (상태/버튼 기준)
+  let statusBoxText = '';
+  let statusBoxColor = undefined;
+  if (verified === false) {
+    statusBoxText = '등록필요';
+    statusBoxColor = '#FFF9D6'; // 노란색
+  } else if (verified === true && status === 'reserved') {
+    statusBoxText = '예매완료';
+    statusBoxColor = '#FFF9D6'; // 노란색
+  } else if (verified === true && status === 'checked_in') {
+    statusBoxText = '인증완료';
+    statusBoxColor = '#DCFCE7'; // 초록색
+  } else {
+    statusBoxText = '';
+    statusBoxColor = undefined;
+  }
+
+  // 버튼 렌더링 분기
+  let buttonLabel = ""; // 버튼에 표시할 텍스트
+  let buttonAction: ((event: any) => void) | undefined = undefined; // 버튼 클릭 시 실행할 함수
+
+  if (verified === undefined) {
+    buttonLabel = "로딩 중..."
+    buttonAction = undefined;
+  } else if (verified === false) {
+    buttonLabel = "얼굴 등록하기";
+    buttonAction = () => onPrimaryButtonPress({ ...ticket, primaryButtonAction: "register" });
+  } else if (verified === true && status === "reserved") {
+    buttonLabel = "얼굴 인증하기";
+    buttonAction = () => onPrimaryButtonPress({ ...ticket, primaryButtonAction: "verify" });
+  } else if (verified === true && status === "checked_in") {
+    buttonLabel = "QR코드 보기";
+    buttonAction = () => onPrimaryButtonPress({ ...ticket, primaryButtonAction: "qr" });
+  }
 
   return (
     <View style={styles.card}>
@@ -65,15 +100,16 @@ const TicketCard = ({
       </View>
       <View style={styles.cardContent}>
         <View style={styles.cardHeader}>
-          <View style={styles.h324}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             <Text style={styles.cardTitle}>{ticket.name}</Text>
-          </View>
-          <View style={[styles.statusBadge, statusStyle]}>
-            <Text style={[styles.statusText, statusTextColor]}>
-              {ticket.ticket_statusText !== "null"
-                ? ticket.ticket_statusText
-                : ""}
-            </Text>
+            {statusBoxText ? (
+              <View style={{
+                ...getStatusBoxStyle(statusBoxText).box,
+                backgroundColor: statusBoxColor,
+              }}>
+                <Text style={getStatusBoxStyle(statusBoxText).text}>{statusBoxText}</Text>
+              </View>
+            ) : null}
           </View>
         </View>
         <View style={styles.marginWrap1}>
@@ -103,10 +139,11 @@ const TicketCard = ({
           <View style={styles.div39}>
             <TouchableOpacity
               style={styles.showqrcode140}
-              onPress={() => onPrimaryButtonPress(ticket)}
+              onPress={buttonAction}
+              disabled={!buttonAction}
             >
               <Text style={styles.qr42} numberOfLines={1} ellipsizeMode="tail">
-                {ticket.primaryButton !== "null" ? ticket.primaryButton : ""}
+                {buttonLabel}
               </Text>
             </TouchableOpacity>
 
@@ -181,27 +218,13 @@ function mapTicketToTicketType(ticket: any): TicketType {
   let primaryButtonAction = ticket.primaryButtonAction;
 
   // 목데이터에 값이 없으면 ticket_status 기준으로 fallback
-  if (!ticket_statusText) {
-    if (ticket.ticket_status === "pending") ticket_statusText = "인증필요";
+  if (!ticket_statusText) { // ticket_statusText가 없으면(즉, undefined/null/빈값이면)
+    if (ticket.ticket_status === "pending") ticket_statusText = "인증필요"; // 예매 후 인증이 필요한 상태
     else if (ticket.ticket_status === "reserved")
-      ticket_statusText = "예매완료";
+      ticket_statusText = "예매완료"; // 예매만 완료된 상태
     else if (["verified", "checked_in"].includes(ticket.ticket_status))
-      ticket_statusText = "인증완료";
-    else ticket_statusText = ticket.ticket_status;
-  }
-  if (!primaryButton) {
-    if (["pending", "reserved"].includes(ticket.ticket_status))
-      primaryButton = "얼굴 인증하기";
-    else if (["verified", "checked_in"].includes(ticket.ticket_status))
-      primaryButton = "QR코드 보기";
-    else primaryButton = "";
-  }
-  if (!primaryButtonAction) {
-    if (["pending", "reserved"].includes(ticket.ticket_status))
-      primaryButtonAction = "verify";
-    else if (["verified", "checked_in"].includes(ticket.ticket_status))
-      primaryButtonAction = "qr";
-    else primaryButtonAction = "";
+      ticket_statusText = "인증완료"; // 인증이 완료된 상태(입장 인증 등)
+    else ticket_statusText = ticket.ticket_status; // 그 외에는 ticket_status 값을 그대로 사용
   }
 
   return {
@@ -218,7 +241,7 @@ function mapTicketToTicketType(ticket: any): TicketType {
     seat_grade: ticket.seat_rank ?? ticket.seat_grade ?? "",
     ticket_status: ticket.ticket_status,
     ticket_statusText,
-    face_verified: ticket.face_verified ?? false,
+    face_verified: ticket.face_verified,
     primaryButton,
     primaryButtonAction,
     verified_at: ticket.verified_at ?? new Date().toISOString(), // 추가
@@ -277,48 +300,67 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
 
   useFocusEffect(
     React.useCallback(() => {
-      const checkLoginAndFetch = async () => {
-        const token = await AsyncStorage.getItem("accessToken");
-        setIsLoggedIn(!!token);
-        if (token) {
-          try {
-            const data = await getMyTickets();
-            const validTickets = data.filter(
-              (ticket) =>
-                ticket.id !== undefined &&
-                ticket.id !== null &&
-                ticket.id > 0 &&
-                !ticket.is_deleted
-            );
-            setTickets(validTickets.map(mapTicketToTicketType));
-          } catch (e) {
-            // 에러 처리 (필요시 Alert 등)
-          }
-        }
+      let isMounted = true;
+      const fetchTickets = async () => {
+        const myTickets = await getMyTickets();
+        if (!isMounted) return;
+        // ticket_status가 'canceled'인 티켓은 제외
+        const filteredTickets = myTickets.filter(ticket => ticket.ticket_status !== 'canceled');
+        const mappedTickets = filteredTickets.map(mapTicketToTicketType);
+        setTickets(mappedTickets);
+
+        // getMyTickets로 받은 후에 verified 동기화
+        const faceAuthResults = await Promise.all(
+          mappedTickets.map(async (ticket) => {
+            try {
+              const res = await getTicketFaceAuth(ticket.id);
+              return { id: ticket.id, face_verified: res.data?.face_verified };
+            } catch {
+              return { id: ticket.id, face_verified: undefined };
+            }
+          })
+        );
+        if (!isMounted) return;
+        setTickets(tickets =>
+          tickets.map(ticket => {
+            const found = faceAuthResults.find(f => f.id === ticket.id);
+            return found ? { ...ticket, face_verified: found.face_verified } : ticket;
+          })
+        );
       };
-      checkLoginAndFetch();
+      fetchTickets();
+      return () => { isMounted = false; };
     }, [])
   );
 
-  // 티켓 목록 불러온 후 각 티켓의 face_verified 상태를 DB에서 동기화
+  // 티켓 목록 불러온 후 각 티켓의 face_verified 상태를 DB에서 동기화 (개별 티켓별로 관리)
   useEffect(() => {
     if (tickets.length === 0) return;
     let isMounted = true;
-    const fetchFaceAuthStatus = async () => {
-      const updatedTickets = await Promise.all(
-        tickets.map(async (ticket) => {
-          try {
-            const res = await getTicketFaceAuth(ticket.id);
-            const face_verified = res.data?.face_verified ?? false;
-            return { ...ticket, face_verified };
-          } catch {
-            return ticket; // 실패 시 기존 값 유지
-          }
-        })
-      );
-      if (isMounted) setTickets(updatedTickets);
-    };
-    fetchFaceAuthStatus();
+    // 각 티켓별로 face_verified를 개별적으로 불러와서 업데이트
+    Promise.all(
+      tickets.map(async (ticket) => {
+        try {
+          const res = await getTicketFaceAuth(ticket.id);
+          const face_verified = res.data?.face_verified;
+          // getTicketFaceAuth 응답 콘솔 출력
+          console.log('getTicketFaceAuth 응답:', ticket.id, face_verified, res.data);
+          return { id: ticket.id, face_verified };
+        } catch {
+          return { id: ticket.id, face_verified: ticket.face_verified };
+        }
+      })
+    ).then((faceAuthResults) => {
+      if (!isMounted) return;
+      // 기존 티켓 배열과 face_verified 결과를 merge
+      const updatedTickets = tickets.map(ticket => {
+        const found = faceAuthResults.find(f => f.id === ticket.id);
+        return found ? { ...ticket, face_verified: found.face_verified } : ticket;
+      });
+      // 업데이트 직후 상태 로그
+      console.log('setTickets updated:', updatedTickets.map(t => ({ id: t.id, face_verified: t.face_verified, ticket_status: t.ticket_status })));
+      setTickets(updatedTickets);
+    });
     return () => {
       isMounted = false;
     };
@@ -368,8 +410,8 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
   let filteredTickets = tickets.filter(
     (ticket: any) =>
       ticket.ticket_status !== "null" &&
-      ticket.ticket_seat !== "null" &&
-      ticket.primaryButton !== "null"
+      ticket.ticket_seat !== "null"
+    // primaryButton !== "null" 필터링은 제거!
   );
 
   if (activeFilter === "예정") {
@@ -432,57 +474,33 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
     }
   };
 
-  const handlePrimaryButtonPress = (ticket: TicketType) => {
-    if (ticket.primaryButtonAction === "qr") {
-      handleQrPress(ticket);
-    } else if (ticket.primaryButtonAction === "verify" && navigation) {
-      navigation.navigate("FaceAuthScreen", {
-        fromMyTickets: true,
-        ticketId: ticket.id,
-        onAuthSuccess: async (ticketId: number) => {
-          try {
-            // 1. 티켓 상태 checked_in으로 변경
-            const res = await certifyTicket(ticketId);
-            // 2. 프론트 상태 즉시 반영
-            setTickets((prev: TicketType[]) =>
-              prev.map((t) =>
-                t.id === ticketId
-                  ? {
-                      ...t,
-                      ticket_status: res.ticket.ticket_status,
-                      ticket_statusText:
-                        res.ticket.ticket_status === "checked_in"
-                          ? "인증완료"
-                          : res.ticket.ticket_status,
-                      primaryButton:
-                        res.ticket.ticket_status === "checked_in"
-                          ? "QR코드 보기"
-                          : t.primaryButton,
-                      primaryButtonAction:
-                        res.ticket.ticket_status === "checked_in"
-                          ? "qr"
-                          : t.primaryButtonAction,
-                      verified_at:
-                        res.ticket.verified_at ?? new Date().toISOString(), // 응답값이 있으면 사용, 없으면 현재시간
-                    }
-                  : t
-              )
-            );
-            // 3. 필요시 서버에서 전체 동기화
-            const data = await getMyTickets();
-            const validTickets = data.filter(
-              (ticket) =>
-                ticket.id !== undefined &&
-                ticket.id !== null &&
-                ticket.id > 0 &&
-                !ticket.is_deleted
-            );
-            setTickets(validTickets.map(mapTicketToTicketType));
-          } catch (e) {
-            Alert.alert("상태 변경 실패", "티켓 상태 변경에 실패했습니다.");
-          }
-        },
-      });
+  const handlePrimaryButtonPress = async (ticket: TicketType) => {
+    try {
+      // 버튼 클릭 시마다 최신 face_verified 값을 API로 받아옴
+      const res = await getTicketFaceAuth(ticket.id);
+      const face_verified = res.data?.face_verified;
+      // ticket_status는 이미 최신 상태라고 가정
+      const status = ticket.ticket_status ?? "";
+
+      // 최신 face_verified 값에 따라 분기
+      if (face_verified === undefined) {
+        Alert.alert("로딩 중...", "얼굴 등록 상태를 불러오는 중입니다. 잠시 후 다시 시도해 주세요.");
+        return;
+      } else if (face_verified === false) {
+        navigation.navigate("FaceRegisterScreen", { ticketId: ticket.id });
+        return;
+      } else if (face_verified === true && status === "reserved") {
+        navigation.navigate("FaceAuthScreen", { ticketId: ticket.id });
+        return;
+      } else if (face_verified === true && status === "checked_in") {
+        handleQrPress(ticket);
+        return;
+      } else {
+        Alert.alert("알 수 없는 상태", "이 티켓은 현재 처리할 수 없는 상태입니다.");
+        return;
+      }
+    } catch (e) {
+      Alert.alert("오류", "티켓 정보를 불러오지 못했습니다.");
     }
   };
 
@@ -574,6 +592,43 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
     </>
   );
 }
+
+// 상태 박스 스타일 함수
+const getStatusBoxStyle = (statusBoxText: string) => {
+  let backgroundColor = '#FFF';
+  let textColor = '#222';
+  if (statusBoxText === '인증완료') {
+    backgroundColor = '#DCFCE7';
+    textColor = '#16A34A';
+  } else if (statusBoxText === '인증필요' || statusBoxText === '예매완료' || statusBoxText === '등록필요') {
+    backgroundColor = '#FFF9D6';
+    textColor = '#C59A18';
+  }
+  return {
+    box: {
+      backgroundColor,
+      borderRadius: 9999,
+      minWidth: 60,
+      minHeight: 20,
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+      justifyContent: 'center' as const,
+      alignItems: 'center' as const,
+      marginRight: 0,
+      marginLeft: 70,
+      alignSelf: 'flex-end' as const,
+      marginTop: 1,
+    },
+    text: {
+      color: textColor,
+      fontSize: 12,
+      fontWeight: 400 as const,
+      lineHeight: 16,
+      fontFamily: 'Roboto',
+      textAlign: 'center' as const,
+    },
+  };
+};
 
 const styles = StyleSheet.create({
   customHeader: {
