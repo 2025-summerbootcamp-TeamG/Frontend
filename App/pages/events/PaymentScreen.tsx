@@ -24,12 +24,18 @@ const STATUSBAR_HEIGHT =
 export default function PaymentScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute();
-  const { event, event_time, selected } = (route.params || {}) as {
+  const { event, event_time, selected, purchase_id, ticketIds, seatInfos: paramSeatInfos } = (route.params || {}) as {
     event: any;
     event_time?: any;
     selected?: string[];
-    purchaseId: string;
+    purchase_id?: number;
+    ticketIds?: number[];
+    seatInfos?: any[];
   };
+
+  // seatInfos는 paramSeatInfos로만 사용, undefined 방지
+  const seatInfos: any[] = paramSeatInfos || [];
+  console.log("seatInfos:", seatInfos);
 
   const [paymentMethod, setPaymentMethod] = useState("무통장입금");
   const [depositor, setDepositor] = useState("");
@@ -41,43 +47,14 @@ export default function PaymentScreen() {
   // 에러 메시지 상태 추가
   const [errorMsg, setErrorMsg] = useState("");
 
-  // 선택된 좌석 정보 추출 (여러 좌석 지원, zone명 분리 매칭)
-  let seatInfos: { zone: string; name: string; price: number }[] = [];
-  if (
-    event_time &&
-    Array.isArray(event_time.zones) &&
-    selected &&
-    selected.length > 0
-  ) {
-    for (const seatId of selected) {
-      const [zoneId, ...seatNameArr] = seatId.split("-");
-      const seatName = seatNameArr.join("-");
-      for (const zone of event_time.zones) {
-        if (zone.rank === zoneId) {
-          for (const seat of zone.seats) {
-            if (seat.seat_number === seatId || seat.seat_number === seatName) {
-              seatInfos.push({
-                zone: zone.rank,
-                name: seat.seat_number,
-                price: zone.price,
-              });
-            }
-          }
-        }
-      }
-    }
-  }
-  console.log("seatInfos:", seatInfos);
-
+  // 기존 seatInfos 추출 로직 전체 제거
   const seatPrice = seatInfos.reduce((sum, s) => sum + s.price, 0);
   const fee = 1000;
   const total = seatPrice + fee;
 
-  const purchaseId = "1"; // 또는 "test-id" 등 임의의 값
-  const tempTicketId = 1; // 임시로 지정한 티켓 고유 ID(실제 결제 후에는 서버에서 발급됨)
 
   // 결제 후 발급받은 티켓의 고유 ID를 저장하는 상태
-  const [ticketId, setTicketId] = useState<number | null>(null); // ticketId: 결제/예매가 완료된 티켓의 고유 식별자(서버에서 발급)
+  const [ticketIdsState, setTicketIdsState] = useState<number[] | null>(ticketIds || null); // 여러 티켓 ID 지원
 
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
@@ -205,7 +182,7 @@ export default function PaymentScreen() {
           <View style={styles.priceRow}>
             <Text style={styles.priceLabel}>
               {seatInfos.length > 0
-                ? seatInfos.map((s) => `${s.zone} 석 x 1`).join(", ")
+                ? seatInfos.map((s) => `${String(s['zone'])} 석 x 1`).join(", ")
                 : "좌석 미선택"}
             </Text>
             <Text style={styles.priceValue}>
@@ -256,19 +233,28 @@ export default function PaymentScreen() {
             }
             setErrorMsg("");
             try {
+              if (!purchase_id) {
+                setErrorMsg("구매 정보가 올바르지 않습니다. 다시 시도해 주세요.");
+                return;
+              }
               // payForTicket 함수 호출 (PayRequest 타입에 맞게 수정)
-              const result = await payForTicket(purchaseId, {
+              const result = await payForTicket(String(purchase_id), {
                 name: buyerName,
                 phone: buyerPhone,
                 email: buyerEmail,
               });
-              // 결제 성공 시 처리 (AxiosResponse 구조 반영)
-
-              setTicketId(result.data.ticketId); // 결제 API 응답에서 발급된 ticketId(티켓 고유 ID)를 상태로 저장
-              
-              navigation.navigate('내 티켓', { // 내 티켓 화면으로 이동
-                screen: 'FaceRegisterScreen', // FaceRegisterScreen으로 이동
-                params: { ticketId: result.data.ticketId, seatInfos } // ticketId: 임시로 1로 고정하여 전달, seatInfos: 선택한 좌석 정보 배열을 FaceRegisterScreen으로 전달
+              // 결제 성공 시 처리 (여러 티켓 ID 지원)
+              setTicketIdsState(result.data.ticketIds || result.data.ticket_ids || []); // ticketIds: 배열
+              navigation.navigate('내 티켓', {
+                screen: 'FaceRegisterScreen',
+                params: {
+                  event,
+                  event_time,
+                  selected,
+                  purchase_id,
+                  ticketIds,
+                  seatInfos,
+                },
               });
             } catch (e) {
               setErrorMsg("결제 처리 중 오류가 발생했습니다.");

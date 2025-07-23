@@ -9,7 +9,8 @@ import {
   FaceAuthResponse,
   Ticket,
   TicketDetail,
-  TicketCertificationResponse
+  TicketCertificationResponse,
+  ShareRequest
 } from "./Types";
 import type { AxiosResponse } from "axios";
 
@@ -80,13 +81,11 @@ export const TicketQRcode = async (
   ticketId: number) => {
   const response = await api.get(`tickets/${ticketId}/qr`);
   return response.data;
-): Promise<SaveFaceToDBResponse> => {
-  return await apiClient.patch(`tickets/${ticketId}/register/`, data);
 };
 
 export const ShareTicket = async (
     purchaseId: string,
     data: ShareRequest
   ) => {
-    return apiClient.post(`tickets/${purchaseId}/share/`, data);
+    return api.post(`tickets/${purchaseId}/share/`, data);
   };

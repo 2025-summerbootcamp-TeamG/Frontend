@@ -34,6 +34,16 @@ export default function FaceRegisterScreen({ navigation, route }: any) {
   const selectedSeats = route?.params?.selected_seats || []; // 선택된 좌석 정보
   const seatInfos = route?.params?.seatInfos || []; // 좌석 상세 정보
 
+  useEffect(() => {
+    console.log('FaceRegisterScreen params:', route?.params);
+    console.log('event:', route?.params?.event);
+    console.log('event_time:', route?.params?.event_time);
+    console.log('selected:', route?.params?.selected);
+    console.log('purchase_id:', route?.params?.purchase_id);
+    console.log('ticketIds:', route?.params?.ticketIds);
+    console.log('seatInfos:', route?.params?.seatInfos);
+  }, [route?.params]);
+
   // 카메라 권한이 없을 때 권한 요청 UI 표시
   if (!permission) return <View />;
   if (!permission.granted) {
