@@ -156,7 +156,7 @@ export default function SeatMap({
   }
 
   const handleSelect = (seat: { id: string; name: string }) => {
-    const apiSeatData = apiSeatsMap.get(seat.name);
+    const apiSeatData = apiSeatsMap.get(seat.id);
 
     if (
       apiSeatData?.seat_status === "booked" ||
@@ -207,7 +207,7 @@ export default function SeatMap({
           </SvgText>
           {seatSections.flatMap((section) =>
             section.seats.map((seat) => {
-              const apiSeatData = apiSeatsMap.get(seat.name);
+              const apiSeatData = apiSeatsMap.get(seat.id);
               const isReserved =
                 apiSeatData?.seat_status === "booked" ||
                 apiSeatData?.seat_status === "reserved";
