@@ -48,15 +48,6 @@ export default function FaceRegisterScreen({ navigation, route }: any) {
 
   useEffect(() => {
     // 기존 로그 출력 유지
-    // 생체인증 자동 실행
-    const runBiometric = async () => {
-      setError("");
-      setLoading(true);
-      try {
-        const hasHardware = await LocalAuthentication.hasHardwareAsync();
-        const isEnrolled = await LocalAuthentication.isEnrolledAsync();
-        if (!hasHardware || !isEnrolled) {
-          setError("생체인증이 지원되지 않거나 등록되어 있지 않습니다.");
           setLoading(false);
           return;
         }
