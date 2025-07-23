@@ -48,19 +48,6 @@ export default function FaceRegisterScreen({ navigation, route }: any) {
 
   useEffect(() => {
     // 기존 로그 출력 유지
-    console.log('FaceRegisterScreen params:', route?.params);
-    console.log('event:', route?.params?.event);
-    console.log('event_time:', route?.params?.event_time);
-    console.log('selected:', route?.params?.selected);
-    console.log('purchase_id:', route?.params?.purchase_id);
-    console.log('ticketIds:', route?.params?.ticketIds);
-    console.log('seatInfos:', route?.params?.seatInfos);
-    console.log('ticketId:', ticketId); // 추가: ticketId 값 로그 출력
-    // 안드로이드에서만 생체인증 실행, 그 외는 바로 통과
-    if (Platform.OS !== 'android') {
-      setBiometricPassed(true);
-      return;
-    }
     // 생체인증 자동 실행
     const runBiometric = async () => {
       setError("");
