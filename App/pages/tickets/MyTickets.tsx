@@ -17,8 +17,13 @@ import { useFocusEffect } from "@react-navigation/native";
 import LoginModal from "../user/LoginModal";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import { getMyTickets, getTicketDetail, getTicketFaceAuth, certifyTicket, TicketQRcode } from "../../services/TicketService";
-
+import {
+  getMyTickets,
+  getTicketDetail,
+  getTicketFaceAuth,
+  certifyTicket,
+  TicketQRcode,
+} from "../../services/TicketService";
 
 // 티켓 카드 컴포넌트 (각 티켓 정보를 카드 형태로 렌더링)
 interface TicketCardProps {
@@ -168,6 +173,7 @@ export interface TicketType {
   reservationNo?: string;
   authDate?: string;
   verified_at?: string; // 추가
+  is_deleted?: boolean; // 추가
 }
 function mapTicketToTicketType(ticket: any): TicketType {
   let ticket_statusText = ticket.ticket_statusText;
@@ -177,18 +183,24 @@ function mapTicketToTicketType(ticket: any): TicketType {
   // 목데이터에 값이 없으면 ticket_status 기준으로 fallback
   if (!ticket_statusText) {
     if (ticket.ticket_status === "pending") ticket_statusText = "인증필요";
-    else if (ticket.ticket_status === "reserved") ticket_statusText = "예매완료";
-    else if (["verified", "checked_in"].includes(ticket.ticket_status)) ticket_statusText = "인증완료";
+    else if (ticket.ticket_status === "reserved")
+      ticket_statusText = "예매완료";
+    else if (["verified", "checked_in"].includes(ticket.ticket_status))
+      ticket_statusText = "인증완료";
     else ticket_statusText = ticket.ticket_status;
   }
   if (!primaryButton) {
-    if (["pending", "reserved"].includes(ticket.ticket_status)) primaryButton = "얼굴 인증하기";
-    else if (["verified", "checked_in"].includes(ticket.ticket_status)) primaryButton = "QR코드 보기";
+    if (["pending", "reserved"].includes(ticket.ticket_status))
+      primaryButton = "얼굴 인증하기";
+    else if (["verified", "checked_in"].includes(ticket.ticket_status))
+      primaryButton = "QR코드 보기";
     else primaryButton = "";
   }
   if (!primaryButtonAction) {
-    if (["pending", "reserved"].includes(ticket.ticket_status)) primaryButtonAction = "verify";
-    else if (["verified", "checked_in"].includes(ticket.ticket_status)) primaryButtonAction = "qr";
+    if (["pending", "reserved"].includes(ticket.ticket_status))
+      primaryButtonAction = "verify";
+    else if (["verified", "checked_in"].includes(ticket.ticket_status))
+      primaryButtonAction = "qr";
     else primaryButtonAction = "";
   }
 
@@ -198,7 +210,9 @@ function mapTicketToTicketType(ticket: any): TicketType {
     artist: ticket.artist ?? "",
     date: ticket.event_date ?? ticket.date ?? ticket.booked_at ?? "",
     location: ticket.event_location ?? ticket.location ?? "",
-    price: ticket.ticket_price ? Number(ticket.ticket_price) : ticket.price ?? 0,
+    price: ticket.ticket_price
+      ? Number(ticket.ticket_price)
+      : ticket.price ?? 0,
     image_url: ticket.image_url ?? "",
     seat_number: ticket.seat_number ?? "",
     seat_grade: ticket.seat_rank ?? ticket.seat_grade ?? "",
@@ -208,6 +222,7 @@ function mapTicketToTicketType(ticket: any): TicketType {
     primaryButton,
     primaryButtonAction,
     verified_at: ticket.verified_at ?? new Date().toISOString(), // 추가
+    is_deleted: ticket.is_deleted ?? false, // 추가
   };
 }
 
@@ -240,7 +255,10 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
       const data = await getMyTickets();
       const validTickets = data.filter(
         (ticket) =>
-          ticket.id !== undefined && ticket.id !== null && ticket.id > 0
+          ticket.id !== undefined &&
+          ticket.id !== null &&
+          ticket.id > 0 &&
+          !ticket.is_deleted
       );
       setTickets(validTickets.map(mapTicketToTicketType));
     } catch (e) {
@@ -267,7 +285,10 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
             const data = await getMyTickets();
             const validTickets = data.filter(
               (ticket) =>
-                ticket.id !== undefined && ticket.id !== null && ticket.id > 0
+                ticket.id !== undefined &&
+                ticket.id !== null &&
+                ticket.id > 0 &&
+                !ticket.is_deleted
             );
             setTickets(validTickets.map(mapTicketToTicketType));
           } catch (e) {
@@ -298,7 +319,9 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
       if (isMounted) setTickets(updatedTickets);
     };
     fetchFaceAuthStatus();
-    return () => { isMounted = false; };
+    return () => {
+      isMounted = false;
+    };
   }, [tickets.length]);
 
   // 티켓 목록을 state로 관리
@@ -368,7 +391,7 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
       setQrData(data);
       setSelectedTicket(ticket);
       setQrModalVisible(true);
-    } catch (e : any) {
+    } catch (e: any) {
       setQrError("QR 코드 생성에 실패했습니다.");
       setQrModalVisible(true);
     } finally {
@@ -427,10 +450,20 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
                   ? {
                       ...t,
                       ticket_status: res.ticket.ticket_status,
-                      ticket_statusText: res.ticket.ticket_status === "checked_in" ? "인증완료" : res.ticket.ticket_status,
-                      primaryButton: res.ticket.ticket_status === "checked_in" ? "QR코드 보기" : t.primaryButton,
-                      primaryButtonAction: res.ticket.ticket_status === "checked_in" ? "qr" : t.primaryButtonAction,
-                      verified_at: res.ticket.verified_at ?? new Date().toISOString(), // 응답값이 있으면 사용, 없으면 현재시간
+                      ticket_statusText:
+                        res.ticket.ticket_status === "checked_in"
+                          ? "인증완료"
+                          : res.ticket.ticket_status,
+                      primaryButton:
+                        res.ticket.ticket_status === "checked_in"
+                          ? "QR코드 보기"
+                          : t.primaryButton,
+                      primaryButtonAction:
+                        res.ticket.ticket_status === "checked_in"
+                          ? "qr"
+                          : t.primaryButtonAction,
+                      verified_at:
+                        res.ticket.verified_at ?? new Date().toISOString(), // 응답값이 있으면 사용, 없으면 현재시간
                     }
                   : t
               )
@@ -438,7 +471,11 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
             // 3. 필요시 서버에서 전체 동기화
             const data = await getMyTickets();
             const validTickets = data.filter(
-              (ticket) => ticket.id !== undefined && ticket.id !== null && ticket.id > 0
+              (ticket) =>
+                ticket.id !== undefined &&
+                ticket.id !== null &&
+                ticket.id > 0 &&
+                !ticket.is_deleted
             );
             setTickets(validTickets.map(mapTicketToTicketType));
           } catch (e) {

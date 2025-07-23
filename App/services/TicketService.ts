@@ -10,6 +10,7 @@ import {
   Ticket,
   TicketDetail,
   TicketCertificationResponse,
+
   ShareRequest
 } from "./Types";
 import type { AxiosResponse } from "axios";
@@ -61,7 +62,7 @@ export async function getTicketDetail(ticketId: number): Promise<TicketDetail> {
 
 // 티켓 취소 (로그인 필요)
 export async function cancelTicket(ticketId: number): Promise<TicketDetail> {
-  const res = await api.patch(`tickets/${ticketId}/`);
+  const res = await api.delete(`tickets/${ticketId}/`);
   return res.data;
 }
 
@@ -72,13 +73,14 @@ export async function getTicketFaceAuth(ticketId: number) {
 }
 
 // 티켓 상태 checked_in으로 변경
-export async function certifyTicket(ticketId: number): Promise<TicketCertificationResponse> {
+export async function certifyTicket(
+  ticketId: number
+): Promise<TicketCertificationResponse> {
   const res = await api.patch(`tickets/${ticketId}/certification/`);
   return res.data;
 }
 
-export const TicketQRcode = async (
-  ticketId: number) => {
+export const TicketQRcode = async (ticketId: number) => {
   const response = await api.get(`tickets/${ticketId}/qr`);
   return response.data;
 };
