@@ -21,8 +21,16 @@ function extractMessage(res: any): string {
 }
 
 export default function FaceRegisterScreen({ navigation, route }: any) {
-  // 티켓 ID 및 좌석 정보 등 route 파라미터에서 추출
-  const ticketId = route?.params?.ticketId;
+  // PaymentScreen에서 받은 파라미터들 모두 추출
+  const {
+    event,
+    event_time,
+    selected,
+    purchase_id,
+    ticketIds = [],
+    seatInfos = [],
+  } = route?.params || {};
+  const ticketId = ticketIds.length > 0 ? ticketIds[0] : null;
   const [modalVisible, setModalVisible] = useState(false); // 모달 표시 여부
   const [isSuccess, setIsSuccess] = useState(true); // 등록 성공/실패 여부
   const cameraRef = useRef<any>(null); // 카메라 ref
@@ -31,8 +39,6 @@ export default function FaceRegisterScreen({ navigation, route }: any) {
   const [error, setError] = useState(""); // 에러 메시지
   const [successMessage, setSuccessMessage] = useState(''); // 성공 메시지
   const [errorMessage, setErrorMessage] = useState(''); // 실패 메시지
-  const selectedSeats = route?.params?.selected_seats || []; // 선택된 좌석 정보
-  const seatInfos = route?.params?.seatInfos || []; // 좌석 상세 정보
 
   useEffect(() => {
     console.log('FaceRegisterScreen params:', route?.params);
@@ -215,9 +221,15 @@ export default function FaceRegisterScreen({ navigation, route }: any) {
                   if (seatInfos.length >= 2) {
                     // 좌석 정보가 2개 이상인 경우(동반자 좌석이 있는 경우)
                     // CompanionRegisterScreen(동반자 등록 화면)으로 이동
-                    // ticketId: 현재 티켓의 고유 ID
-                    // seatInfos: 선택된 좌석들의 상세 정보 배열
-                    navigation.navigate('CompanionRegisterScreen', { ticketId, seatInfos });
+                    // PaymentScreen에서 받았던 파라미터들을 그대로 넘김
+                    navigation.navigate('CompanionRegisterScreen', {
+                      event,
+                      event_time,
+                      selected,
+                      purchase_id,
+                      ticketIds,
+                      seatInfos,
+                    });
                   } else {
                     // 좌석이 1개뿐인 경우(동반자 없음)
                     // MyTickets(내 티켓 목록) 화면으로 이동
