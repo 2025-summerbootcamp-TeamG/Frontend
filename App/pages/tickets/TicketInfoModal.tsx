@@ -104,7 +104,12 @@ export default function TicketInfoModal({
     },
     {
       label: "인증 일시",
-      value: (ticket as any).verified_at || "NULL",
+      value:
+        ticket.ticket_status === "reserved"
+          ? "얼굴 인증 안됨"
+          : ticket.verified_at
+          ? ticket.verified_at
+          : "인증 일시 없음",
     },
   ];
 

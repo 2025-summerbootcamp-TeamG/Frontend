@@ -15,14 +15,17 @@ export default function HomeScreen() {
   const [newEvents, setNewEvents] = useState<Event[]>([]);
 
   useEffect(() => {
+    console.time("[홈] 행사 API 요청");
     getEvents({ page: 1, limit: 50 })
       .then((res) => {
-        // 인기: 조회수 내림차순 (Number로 변환)
+        console.timeEnd("[홈] 행사 API 요청");
+        console.time("[홈] 인기 정렬");
         const sorted = [...res.events].sort(
           (a, b) => Number(b.view_count) - Number(a.view_count)
         );
         const popular = sorted.slice(0, 4);
-        // 신규: created_at 내림차순
+        console.timeEnd("[홈] 인기 정렬");
+        console.time("[홈] 신규 정렬");
         const newList = [...res.events]
           .sort((a, b) => {
             const dateA = new Date(a.created_at).getTime();
@@ -30,8 +33,13 @@ export default function HomeScreen() {
             return dateB - dateA;
           })
           .slice(0, 4);
+        console.timeEnd("[홈] 신규 정렬");
+        console.time("[홈] setPopularEvents");
         setPopularEvents(popular);
+        console.timeEnd("[홈] setPopularEvents");
+        console.time("[홈] setNewEvents");
         setNewEvents(newList);
+        console.timeEnd("[홈] setNewEvents");
       })
       .catch(() => {
         setPopularEvents([]);
@@ -46,7 +54,8 @@ export default function HomeScreen() {
     }
   };
 
-  return (
+  console.time("[홈] 렌더링");
+  const render = (
     <>
       <MainHeader />
       <ScrollView
@@ -73,4 +82,6 @@ export default function HomeScreen() {
       </ScrollView>
     </>
   );
+  console.timeEnd("[홈] 렌더링");
+  return render;
 }
