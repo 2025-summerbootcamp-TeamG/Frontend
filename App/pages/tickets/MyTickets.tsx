@@ -25,6 +25,13 @@ import {
   TicketQRcode,
 } from "../../services/TicketService";
 
+// 좌석 번호에서 '-' 이후의 값만 추출하는 함수 (컴포넌트 바깥에 위치)
+const displaySeatNumber = (seat_number: string) => {
+  if (!seat_number) return "";
+  const parts = seat_number.split("-");
+  return parts.length > 1 ? parts[1] : seat_number;
+};
+
 // 티켓 카드 컴포넌트 (각 티켓 정보를 카드 형태로 렌더링)
 interface TicketCardProps {
   ticket: TicketType & { [key: string]: any };
@@ -94,8 +101,13 @@ const TicketCard = ({
         <View style={styles.marginWrap1}>
           <View style={styles.p30}>
             <Text style={styles.cardInfo}>
-              {(ticket.seat_grade || "") +
-                (ticket.seat_number ? " " + ticket.seat_number : "")}
+              {ticket.seat_grade && ticket.seat_number
+                ? `${ticket.seat_grade}-${displaySeatNumber(
+                    ticket.seat_number
+                  )}`
+                : ticket.seat_number
+                ? displaySeatNumber(ticket.seat_number)
+                : ""}
             </Text>
           </View>
         </View>
@@ -258,7 +270,9 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
           ticket.id !== undefined &&
           ticket.id !== null &&
           ticket.id > 0 &&
-          !ticket.is_deleted
+          !ticket.is_deleted &&
+          (ticket.ticket_status === "reserved" ||
+            ticket.ticket_status === "checked_in")
       );
       setTickets(validTickets.map(mapTicketToTicketType));
     } catch (e) {
@@ -288,7 +302,9 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
                 ticket.id !== undefined &&
                 ticket.id !== null &&
                 ticket.id > 0 &&
-                !ticket.is_deleted
+                !ticket.is_deleted &&
+                (ticket.ticket_status === "reserved" ||
+                  ticket.ticket_status === "checked_in")
             );
             setTickets(validTickets.map(mapTicketToTicketType));
           } catch (e) {
@@ -410,12 +426,13 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
         date: detail.event_date,
         location: detail.event_location,
         seat_grade: detail.seat_rank,
-        seat_number: detail.seat_number,
+        seat_number: displaySeatNumber(detail.seat_number),
         ticket_status: ticket.ticket_status, // 목록에서 가져옴
         ticket_statusText: ticket.ticket_statusText, // 목록에서 가져옴
         face_verified: detail.face_verified,
         image_url: detail.image_url,
         price: Number(detail.ticket_price) || 0,
+        verified_at: detail.verified_at, // 인증 일시를 명확히 할당
         // 기타 필요한 필드 추가
         // reservationNo: detail.reservation_number,
         // total_price: detail.total_price,
@@ -475,7 +492,9 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
                 ticket.id !== undefined &&
                 ticket.id !== null &&
                 ticket.id > 0 &&
-                !ticket.is_deleted
+                !ticket.is_deleted &&
+                (ticket.ticket_status === "reserved" ||
+                  ticket.ticket_status === "checked_in")
             );
             setTickets(validTickets.map(mapTicketToTicketType));
           } catch (e) {
