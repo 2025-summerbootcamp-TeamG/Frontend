@@ -9,6 +9,7 @@ import {
   Image,
   Alert,
   ActivityIndicator,
+  Platform,
 } from "react-native";
 import MainHeader from "../../components/common/MainHeader";
 import QRCodeModal from "./QRCodeModal";
@@ -25,6 +26,7 @@ import {
   certifyTicket,
   TicketQRcode,
 } from "../../services/TicketService";
+import * as LocalAuthentication from 'expo-local-authentication';
 
 // 좌석 번호에서 '-' 이후의 값만 추출하는 함수 (컴포넌트 바깥에 위치)
 const displaySeatNumber = (seat_number: string) => {
@@ -503,102 +505,18 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
     }
   };
 
-  const handlePrimaryButtonPress = (ticket: TicketType) => {
+  const handlePrimaryButtonPress = async (ticket: TicketType) => {
     if (ticket.primaryButtonAction === "qr") {
       handleQrPress(ticket);
     } else if (ticket.primaryButtonAction === "verify" && navigation) {
-      navigation.navigate("FaceAuthScreen", {
-        fromMyTickets: true,
-        ticketId: ticket.id,
-        onAuthSuccess: async (ticketId: number) => {
-          try {
-            // 1. 티켓 상태 checked_in으로 변경
-            const res = await certifyTicket(ticketId);
-            // 2. 프론트 상태 즉시 반영
-            setTickets((prev: TicketType[]) =>
-              prev.map((t) =>
-                t.id === ticketId
-                  ? {
-                      ...t,
-                      ticket_status: res.ticket.ticket_status,
-                      ticket_statusText:
-                        res.ticket.ticket_status === "checked_in"
-                          ? "인증완료"
-                          : res.ticket.ticket_status,
-                      primaryButton:
-                        res.ticket.ticket_status === "checked_in"
-                          ? "QR코드 보기"
-                          : t.primaryButton,
-                      primaryButtonAction:
-                        res.ticket.ticket_status === "checked_in"
-                          ? "qr"
-                          : t.primaryButtonAction,
-                      verified_at:
-                        res.ticket.verified_at ?? new Date().toISOString(),
-                    }
-                  : t
-              )
-            );
-            // 3. 필요시 서버에서 전체 동기화
-            const data = await getMyTickets();
-            const validTickets = data.filter(
-              (ticket) =>
-                ticket.id !== undefined &&
-                ticket.id !== null &&
-                ticket.id > 0 &&
-                !ticket.is_deleted &&
-                (ticket.ticket_status === "reserved" ||
-                  ticket.ticket_status === "checked_in")
-            );
-            setTickets(validTickets.map(mapTicketToTicketType));
-          } catch (e) {
-            Alert.alert("상태 변경 실패", "티켓 상태 변경에 실패했습니다.");
-          }
-        },
-      });
-    } else if (ticket.primaryButtonAction === "register" && navigation) {
-      navigation.navigate("FaceRegisterScreen", { ticketId: ticket.id });
-    } else {
-      // fallback: face_verified와 status로 분기
-      const status = ticket.ticket_status ?? "";
-      const verified = ticket.face_verified;
-      if (verified === undefined) {
-        Alert.alert("로딩 중...", "얼굴 등록 상태를 불러오는 중입니다. 잠시 후 다시 시도해 주세요.");
-        return;
-      } else if (verified === false) {
-        navigation.navigate("FaceRegisterScreen", { ticketId: ticket.id });
-        return;
-      } else if (verified === true && status === "reserved") {
+      // 생체인증 및 certifyTicket 호출 코드 제거, 바로 얼굴 인증 화면으로 이동
+      const goFaceAuth = () => {
         navigation.navigate("FaceAuthScreen", {
           fromMyTickets: true,
           ticketId: ticket.id,
           onAuthSuccess: async (ticketId: number) => {
+            // 인증 성공 후 티켓 목록만 갱신 (certifyTicket 호출 X)
             try {
-              const res = await certifyTicket(ticketId);
-              setTickets((prev: TicketType[]) =>
-                prev.map((t) =>
-                  t.id === ticketId
-                    ? {
-                        ...t,
-                        ticket_status: res.ticket.ticket_status,
-                        ticket_statusText:
-                          res.ticket.ticket_status === "checked_in"
-                            ? "인증완료"
-                            : res.ticket.ticket_status,
-                        primaryButton:
-                          res.ticket.ticket_status === "checked_in"
-                            ? "QR코드 보기"
-                            : t.primaryButton,
-                        primaryButtonAction:
-                          res.ticket.ticket_status === "checked_in"
-                            ? "qr"
-                            : t.primaryButtonAction,
-                        verified_at:
-                          res.ticket.verified_at ?? new Date().toISOString(),
-                      }
-                    : t
-                )
-              );
               const data = await getMyTickets();
               const validTickets = data.filter(
                 (ticket) =>
@@ -615,12 +533,55 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
             }
           },
         });
-        return;
-      } else if (verified === true && status === "checked_in") {
-        handleQrPress(ticket);
-        return;
+      };
+      if (Platform.OS === 'ios') {
+        setTimeout(goFaceAuth, 400);
       } else {
-        Alert.alert("알 수 없는 상태", "이 티켓은 현재 처리할 수 없는 상태입니다.");
+        goFaceAuth();
+      }
+    } else if (ticket.primaryButtonAction === "register" && navigation) {
+      navigation.navigate("FaceRegisterScreen", { ticketId: ticket.id });
+    } else {
+      // fallback: face_verified와 status로 분기
+      const status = ticket.ticket_status ?? "";
+      const verified = ticket.face_verified;
+      if (verified === undefined) {
+        Alert.alert("로딩 중...", "얼굴 등록 상태를 불러오는 중입니다. 잠시 후 다시 시도해 주세요.");
+        return;
+      } else if (verified === false) {
+        navigation.navigate("FaceRegisterScreen", { ticketId: ticket.id });
+        return;
+      } else if (verified === true && status === "reserved") {
+        // 생체인증 및 certifyTicket 호출 코드 제거, 바로 얼굴 인증 화면으로 이동
+        const goFaceAuth = () => {
+          navigation.navigate("FaceAuthScreen", {
+            fromMyTickets: true,
+            ticketId: ticket.id,
+            onAuthSuccess: async (ticketId: number) => {
+              // 인증 성공 후 티켓 목록만 갱신 (certifyTicket 호출 X)
+              try {
+                const data = await getMyTickets();
+                const validTickets = data.filter(
+                  (ticket) =>
+                    ticket.id !== undefined &&
+                    ticket.id !== null &&
+                    ticket.id > 0 &&
+                    !ticket.is_deleted &&
+                    (ticket.ticket_status === "reserved" ||
+                      ticket.ticket_status === "checked_in")
+                );
+                setTickets(validTickets.map(mapTicketToTicketType));
+              } catch (e) {
+                Alert.alert("상태 변경 실패", "티켓 상태 변경에 실패했습니다.");
+              }
+            },
+          });
+        };
+        if (Platform.OS === 'ios') {
+          setTimeout(goFaceAuth, 400);
+        } else {
+          goFaceAuth();
+        }
         return;
       }
     }
