@@ -29,6 +29,15 @@ export default function FaceAuthScreen({ navigation, route }: any) {
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [isCameraReady, setIsCameraReady] = useState(Platform.OS !== 'ios');
+
+  useEffect(() => {
+    if (Platform.OS === 'ios') {
+      // iOS는 진입 시 400ms 후 카메라 mount
+      const timer = setTimeout(() => setIsCameraReady(true), 400);
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
   useEffect(() => {
     if (Platform.OS === "android") {
@@ -143,33 +152,41 @@ export default function FaceAuthScreen({ navigation, route }: any) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.desc1}>본인 확인을 위한 얼굴 인증 절차입니다.</Text>
-      <Text style={styles.desc2}>
-        얼굴이 가이드라인 안에 들어오도록 위치시켜 주세요.
-      </Text>
-      <View style={styles.guideBox}>
-        <View style={styles.dottedRect}>
-          <CameraView style={styles.camera} facing="front" ref={cameraRef} />
-          <View style={styles.oval} pointerEvents="none" />
-          <View style={styles.guideTextBox}>
-            <Text style={styles.guideText}>
-              카메라를 정면으로 바라봐 주세요.
-            </Text>
-          </View>
+      {!isCameraReady ? (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <Text>카메라 준비 중...</Text>
         </View>
-      </View>
-      {error ? (
-        <Text style={{ color: "red", textAlign: "center" }}>{error}</Text>
-      ) : null}
-      <TouchableOpacity
-        style={styles.button}
-        onPress={handleAuth}
-        disabled={loading}
-      >
-        <Text style={styles.buttonText}>
-          {loading ? "인증 중..." : "얼굴 인증"}
-        </Text>
-      </TouchableOpacity>
+      ) : (
+        <>
+          <Text style={styles.desc1}>본인 확인을 위한 얼굴 인증 절차입니다.</Text>
+          <Text style={styles.desc2}>
+            얼굴이 가이드라인 안에 들어오도록 위치시켜 주세요.
+          </Text>
+          <View style={styles.guideBox}>
+            <View style={styles.dottedRect}>
+              <CameraView style={styles.camera} facing="front" ref={cameraRef} />
+              <View style={styles.oval} pointerEvents="none" />
+              <View style={styles.guideTextBox}>
+                <Text style={styles.guideText}>
+                  카메라를 정면으로 바라봐 주세요.
+                </Text>
+              </View>
+            </View>
+          </View>
+          {error ? (
+            <Text style={{ color: "red", textAlign: "center" }}>{error}</Text>
+          ) : null}
+          <TouchableOpacity
+            style={styles.button}
+            onPress={handleAuth}
+            disabled={loading}
+          >
+            <Text style={styles.buttonText}>
+              {loading ? "인증 중..." : "얼굴 인증"}
+            </Text>
+          </TouchableOpacity>
+        </>
+      )}
       <Modal
         visible={modalVisible}
         transparent
