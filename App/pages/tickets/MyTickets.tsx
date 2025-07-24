@@ -9,6 +9,7 @@ import {
   Image,
   Alert,
   ActivityIndicator,
+  Platform,
 } from "react-native";
 import MainHeader from "../../components/common/MainHeader";
 import QRCodeModal from "./QRCodeModal";
@@ -522,89 +523,91 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
         Alert.alert("생체인증 실패", "생체인증에 실패했습니다.");
         return;
       }
-      // 성공 시 얼굴 인증 화면으로 이동
-      navigation.navigate("FaceAuthScreen", {
-        fromMyTickets: true,
-        ticketId: ticket.id,
-        onAuthSuccess: async (ticketId: number) => {
-          try {
-            // 1. 티켓 상태 checked_in으로 변경
-            const res = await certifyTicket(ticketId);
-            // 2. 프론트 상태 즉시 반영
-            setTickets((prev: TicketType[]) =>
-              prev.map((t) =>
-                t.id === ticketId
-                  ? {
-                      ...t,
-                      ticket_status: res.ticket.ticket_status,
-                      ticket_statusText:
-                        res.ticket.ticket_status === "checked_in"
-                          ? "인증완료"
-                          : res.ticket.ticket_status,
-                      primaryButton:
-                        res.ticket.ticket_status === "checked_in"
-                          ? "QR코드 보기"
-                          : t.primaryButton,
-                      primaryButtonAction:
-                        res.ticket.ticket_status === "checked_in"
-                          ? "qr"
-                          : t.primaryButtonAction,
-                      verified_at:
-                        res.ticket.verified_at ?? new Date().toISOString(),
-                    }
-                  : t
-              )
-            );
-            // 3. 필요시 서버에서 전체 동기화
-            const data = await getMyTickets();
-            const validTickets = data.filter(
-              (ticket) =>
-                ticket.id !== undefined &&
-                ticket.id !== null &&
-                ticket.id > 0 &&
-                !ticket.is_deleted &&
-                (ticket.ticket_status === "reserved" ||
-                  ticket.ticket_status === "checked_in")
-            );
-            setTickets(validTickets.map(mapTicketToTicketType));
-          } catch (e) {
-            Alert.alert("상태 변경 실패", "티켓 상태 변경에 실패했습니다.");
-          }
-        },
-      });
-    } else if (ticket.primaryButtonAction === "register" && navigation) {
-      navigation.navigate("FaceRegisterScreen", { ticketId: ticket.id });
-    } else {
-      // fallback: face_verified와 status로 분기
-      const status = ticket.ticket_status ?? "";
-      const verified = ticket.face_verified;
-      if (verified === undefined) {
-        Alert.alert("로딩 중...", "얼굴 등록 상태를 불러오는 중입니다. 잠시 후 다시 시도해 주세요.");
-        return;
-      } else if (verified === false) {
-        navigation.navigate("FaceRegisterScreen", { ticketId: ticket.id });
-        return;
-      } else if (verified === true && status === "reserved") {
-        // 생체 인식 먼저 실행
-        const hasHardware = await LocalAuthentication.hasHardwareAsync();
-        const isEnrolled = await LocalAuthentication.isEnrolledAsync();
-        if (!hasHardware || !isEnrolled) {
-          Alert.alert("생체인증 불가", "생체인증이 지원되지 않거나 등록되어 있지 않습니다.");
-          return;
-        }
-        const result = await LocalAuthentication.authenticateAsync({
-          promptMessage: "생체인증을 진행해 주세요.",
-        });
-        if (!result.success) {
-          Alert.alert("생체인증 실패", "생체인증에 실패했습니다.");
-          return;
-        }
+      // iOS에서는 navigation 전에 400ms 딜레이
+      if (Platform.OS === 'ios') {
+        setTimeout(() => {
+          navigation.navigate("FaceAuthScreen", {
+            fromMyTickets: true,
+            ticketId: ticket.id,
+            onAuthSuccess: async (ticketId: number) => {
+              try {
+                const res = await certifyTicket(ticketId);
+                if (!res || !res.ticket) {
+                  const data = await getMyTickets();
+                  const validTickets = data.filter(
+                    (ticket) =>
+                      ticket.id !== undefined &&
+                      ticket.id !== null &&
+                      ticket.id > 0 &&
+                      !ticket.is_deleted &&
+                      (ticket.ticket_status === "reserved" ||
+                        ticket.ticket_status === "checked_in")
+                  );
+                  setTickets(validTickets.map(mapTicketToTicketType));
+                  return;
+                }
+                setTickets((prev: TicketType[]) =>
+                  prev.map((t) =>
+                    t.id === ticketId
+                      ? {
+                          ...t,
+                          ticket_status: res.ticket.ticket_status,
+                          ticket_statusText:
+                            res.ticket.ticket_status === "checked_in"
+                              ? "인증완료"
+                              : res.ticket.ticket_status,
+                          primaryButton:
+                            res.ticket.ticket_status === "checked_in"
+                              ? "QR코드 보기"
+                              : t.primaryButton,
+                          primaryButtonAction:
+                            res.ticket.ticket_status === "checked_in"
+                              ? "qr"
+                              : t.primaryButtonAction,
+                          verified_at:
+                            res.ticket.verified_at ?? new Date().toISOString(),
+                        }
+                      : t
+                  )
+                );
+                const data = await getMyTickets();
+                const validTickets = data.filter(
+                  (ticket) =>
+                    ticket.id !== undefined &&
+                    ticket.id !== null &&
+                    ticket.id > 0 &&
+                    !ticket.is_deleted &&
+                    (ticket.ticket_status === "reserved" ||
+                      ticket.ticket_status === "checked_in")
+                );
+                setTickets(validTickets.map(mapTicketToTicketType));
+              } catch (e) {
+                Alert.alert("상태 변경 실패", "티켓 상태 변경에 실패했습니다.");
+              }
+            },
+          });
+        }, 400);
+      } else {
         navigation.navigate("FaceAuthScreen", {
           fromMyTickets: true,
           ticketId: ticket.id,
           onAuthSuccess: async (ticketId: number) => {
             try {
               const res = await certifyTicket(ticketId);
+              if (!res || !res.ticket) {
+                const data = await getMyTickets();
+                const validTickets = data.filter(
+                  (ticket) =>
+                    ticket.id !== undefined &&
+                    ticket.id !== null &&
+                    ticket.id > 0 &&
+                    !ticket.is_deleted &&
+                    (ticket.ticket_status === "reserved" ||
+                      ticket.ticket_status === "checked_in")
+                );
+                setTickets(validTickets.map(mapTicketToTicketType));
+                return;
+              }
               setTickets((prev: TicketType[]) =>
                 prev.map((t) =>
                   t.id === ticketId
@@ -645,12 +648,159 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
             }
           },
         });
+      }
+    } else if (ticket.primaryButtonAction === "register" && navigation) {
+      navigation.navigate("FaceRegisterScreen", { ticketId: ticket.id });
+    } else {
+      // fallback: face_verified와 status로 분기
+      const status = ticket.ticket_status ?? "";
+      const verified = ticket.face_verified;
+      if (verified === undefined) {
+        Alert.alert("로딩 중...", "얼굴 등록 상태를 불러오는 중입니다. 잠시 후 다시 시도해 주세요.");
         return;
-      } else if (verified === true && status === "checked_in") {
-        handleQrPress(ticket);
+      } else if (verified === false) {
+        navigation.navigate("FaceRegisterScreen", { ticketId: ticket.id });
         return;
-      } else {
-        Alert.alert("알 수 없는 상태", "이 티켓은 현재 처리할 수 없는 상태입니다.");
+      } else if (verified === true && status === "reserved") {
+        // 생체 인식 먼저 실행
+        const hasHardware = await LocalAuthentication.hasHardwareAsync();
+        const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+        if (!hasHardware || !isEnrolled) {
+          Alert.alert("생체인증 불가", "생체인증이 지원되지 않거나 등록되어 있지 않습니다.");
+          return;
+        }
+        const result = await LocalAuthentication.authenticateAsync({
+          promptMessage: "생체인증을 진행해 주세요.",
+        });
+        if (!result.success) {
+          Alert.alert("생체인증 실패", "생체인증에 실패했습니다.");
+          return;
+        }
+        if (Platform.OS === 'ios') {
+          setTimeout(() => {
+            navigation.navigate("FaceAuthScreen", {
+              fromMyTickets: true,
+              ticketId: ticket.id,
+              onAuthSuccess: async (ticketId: number) => {
+                try {
+                  const res = await certifyTicket(ticketId);
+                  if (!res || !res.ticket) {
+                    const data = await getMyTickets();
+                    const validTickets = data.filter(
+                      (ticket) =>
+                        ticket.id !== undefined &&
+                        ticket.id !== null &&
+                        ticket.id > 0 &&
+                        !ticket.is_deleted &&
+                        (ticket.ticket_status === "reserved" ||
+                          ticket.ticket_status === "checked_in")
+                    );
+                    setTickets(validTickets.map(mapTicketToTicketType));
+                    return;
+                  }
+                  setTickets((prev: TicketType[]) =>
+                    prev.map((t) =>
+                      t.id === ticketId
+                        ? {
+                            ...t,
+                            ticket_status: res.ticket.ticket_status,
+                            ticket_statusText:
+                              res.ticket.ticket_status === "checked_in"
+                                ? "인증완료"
+                                : res.ticket.ticket_status,
+                            primaryButton:
+                              res.ticket.ticket_status === "checked_in"
+                                ? "QR코드 보기"
+                                : t.primaryButton,
+                            primaryButtonAction:
+                              res.ticket.ticket_status === "checked_in"
+                                ? "qr"
+                                : t.primaryButtonAction,
+                            verified_at:
+                              res.ticket.verified_at ?? new Date().toISOString(),
+                          }
+                        : t
+                    )
+                  );
+                  const data = await getMyTickets();
+                  const validTickets = data.filter(
+                    (ticket) =>
+                      ticket.id !== undefined &&
+                      ticket.id !== null &&
+                      ticket.id > 0 &&
+                      !ticket.is_deleted &&
+                      (ticket.ticket_status === "reserved" ||
+                        ticket.ticket_status === "checked_in")
+                  );
+                  setTickets(validTickets.map(mapTicketToTicketType));
+                } catch (e) {
+                  Alert.alert("상태 변경 실패", "티켓 상태 변경에 실패했습니다.");
+                }
+              },
+            });
+          }, 400);
+        } else {
+          navigation.navigate("FaceAuthScreen", {
+            fromMyTickets: true,
+            ticketId: ticket.id,
+            onAuthSuccess: async (ticketId: number) => {
+              try {
+                const res = await certifyTicket(ticketId);
+                if (!res || !res.ticket) {
+                  const data = await getMyTickets();
+                  const validTickets = data.filter(
+                    (ticket) =>
+                      ticket.id !== undefined &&
+                      ticket.id !== null &&
+                      ticket.id > 0 &&
+                      !ticket.is_deleted &&
+                      (ticket.ticket_status === "reserved" ||
+                        ticket.ticket_status === "checked_in")
+                  );
+                  setTickets(validTickets.map(mapTicketToTicketType));
+                  return;
+                }
+                setTickets((prev: TicketType[]) =>
+                  prev.map((t) =>
+                    t.id === ticketId
+                      ? {
+                          ...t,
+                          ticket_status: res.ticket.ticket_status,
+                          ticket_statusText:
+                            res.ticket.ticket_status === "checked_in"
+                              ? "인증완료"
+                              : res.ticket.ticket_status,
+                          primaryButton:
+                            res.ticket.ticket_status === "checked_in"
+                              ? "QR코드 보기"
+                              : t.primaryButton,
+                          primaryButtonAction:
+                            res.ticket.ticket_status === "checked_in"
+                              ? "qr"
+                              : t.primaryButtonAction,
+                          verified_at:
+                            res.ticket.verified_at ?? new Date().toISOString(),
+                        }
+                      : t
+                  )
+                );
+                const data = await getMyTickets();
+                const validTickets = data.filter(
+                  (ticket) =>
+                    ticket.id !== undefined &&
+                    ticket.id !== null &&
+                    ticket.id > 0 &&
+                    !ticket.is_deleted &&
+                    (ticket.ticket_status === "reserved" ||
+                      ticket.ticket_status === "checked_in")
+                );
+                setTickets(validTickets.map(mapTicketToTicketType));
+              } catch (e) {
+                Alert.alert("상태 변경 실패", "티켓 상태 변경에 실패했습니다.");
+              }
+            },
+          });
+        }
         return;
       }
     }

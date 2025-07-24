@@ -33,9 +33,10 @@ export default function FaceAuthScreen({ navigation, route }: any) {
 
   useEffect(() => {
     if (Platform.OS === 'ios') {
-      // iOS는 진입 시 400ms 후 카메라 mount
       const timer = setTimeout(() => setIsCameraReady(true), 400);
       return () => clearTimeout(timer);
+    } else {
+      setIsCameraReady(true);
     }
   }, []);
 
