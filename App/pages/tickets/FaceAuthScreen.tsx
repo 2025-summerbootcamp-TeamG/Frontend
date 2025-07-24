@@ -1,5 +1,5 @@
 // Frontend/App/pages/user/FaceAuthScreen.tsx
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -31,6 +31,7 @@ export default function FaceAuthScreen({ navigation, route }: any) {
   const [errorMessage, setErrorMessage] = useState("");
   const [biometricPassed, setBiometricPassed] = useState(false); // 생체인증 성공 여부
   const [isAuthenticated, setIsAuthenticated] = useState(Platform.OS !== 'ios');
+  const [inProgress, setInProgress] = useState(false);
 
   React.useEffect(() => {
     if (Platform.OS === "android") {
@@ -191,15 +192,17 @@ export default function FaceAuthScreen({ navigation, route }: any) {
     }
   };
 
-  // 생체 인증 및 인증 준비 함수
-  const handleBiometric = async () => {
+  // 생체 인증 + 얼굴 인증을 한 번에 처리
+  const handleBiometricAndAuth = async () => {
     setError("");
+    setInProgress(true);
     setLoading(true);
     try {
       const hasHardware = await LocalAuthentication.hasHardwareAsync();
       const isEnrolled = await LocalAuthentication.isEnrolledAsync();
       if (!hasHardware || !isEnrolled) {
         setError("생체인증이 지원되지 않거나 등록되어 있지 않습니다.");
+        setInProgress(false);
         setLoading(false);
         return;
       }
@@ -208,31 +211,34 @@ export default function FaceAuthScreen({ navigation, route }: any) {
       });
       if (!result.success) {
         setError("생체인증에 실패했습니다.");
+        setInProgress(false);
         setLoading(false);
         return;
       }
       setIsAuthenticated(true); // 성공 시 카메라 보여주기
-      setLoading(false);
+      // 생체 인증 성공 시 바로 얼굴 인증 진행
+      await handleAuth();
+      setInProgress(false);
     } catch (e) {
       setError("생체인증 중 오류가 발생했습니다.");
+      setInProgress(false);
       setLoading(false);
     }
   };
 
+  // 화면 진입 시 자동 실행
+  useEffect(() => {
+    if (!inProgress && Platform.OS === 'ios') {
+      handleBiometricAndAuth();
+    }
+  }, [route?.params]);
+
   return (
     <SafeAreaView style={styles.container}>
-      {!isAuthenticated ? (
-        <>
-          <Text style={styles.desc1}>본인 확인을 위해 생체인증이 필요합니다.</Text>
-          {error ? <Text style={{ color: "red", textAlign: "center" }}>{error}</Text> : null}
-          <TouchableOpacity
-            style={styles.button}
-            onPress={handleBiometric}
-            disabled={loading}
-          >
-            <Text style={styles.buttonText}>{loading ? "인증 중..." : "생체 인증"}</Text>
-          </TouchableOpacity>
-        </>
+      {inProgress || loading ? (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <Text>얼굴 인증을 진행 중입니다...</Text>
+        </View>
       ) : (
         <>
           <Text style={styles.desc1}>본인 확인을 위한 얼굴 인증 절차입니다.</Text>
@@ -253,15 +259,6 @@ export default function FaceAuthScreen({ navigation, route }: any) {
           {error ? (
             <Text style={{ color: "red", textAlign: "center" }}>{error}</Text>
           ) : null}
-          <TouchableOpacity
-            style={styles.button}
-            onPress={handleAuth}
-            disabled={loading}
-          >
-            <Text style={styles.buttonText}>
-              {loading ? "인증 중..." : "얼굴 인증"}
-            </Text>
-          </TouchableOpacity>
         </>
       )}
       <Modal
