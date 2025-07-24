@@ -30,6 +30,7 @@ export default function FaceAuthScreen({ navigation, route }: any) {
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isCameraReady, setIsCameraReady] = useState(Platform.OS !== 'ios');
+  const [biometricPassed, setBiometricPassed] = useState(Platform.OS !== 'ios');
 
   useEffect(() => {
     if (Platform.OS === 'ios') {
@@ -61,6 +62,7 @@ export default function FaceAuthScreen({ navigation, route }: any) {
             setLoading(false);
             return;
           }
+          setBiometricPassed(true);
           setLoading(false);
         } catch (e) {
           setError("생체인증 중 오류가 발생했습니다.");
@@ -69,6 +71,36 @@ export default function FaceAuthScreen({ navigation, route }: any) {
       };
       runBiometric();
       return;
+    }
+    if (Platform.OS === "ios") {
+      const runFaceId = async () => {
+        setError("");
+        setLoading(true);
+        try {
+          const hasHardware = await LocalAuthentication.hasHardwareAsync();
+          const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+          if (!hasHardware || !isEnrolled) {
+            setError("Face ID가 지원되지 않거나 등록되어 있지 않습니다.");
+            setLoading(false);
+            return;
+          }
+          const result = await LocalAuthentication.authenticateAsync({
+            promptMessage: "Face ID로 인증해 주세요",
+            fallbackLabel: "비밀번호 입력",
+          });
+          if (!result.success) {
+            setError("Face ID 인증에 실패했습니다.");
+            setLoading(false);
+            return;
+          }
+          setBiometricPassed(true);
+          setLoading(false);
+        } catch (e) {
+          setError("Face ID 인증 중 오류가 발생했습니다.");
+          setLoading(false);
+        }
+      };
+      runFaceId();
     }
   }, [route?.params]);
 
@@ -148,6 +180,20 @@ export default function FaceAuthScreen({ navigation, route }: any) {
           <Text>권한 요청</Text>
         </TouchableOpacity>
       </View>
+    );
+  }
+  if (!biometricPassed) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Text style={{ textAlign: "center", marginTop: 40, color: "gray" }}>
+          본인 확인을 위해 생체인증이 필요합니다.
+        </Text>
+        {error ? (
+          <Text style={{ color: "red", textAlign: "center", marginTop: 16 }}>
+            {error}
+          </Text>
+        ) : null}
+      </SafeAreaView>
     );
   }
 
