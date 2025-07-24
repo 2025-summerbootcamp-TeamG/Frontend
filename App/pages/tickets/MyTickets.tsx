@@ -564,7 +564,22 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
                   ticket.ticket_status === "checked_in")
             );
             setTickets(validTickets.map(mapTicketToTicketType));
-          } catch (e) {
+          } catch (e: any) {
+            if (e.response?.status === 400) {
+              // 400 Bad Request는 무시하고 강제 동기화만 수행
+              const data = await getMyTickets();
+              const validTickets = data.filter(
+                (ticket) =>
+                  ticket.id !== undefined &&
+                  ticket.id !== null &&
+                  ticket.id > 0 &&
+                  !ticket.is_deleted &&
+                  (ticket.ticket_status === "reserved" ||
+                    ticket.ticket_status === "checked_in")
+              );
+              setTickets(validTickets.map(mapTicketToTicketType));
+              return;
+            }
             Alert.alert("상태 변경 실패", "티켓 상태 변경에 실패했습니다.");
           }
         },

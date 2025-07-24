@@ -8,6 +8,7 @@ import {
   SafeAreaView,
   Modal,
   Platform,
+  AppState,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";
@@ -31,6 +32,7 @@ export default function FaceAuthScreen({ navigation, route }: any) {
   const [errorMessage, setErrorMessage] = useState("");
   const [isCameraReady, setIsCameraReady] = useState(Platform.OS !== 'ios');
   const [biometricPassed, setBiometricPassed] = useState(Platform.OS !== 'ios');
+  const [showCamera, setShowCamera] = useState(true);
 
   useEffect(() => {
     if (Platform.OS === 'ios') {
@@ -103,6 +105,16 @@ export default function FaceAuthScreen({ navigation, route }: any) {
       runFaceId();
     }
   }, [route?.params]);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextAppState) => {
+      if (nextAppState === 'active') {
+        setShowCamera(false);
+        setTimeout(() => setShowCamera(true), 200);
+      }
+    });
+    return () => subscription.remove();
+  }, []);
 
   // 사진 촬영 및 얼굴 인증 처리 함수
   const handleAuth = async () => {
@@ -211,7 +223,14 @@ export default function FaceAuthScreen({ navigation, route }: any) {
           </Text>
           <View style={styles.guideBox}>
             <View style={styles.dottedRect}>
-              <CameraView style={styles.camera} facing="front" ref={cameraRef} />
+              {showCamera && (
+                <CameraView
+                  style={styles.camera}
+                  facing="front"
+                  ref={cameraRef}
+                  onCameraReady={() => { console.log('카메라 켜짐'); }}
+                />
+              )}
               <View style={styles.oval} pointerEvents="none" />
               <View style={styles.guideTextBox}>
                 <Text style={styles.guideText}>
