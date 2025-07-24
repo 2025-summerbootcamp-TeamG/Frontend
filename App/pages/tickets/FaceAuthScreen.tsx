@@ -98,33 +98,6 @@ export default function FaceAuthScreen({ navigation, route }: any) {
     }
   }, [route?.params]);
 
-  if (!permission) return <View />;
-  if (!permission.granted) {
-    return (
-      <View>
-        <Text>카메라 접근 권한이 필요합니다.</Text>
-        <TouchableOpacity onPress={requestPermission}>
-          <Text>권한 요청</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
-  if (!biometricPassed) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <Text style={{ textAlign: "center", marginTop: 40, color: "gray" }}>
-          본인 확인을 위해 생체인증이 필요합니다.
-        </Text>
-        {error ? (
-          <Text style={{ color: "red", textAlign: "center", marginTop: 16 }}>
-            {error}
-          </Text>
-        ) : null}
-      </SafeAreaView>
-    );
-  }
-
   // 사진 촬영 및 얼굴 인증 처리 함수
   const handleAuth = async () => {
     // iOS Face ID 인증 부분 제거 (진입 시 이미 인증됨)
@@ -195,14 +168,12 @@ export default function FaceAuthScreen({ navigation, route }: any) {
   // 생체 인증 + 얼굴 인증을 한 번에 처리
   const handleBiometricAndAuth = async () => {
     setError("");
-    setInProgress(true);
     setLoading(true);
     try {
       const hasHardware = await LocalAuthentication.hasHardwareAsync();
       const isEnrolled = await LocalAuthentication.isEnrolledAsync();
       if (!hasHardware || !isEnrolled) {
         setError("생체인증이 지원되지 않거나 등록되어 있지 않습니다.");
-        setInProgress(false);
         setLoading(false);
         return;
       }
@@ -211,31 +182,52 @@ export default function FaceAuthScreen({ navigation, route }: any) {
       });
       if (!result.success) {
         setError("생체인증에 실패했습니다.");
-        setInProgress(false);
         setLoading(false);
         return;
       }
-      setIsAuthenticated(true); // 성공 시 카메라 보여주기
       // 생체 인증 성공 시 바로 얼굴 인증 진행
       await handleAuth();
-      setInProgress(false);
     } catch (e) {
       setError("생체인증 중 오류가 발생했습니다.");
-      setInProgress(false);
       setLoading(false);
     }
   };
 
   // 화면 진입 시 자동 실행
   useEffect(() => {
-    if (!inProgress && Platform.OS === 'ios') {
-      handleBiometricAndAuth();
-    }
+    handleBiometricAndAuth();
   }, [route?.params]);
+
+  if (!permission) return <View />;
+  if (!permission.granted) {
+    return (
+      <View>
+        <Text>카메라 접근 권한이 필요합니다.</Text>
+        <TouchableOpacity onPress={requestPermission}>
+          <Text>권한 요청</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  if (!biometricPassed) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Text style={{ textAlign: "center", marginTop: 40, color: "gray" }}>
+          본인 확인을 위해 생체인증이 필요합니다.
+        </Text>
+        {error ? (
+          <Text style={{ color: "red", textAlign: "center", marginTop: 16 }}>
+            {error}
+          </Text>
+        ) : null}
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
-      {inProgress || loading ? (
+      {loading ? (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
           <Text>얼굴 인증을 진행 중입니다...</Text>
         </View>
