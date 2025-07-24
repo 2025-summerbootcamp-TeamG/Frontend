@@ -100,7 +100,6 @@ export default function FaceAuthScreen({ navigation, route }: any) {
 
   // 사진 촬영 및 얼굴 인증 처리 함수
   const handleAuth = async () => {
-    // iOS Face ID 인증 부분 제거 (진입 시 이미 인증됨)
     setLoading(true); // 로딩 시작
     setError("");
     setSuccessMessage("");
@@ -128,40 +127,41 @@ export default function FaceAuthScreen({ navigation, route }: any) {
         return;
       }
       // 2. 얼굴 인증 요청 (서버에 이미지 전송)
-      const authRes: FaceAuthResponse = await FaceAuth(ticketId, {
-        image: imageBase64,
-      });
-      // 인증 결과 처리
-      if (authRes.message && authRes.message.includes("성공")) {
+      const authRes: FaceAuthResponse = await FaceAuth(ticketId, { image: imageBase64 });
+      if (authRes.message && authRes.message.includes('성공')) {
         setIsSuccess(true);
-        setSuccessMessage(
-          authRes.message || "얼굴 인증이 성공적으로 완료되었습니다."
-        );
-        setErrorMessage("");
+        setSuccessMessage(authRes.message || '얼굴 인증이 성공적으로 완료되었습니다.');
+        setErrorMessage('');
+        setModalVisible(true);
+        setLoading(false);
+        // 자동으로 1초 후에 다음 화면으로 이동
+        setTimeout(() => {
+          if (route.params?.onAuthSuccess) {
+            route.params.onAuthSuccess(ticketId);
+          }
+          navigation.goBack();
+        }, 1000);
+        return;
       } else {
         setIsSuccess(false);
-        setSuccessMessage("");
-        setErrorMessage(authRes.message || "인증에 실패했습니다.");
+        setSuccessMessage('');
+        setErrorMessage(authRes.message || '인증에 실패했습니다.');
+        setModalVisible(true);
+        setLoading(false);
+        return;
       }
-      setModalVisible(true);
-      setLoading(false);
-      return;
     } catch (e: any) {
       setIsSuccess(false);
       setSuccessMessage("");
       let msg = "인증 중 오류가 발생했습니다.";
       if (e.response && e.response.data) {
-        msg =
-          e.response.data.message ||
-          e.response.data.error ||
-          JSON.stringify(e.response.data);
+        msg = e.response.data.message || e.response.data.error || JSON.stringify(e.response.data);
       } else if (e.message) {
         msg = e.message;
       }
       setErrorMessage(msg);
       setModalVisible(true);
-    } finally {
-      setLoading(false); // 로딩 종료
+      setLoading(false);
     }
   };
 
