@@ -108,12 +108,18 @@ export default function FaceAuthScreen({ navigation, route }: any) {
         setErrorMessage('');
         setModalVisible(true);
         setLoading(false);
+        // 인증 성공 시 certifyTicket 호출 (여기서만 1회 호출)
+        try {
+          await certifyTicket(ticketId);
+        } catch (e) {
+          // 실패해도 일단 넘어감 (필요시 에러 처리)
+        }
         // 자동으로 1초 후에 다음 화면으로 이동
         setTimeout(() => {
           if (route.params?.onAuthSuccess) {
             route.params.onAuthSuccess(ticketId);
           }
-          navigation.goBack();
+          navigation.navigate("MyTickets");
         }, 1000);
         return;
       } else {
@@ -219,10 +225,11 @@ export default function FaceAuthScreen({ navigation, route }: any) {
               onPress={async () => {
                 setModalVisible(false);
                 if (isSuccess) {
+                  // 여기서는 certifyTicket을 호출하지 않음 (중복 방지)
                   if (route.params?.onAuthSuccess) {
                     route.params.onAuthSuccess(ticketId);
                   }
-                  navigation.goBack();
+                  navigation.navigate("MyTickets");
                 }
               }}
             >

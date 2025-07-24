@@ -509,129 +509,14 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
     if (ticket.primaryButtonAction === "qr") {
       handleQrPress(ticket);
     } else if (ticket.primaryButtonAction === "verify" && navigation) {
-      // 생체 인식 먼저 실행
-      const hasHardware = await LocalAuthentication.hasHardwareAsync();
-      const isEnrolled = await LocalAuthentication.isEnrolledAsync();
-      if (!hasHardware || !isEnrolled) {
-        Alert.alert("생체인증 불가", "생체인증이 지원되지 않거나 등록되어 있지 않습니다.");
-        return;
-      }
-      const result = await LocalAuthentication.authenticateAsync({
-        promptMessage: "생체인증을 진행해 주세요.",
-      });
-      if (!result.success) {
-        Alert.alert("생체인증 실패", "생체인증에 실패했습니다.");
-        return;
-      }
-      // iOS에서는 navigation 전에 400ms 딜레이
-      if (Platform.OS === 'ios') {
-        setTimeout(() => {
-          navigation.navigate("FaceAuthScreen", {
-            fromMyTickets: true,
-            ticketId: ticket.id,
-            onAuthSuccess: async (ticketId: number) => {
-              try {
-                const res = await certifyTicket(ticketId);
-                if (!res || !res.ticket) {
-                  const data = await getMyTickets();
-                  const validTickets = data.filter(
-                    (ticket) =>
-                      ticket.id !== undefined &&
-                      ticket.id !== null &&
-                      ticket.id > 0 &&
-                      !ticket.is_deleted &&
-                      (ticket.ticket_status === "reserved" ||
-                        ticket.ticket_status === "checked_in")
-                  );
-                  setTickets(validTickets.map(mapTicketToTicketType));
-                  return;
-                }
-                setTickets((prev: TicketType[]) =>
-                  prev.map((t) =>
-                    t.id === ticketId
-                      ? {
-                          ...t,
-                          ticket_status: res.ticket.ticket_status,
-                          ticket_statusText:
-                            res.ticket.ticket_status === "checked_in"
-                              ? "인증완료"
-                              : res.ticket.ticket_status,
-                          primaryButton:
-                            res.ticket.ticket_status === "checked_in"
-                              ? "QR코드 보기"
-                              : t.primaryButton,
-                          primaryButtonAction:
-                            res.ticket.ticket_status === "checked_in"
-                              ? "qr"
-                              : t.primaryButtonAction,
-                          verified_at:
-                            res.ticket.verified_at ?? new Date().toISOString(),
-                        }
-                      : t
-                  )
-                );
-                const data = await getMyTickets();
-                const validTickets = data.filter(
-                  (ticket) =>
-                    ticket.id !== undefined &&
-                    ticket.id !== null &&
-                    ticket.id > 0 &&
-                    !ticket.is_deleted &&
-                    (ticket.ticket_status === "reserved" ||
-                      ticket.ticket_status === "checked_in")
-                );
-                setTickets(validTickets.map(mapTicketToTicketType));
-              } catch (e) {
-                Alert.alert("상태 변경 실패", "티켓 상태 변경에 실패했습니다.");
-              }
-            },
-          });
-        }, 400);
-      } else {
+      // 생체인증 및 certifyTicket 호출 코드 제거, 바로 얼굴 인증 화면으로 이동
+      const goFaceAuth = () => {
         navigation.navigate("FaceAuthScreen", {
           fromMyTickets: true,
           ticketId: ticket.id,
           onAuthSuccess: async (ticketId: number) => {
+            // 인증 성공 후 티켓 목록만 갱신 (certifyTicket 호출 X)
             try {
-              const res = await certifyTicket(ticketId);
-              if (!res || !res.ticket) {
-                const data = await getMyTickets();
-                const validTickets = data.filter(
-                  (ticket) =>
-                    ticket.id !== undefined &&
-                    ticket.id !== null &&
-                    ticket.id > 0 &&
-                    !ticket.is_deleted &&
-                    (ticket.ticket_status === "reserved" ||
-                      ticket.ticket_status === "checked_in")
-                );
-                setTickets(validTickets.map(mapTicketToTicketType));
-                return;
-              }
-              setTickets((prev: TicketType[]) =>
-                prev.map((t) =>
-                  t.id === ticketId
-                    ? {
-                        ...t,
-                        ticket_status: res.ticket.ticket_status,
-                        ticket_statusText:
-                          res.ticket.ticket_status === "checked_in"
-                            ? "인증완료"
-                            : res.ticket.ticket_status,
-                        primaryButton:
-                          res.ticket.ticket_status === "checked_in"
-                            ? "QR코드 보기"
-                            : t.primaryButton,
-                        primaryButtonAction:
-                          res.ticket.ticket_status === "checked_in"
-                            ? "qr"
-                            : t.primaryButtonAction,
-                        verified_at:
-                          res.ticket.verified_at ?? new Date().toISOString(),
-                      }
-                    : t
-                )
-              );
               const data = await getMyTickets();
               const validTickets = data.filter(
                 (ticket) =>
@@ -648,6 +533,11 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
             }
           },
         });
+      };
+      if (Platform.OS === 'ios') {
+        setTimeout(goFaceAuth, 400);
+      } else {
+        goFaceAuth();
       }
     } else if (ticket.primaryButtonAction === "register" && navigation) {
       navigation.navigate("FaceRegisterScreen", { ticketId: ticket.id });
@@ -662,128 +552,14 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
         navigation.navigate("FaceRegisterScreen", { ticketId: ticket.id });
         return;
       } else if (verified === true && status === "reserved") {
-        // 생체 인식 먼저 실행
-        const hasHardware = await LocalAuthentication.hasHardwareAsync();
-        const isEnrolled = await LocalAuthentication.isEnrolledAsync();
-        if (!hasHardware || !isEnrolled) {
-          Alert.alert("생체인증 불가", "생체인증이 지원되지 않거나 등록되어 있지 않습니다.");
-          return;
-        }
-        const result = await LocalAuthentication.authenticateAsync({
-          promptMessage: "생체인증을 진행해 주세요.",
-        });
-        if (!result.success) {
-          Alert.alert("생체인증 실패", "생체인증에 실패했습니다.");
-          return;
-        }
-        if (Platform.OS === 'ios') {
-          setTimeout(() => {
-            navigation.navigate("FaceAuthScreen", {
-              fromMyTickets: true,
-              ticketId: ticket.id,
-              onAuthSuccess: async (ticketId: number) => {
-                try {
-                  const res = await certifyTicket(ticketId);
-                  if (!res || !res.ticket) {
-                    const data = await getMyTickets();
-                    const validTickets = data.filter(
-                      (ticket) =>
-                        ticket.id !== undefined &&
-                        ticket.id !== null &&
-                        ticket.id > 0 &&
-                        !ticket.is_deleted &&
-                        (ticket.ticket_status === "reserved" ||
-                          ticket.ticket_status === "checked_in")
-                    );
-                    setTickets(validTickets.map(mapTicketToTicketType));
-                    return;
-                  }
-                  setTickets((prev: TicketType[]) =>
-                    prev.map((t) =>
-                      t.id === ticketId
-                        ? {
-                            ...t,
-                            ticket_status: res.ticket.ticket_status,
-                            ticket_statusText:
-                              res.ticket.ticket_status === "checked_in"
-                                ? "인증완료"
-                                : res.ticket.ticket_status,
-                            primaryButton:
-                              res.ticket.ticket_status === "checked_in"
-                                ? "QR코드 보기"
-                                : t.primaryButton,
-                            primaryButtonAction:
-                              res.ticket.ticket_status === "checked_in"
-                                ? "qr"
-                                : t.primaryButtonAction,
-                            verified_at:
-                              res.ticket.verified_at ?? new Date().toISOString(),
-                          }
-                        : t
-                    )
-                  );
-                  const data = await getMyTickets();
-                  const validTickets = data.filter(
-                    (ticket) =>
-                      ticket.id !== undefined &&
-                      ticket.id !== null &&
-                      ticket.id > 0 &&
-                      !ticket.is_deleted &&
-                      (ticket.ticket_status === "reserved" ||
-                        ticket.ticket_status === "checked_in")
-                  );
-                  setTickets(validTickets.map(mapTicketToTicketType));
-                } catch (e) {
-                  Alert.alert("상태 변경 실패", "티켓 상태 변경에 실패했습니다.");
-                }
-              },
-            });
-          }, 400);
-        } else {
+        // 생체인증 및 certifyTicket 호출 코드 제거, 바로 얼굴 인증 화면으로 이동
+        const goFaceAuth = () => {
           navigation.navigate("FaceAuthScreen", {
             fromMyTickets: true,
             ticketId: ticket.id,
             onAuthSuccess: async (ticketId: number) => {
+              // 인증 성공 후 티켓 목록만 갱신 (certifyTicket 호출 X)
               try {
-                const res = await certifyTicket(ticketId);
-                if (!res || !res.ticket) {
-                  const data = await getMyTickets();
-                  const validTickets = data.filter(
-                    (ticket) =>
-                      ticket.id !== undefined &&
-                      ticket.id !== null &&
-                      ticket.id > 0 &&
-                      !ticket.is_deleted &&
-                      (ticket.ticket_status === "reserved" ||
-                        ticket.ticket_status === "checked_in")
-                  );
-                  setTickets(validTickets.map(mapTicketToTicketType));
-                  return;
-                }
-                setTickets((prev: TicketType[]) =>
-                  prev.map((t) =>
-                    t.id === ticketId
-                      ? {
-                          ...t,
-                          ticket_status: res.ticket.ticket_status,
-                          ticket_statusText:
-                            res.ticket.ticket_status === "checked_in"
-                              ? "인증완료"
-                              : res.ticket.ticket_status,
-                          primaryButton:
-                            res.ticket.ticket_status === "checked_in"
-                              ? "QR코드 보기"
-                              : t.primaryButton,
-                          primaryButtonAction:
-                            res.ticket.ticket_status === "checked_in"
-                              ? "qr"
-                              : t.primaryButtonAction,
-                          verified_at:
-                            res.ticket.verified_at ?? new Date().toISOString(),
-                        }
-                      : t
-                  )
-                );
                 const data = await getMyTickets();
                 const validTickets = data.filter(
                   (ticket) =>
@@ -800,6 +576,11 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
               }
             },
           });
+        };
+        if (Platform.OS === 'ios') {
+          setTimeout(goFaceAuth, 400);
+        } else {
+          goFaceAuth();
         }
         return;
       }
