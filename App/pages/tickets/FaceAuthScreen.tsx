@@ -30,7 +30,7 @@ export default function FaceAuthScreen({ navigation, route }: any) {
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (Platform.OS === "android") {
       const runBiometric = async () => {
         setError("");
@@ -59,37 +59,6 @@ export default function FaceAuthScreen({ navigation, route }: any) {
       };
       runBiometric();
       return;
-    } else if (Platform.OS === "ios") {
-      const runFaceId = async () => {
-        setError("");
-        setLoading(true);
-        try {
-          const hasHardware = await LocalAuthentication.hasHardwareAsync();
-          const isEnrolled = await LocalAuthentication.isEnrolledAsync();
-          if (!hasHardware || !isEnrolled) {
-            setError("Face ID가 지원되지 않거나 등록되어 있지 않습니다.");
-            setLoading(false);
-            return;
-          }
-          const result = await LocalAuthentication.authenticateAsync({
-            promptMessage: "Face ID로 인증해 주세요",
-            fallbackLabel: "비밀번호 입력",
-          });
-          if (!result.success) {
-            setError("Face ID 인증에 실패했습니다.");
-            setLoading(false);
-            return;
-          }
-          setLoading(false);
-        } catch (e) {
-          setError("Face ID 인증 중 오류가 발생했습니다.");
-          setLoading(false);
-        }
-      };
-      runFaceId();
-      return;
-    } else {
-      setLoading(false);
     }
   }, [route?.params]);
 
