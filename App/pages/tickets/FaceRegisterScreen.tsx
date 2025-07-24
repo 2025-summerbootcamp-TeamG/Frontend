@@ -54,6 +54,7 @@ export default function FaceRegisterScreen({ navigation, route }: any) {
   const [errorMessage, setErrorMessage] = useState(""); // 실패 메시지
   const [biometricPassed, setBiometricPassed] = useState(false); // 생체인증 성공 여부
   const [isAuthenticated, setIsAuthenticated] = useState(Platform.OS !== 'ios');
+  const [authError, setAuthError] = useState("");
 
   useEffect(() => {
     // 기존 로그 출력 유지
@@ -70,20 +71,25 @@ export default function FaceRegisterScreen({ navigation, route }: any) {
         const hasHardware = await LocalAuthentication.hasHardwareAsync();
         const enrolled = await LocalAuthentication.isEnrolledAsync();
         if (!hasHardware || !enrolled) {
-          alert('Face ID가 설정되어 있지 않습니다.');
+          setAuthError('Face ID가 설정되어 있지 않습니다.');
           return;
         }
         const result = await LocalAuthentication.authenticateAsync({
           promptMessage: 'Face ID로 인증해 주세요',
           fallbackLabel: '비밀번호 입력',
         });
-        if (result.success) setIsAuthenticated(true);
+        if (result.success) {
+          setIsAuthenticated(true);
+          setAuthError("");
+        } else {
+          setAuthError('Face ID 인증에 실패했습니다.');
+        }
       }
     };
     if (Platform.OS === 'ios' && !isAuthenticated) {
       doAuth();
     }
-  }, [route?.params]);
+  }, [route?.params, isAuthenticated]);
 
   // 카메라 권한이 없을 때 권한 요청 UI 표시
   if (!permission) return <View />;
@@ -100,7 +106,19 @@ export default function FaceRegisterScreen({ navigation, route }: any) {
   if (!isAuthenticated) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Text>Face ID 인증 중입니다...</Text>
+        <Text>본인 확인을 위해 생체인증이 필요합니다.</Text>
+        {authError ? (
+          <Text style={{ color: 'red', marginTop: 8 }}>{authError}</Text>
+        ) : null}
+        <TouchableOpacity
+          style={{ marginTop: 24, padding: 12, backgroundColor: '#2563eb', borderRadius: 8 }}
+          onPress={() => {
+            setAuthError("");
+            setIsAuthenticated(false); // 강제로 재시도
+          }}
+        >
+          <Text style={{ color: 'white', fontWeight: 'bold' }}>생체 인증 다시 시도</Text>
+        </TouchableOpacity>
       </View>
     );
   }
