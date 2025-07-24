@@ -8,6 +8,7 @@ import {
   Modal,
   Image,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import MainHeader from "../../components/common/MainHeader";
 import QRCodeModal from "./QRCodeModal";
@@ -60,17 +61,17 @@ const TicketCard = ({
   // 박스 색상 및 텍스트 분기 (상태/버튼 기준)
   let statusBoxText = '';
   let statusBoxColor = undefined;
-  if (verified === false) {
+  if (status === 'reserved') {
     statusBoxText = '등록필요';
     statusBoxColor = '#FFF9D6'; // 노란색
-  } else if (verified === true && status === 'reserved') {
+  } else if (status === 'verified') {
     statusBoxText = '예매완료';
     statusBoxColor = '#FFF9D6'; // 노란색
-  } else if (verified === true && status === 'checked_in') {
+  } else if (status === 'checked_in') {
     statusBoxText = '인증완료';
     statusBoxColor = '#DCFCE7'; // 초록색
   } else {
-    statusBoxText = '';
+    statusBoxText = '로딩 중...';
     statusBoxColor = undefined;
   }
 
@@ -78,18 +79,21 @@ const TicketCard = ({
   let buttonLabel = ""; // 버튼에 표시할 텍스트
   let buttonAction: ((event: any) => void) | undefined = undefined; // 버튼 클릭 시 실행할 함수
 
-  if (verified === undefined) {
-    buttonLabel = "로딩 중..."
+  if (status === undefined || verified === undefined) {
+    buttonLabel = "로딩 중...";
     buttonAction = undefined;
-  } else if (verified === false) {
+  } else if (status === "reserved") {
     buttonLabel = "얼굴 등록하기";
     buttonAction = () => onPrimaryButtonPress({ ...ticket, primaryButtonAction: "register" });
-  } else if (verified === true && status === "reserved") {
+  } else if (status === "verified") {
     buttonLabel = "얼굴 인증하기";
     buttonAction = () => onPrimaryButtonPress({ ...ticket, primaryButtonAction: "verify" });
-  } else if (verified === true && status === "checked_in") {
+  } else if (status === "checked_in") {
     buttonLabel = "QR코드 보기";
     buttonAction = () => onPrimaryButtonPress({ ...ticket, primaryButtonAction: "qr" });
+  } else {
+    buttonLabel = "";
+    buttonAction = undefined;
   }
 
   return (
@@ -154,9 +158,14 @@ const TicketCard = ({
               onPress={buttonAction}
               disabled={!buttonAction}
             >
-              <Text style={styles.qr42} numberOfLines={1} ellipsizeMode="tail">
-                {buttonLabel}
-              </Text>
+              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center" }}>
+                <Text style={styles.qr42} numberOfLines={1} ellipsizeMode="tail">
+                  {buttonLabel}
+                </Text>
+                {buttonLabel === "로딩 중..." && (
+                  <ActivityIndicator size="small" color="#fff" style={{ marginLeft: 6 }} />
+                )}
+              </View>
             </TouchableOpacity>
 
             <View style={styles.marginWrap4}>
@@ -295,7 +304,8 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
           ticket.id > 0 &&
           !ticket.is_deleted &&
           (ticket.ticket_status === "reserved" ||
-            ticket.ticket_status === "checked_in")
+            ticket.ticket_status === "checked_in" ||
+            ticket.ticket_status === "verified") // verified도 포함
       );
       setTickets(validTickets.map(mapTicketToTicketType));
     } catch (e) {
@@ -326,7 +336,7 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
           ticket =>
             ticket.ticket_status !== 'canceled' &&
             ticket.ticket_status !== 'booked' &&
-            (ticket.ticket_status === "reserved" || ticket.ticket_status === "checked_in")
+            (ticket.ticket_status === "reserved" || ticket.ticket_status === "checked_in" || ticket.ticket_status === "verified") // verified도 포함
         );
         const mappedTickets = filteredTickets.map(mapTicketToTicketType);
         setTickets(mappedTickets);
