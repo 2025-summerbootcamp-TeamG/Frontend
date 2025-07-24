@@ -29,9 +29,6 @@ export default function FaceAuthScreen({ navigation, route }: any) {
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
-  const [biometricPassed, setBiometricPassed] = useState(false); // 생체인증 성공 여부
-  const [isAuthenticated, setIsAuthenticated] = useState(Platform.OS !== 'ios');
-  const [inProgress, setInProgress] = useState(false);
 
   React.useEffect(() => {
     if (Platform.OS === "android") {
@@ -54,7 +51,6 @@ export default function FaceAuthScreen({ navigation, route }: any) {
             setLoading(false);
             return;
           }
-          setBiometricPassed(true);
           setLoading(false);
         } catch (e) {
           setError("생체인증 중 오류가 발생했습니다.");
@@ -84,7 +80,6 @@ export default function FaceAuthScreen({ navigation, route }: any) {
             setLoading(false);
             return;
           }
-          setBiometricPassed(true);
           setLoading(false);
         } catch (e) {
           setError("Face ID 인증 중 오류가 발생했습니다.");
@@ -94,7 +89,7 @@ export default function FaceAuthScreen({ navigation, route }: any) {
       runFaceId();
       return;
     } else {
-      setBiometricPassed(true);
+      setLoading(false);
     }
   }, [route?.params]);
 
@@ -165,39 +160,6 @@ export default function FaceAuthScreen({ navigation, route }: any) {
     }
   };
 
-  // 생체 인증 + 얼굴 인증을 한 번에 처리
-  const handleBiometricAndAuth = async () => {
-    setError("");
-    setLoading(true);
-    try {
-      const hasHardware = await LocalAuthentication.hasHardwareAsync();
-      const isEnrolled = await LocalAuthentication.isEnrolledAsync();
-      if (!hasHardware || !isEnrolled) {
-        setError("생체인증이 지원되지 않거나 등록되어 있지 않습니다.");
-        setLoading(false);
-        return;
-      }
-      const result = await LocalAuthentication.authenticateAsync({
-        promptMessage: "생체인증을 진행해 주세요.",
-      });
-      if (!result.success) {
-        setError("생체인증에 실패했습니다.");
-        setLoading(false);
-        return;
-      }
-      // 생체 인증 성공 시 바로 얼굴 인증 진행
-      await handleAuth();
-    } catch (e) {
-      setError("생체인증 중 오류가 발생했습니다.");
-      setLoading(false);
-    }
-  };
-
-  // 화면 진입 시 자동 실행
-  useEffect(() => {
-    handleBiometricAndAuth();
-  }, [route?.params]);
-
   if (!permission) return <View />;
   if (!permission.granted) {
     return (
@@ -210,49 +172,35 @@ export default function FaceAuthScreen({ navigation, route }: any) {
     );
   }
 
-  if (!biometricPassed) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <Text style={{ textAlign: "center", marginTop: 40, color: "gray" }}>
-          본인 확인을 위해 생체인증이 필요합니다.
-        </Text>
-        {error ? (
-          <Text style={{ color: "red", textAlign: "center", marginTop: 16 }}>
-            {error}
-          </Text>
-        ) : null}
-      </SafeAreaView>
-    );
-  }
-
   return (
     <SafeAreaView style={styles.container}>
-      {loading ? (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <Text>얼굴 인증을 진행 중입니다...</Text>
-        </View>
-      ) : (
-        <>
-          <Text style={styles.desc1}>본인 확인을 위한 얼굴 인증 절차입니다.</Text>
-          <Text style={styles.desc2}>
-            얼굴이 가이드라인 안에 들어오도록 위치시켜 주세요.
-          </Text>
-          <View style={styles.guideBox}>
-            <View style={styles.dottedRect}>
-              <CameraView style={styles.camera} facing="front" ref={cameraRef} />
-              <View style={styles.oval} pointerEvents="none" />
-              <View style={styles.guideTextBox}>
-                <Text style={styles.guideText}>
-                  카메라를 정면으로 바라봐 주세요.
-                </Text>
-              </View>
-            </View>
+      <Text style={styles.desc1}>본인 확인을 위한 얼굴 인증 절차입니다.</Text>
+      <Text style={styles.desc2}>
+        얼굴이 가이드라인 안에 들어오도록 위치시켜 주세요.
+      </Text>
+      <View style={styles.guideBox}>
+        <View style={styles.dottedRect}>
+          <CameraView style={styles.camera} facing="front" ref={cameraRef} />
+          <View style={styles.oval} pointerEvents="none" />
+          <View style={styles.guideTextBox}>
+            <Text style={styles.guideText}>
+              카메라를 정면으로 바라봐 주세요.
+            </Text>
           </View>
-          {error ? (
-            <Text style={{ color: "red", textAlign: "center" }}>{error}</Text>
-          ) : null}
-        </>
-      )}
+        </View>
+      </View>
+      {error ? (
+        <Text style={{ color: "red", textAlign: "center" }}>{error}</Text>
+      ) : null}
+      <TouchableOpacity
+        style={styles.button}
+        onPress={handleAuth}
+        disabled={loading}
+      >
+        <Text style={styles.buttonText}>
+          {loading ? "인증 중..." : "얼굴 인증"}
+        </Text>
+      </TouchableOpacity>
       <Modal
         visible={modalVisible}
         transparent

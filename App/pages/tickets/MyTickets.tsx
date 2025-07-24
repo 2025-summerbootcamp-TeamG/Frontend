@@ -25,6 +25,7 @@ import {
   certifyTicket,
   TicketQRcode,
 } from "../../services/TicketService";
+import * as LocalAuthentication from 'expo-local-authentication';
 
 // 좌석 번호에서 '-' 이후의 값만 추출하는 함수 (컴포넌트 바깥에 위치)
 const displaySeatNumber = (seat_number: string) => {
@@ -503,10 +504,25 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
     }
   };
 
-  const handlePrimaryButtonPress = (ticket: TicketType) => {
+  const handlePrimaryButtonPress = async (ticket: TicketType) => {
     if (ticket.primaryButtonAction === "qr") {
       handleQrPress(ticket);
     } else if (ticket.primaryButtonAction === "verify" && navigation) {
+      // 생체 인식 먼저 실행
+      const hasHardware = await LocalAuthentication.hasHardwareAsync();
+      const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+      if (!hasHardware || !isEnrolled) {
+        Alert.alert("생체인증 불가", "생체인증이 지원되지 않거나 등록되어 있지 않습니다.");
+        return;
+      }
+      const result = await LocalAuthentication.authenticateAsync({
+        promptMessage: "생체인증을 진행해 주세요.",
+      });
+      if (!result.success) {
+        Alert.alert("생체인증 실패", "생체인증에 실패했습니다.");
+        return;
+      }
+      // 성공 시 얼굴 인증 화면으로 이동
       navigation.navigate("FaceAuthScreen", {
         fromMyTickets: true,
         ticketId: ticket.id,
@@ -569,6 +585,20 @@ export default function MyTickets({ navigation }: MyTicketsProps) {
         navigation.navigate("FaceRegisterScreen", { ticketId: ticket.id });
         return;
       } else if (verified === true && status === "reserved") {
+        // 생체 인식 먼저 실행
+        const hasHardware = await LocalAuthentication.hasHardwareAsync();
+        const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+        if (!hasHardware || !isEnrolled) {
+          Alert.alert("생체인증 불가", "생체인증이 지원되지 않거나 등록되어 있지 않습니다.");
+          return;
+        }
+        const result = await LocalAuthentication.authenticateAsync({
+          promptMessage: "생체인증을 진행해 주세요.",
+        });
+        if (!result.success) {
+          Alert.alert("생체인증 실패", "생체인증에 실패했습니다.");
+          return;
+        }
         navigation.navigate("FaceAuthScreen", {
           fromMyTickets: true,
           ticketId: ticket.id,
