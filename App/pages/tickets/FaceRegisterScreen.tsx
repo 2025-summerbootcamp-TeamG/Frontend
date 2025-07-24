@@ -53,6 +53,7 @@ export default function FaceRegisterScreen({ navigation, route }: any) {
   const [successMessage, setSuccessMessage] = useState(""); // 성공 메시지
   const [errorMessage, setErrorMessage] = useState(""); // 실패 메시지
   const [biometricPassed, setBiometricPassed] = useState(false); // 생체인증 성공 여부
+  const [isAuthenticated, setIsAuthenticated] = useState(Platform.OS !== 'ios');
 
   useEffect(() => {
     // 기존 로그 출력 유지
@@ -63,67 +64,24 @@ export default function FaceRegisterScreen({ navigation, route }: any) {
     console.log("purchase_id:", route?.params?.purchase_id);
     console.log("ticketIds:", route?.params?.ticketIds);
     console.log("seatInfos:", route?.params?.seatInfos);
-    // 안드로이드에서만 생체인증 자동 실행 (기존 코드)
-    if (Platform.OS === "android") {
-      const runBiometric = async () => {
-        setError("");
-        setLoading(true);
-        try {
-          const hasHardware = await LocalAuthentication.hasHardwareAsync();
-          const isEnrolled = await LocalAuthentication.isEnrolledAsync();
-          if (!hasHardware || !isEnrolled) {
-            setError("생체인증이 지원되지 않거나 등록되어 있지 않습니다.");
-            setLoading(false);
-            return;
-          }
-          const result = await LocalAuthentication.authenticateAsync({
-            promptMessage: "생체인증을 진행해 주세요.",
-          });
-          if (!result.success) {
-            setError("생체인증에 실패했습니다.");
-            setLoading(false);
-            return;
-          }
-          setBiometricPassed(true);
-          setLoading(false);
-        } catch (e) {
-          setError("생체인증 중 오류가 발생했습니다.");
-          setLoading(false);
+    // iOS에서만 생체 인증 먼저 실행
+    const doAuth = async () => {
+      if (Platform.OS === 'ios') {
+        const hasHardware = await LocalAuthentication.hasHardwareAsync();
+        const enrolled = await LocalAuthentication.isEnrolledAsync();
+        if (!hasHardware || !enrolled) {
+          alert('Face ID가 설정되어 있지 않습니다.');
+          return;
         }
-      };
-      runBiometric();
-      return;
-    }
-    // iOS에서만 진입 시 Face ID 자동 실행
-    if (Platform.OS === "ios") {
-      const runFaceId = async () => {
-        setError("");
-        setLoading(true);
-        try {
-          const hasHardware = await LocalAuthentication.hasHardwareAsync();
-          const isEnrolled = await LocalAuthentication.isEnrolledAsync();
-          if (!hasHardware || !isEnrolled) {
-            setError("Face ID가 지원되지 않거나 등록되어 있지 않습니다.");
-            setLoading(false);
-            return;
-          }
-          const result = await LocalAuthentication.authenticateAsync({
-            promptMessage: "Face ID로 인증해 주세요",
-            fallbackLabel: "비밀번호 입력",
-          });
-          if (!result.success) {
-            setError("Face ID 인증에 실패했습니다.");
-            setLoading(false);
-            return;
-          }
-          setBiometricPassed(true);
-          setLoading(false);
-        } catch (e) {
-          setError("Face ID 인증 중 오류가 발생했습니다.");
-          setLoading(false);
-        }
-      };
-      runFaceId();
+        const result = await LocalAuthentication.authenticateAsync({
+          promptMessage: 'Face ID로 인증해 주세요',
+          fallbackLabel: '비밀번호 입력',
+        });
+        if (result.success) setIsAuthenticated(true);
+      }
+    };
+    if (Platform.OS === 'ios' && !isAuthenticated) {
+      doAuth();
     }
   }, [route?.params]);
 
@@ -139,20 +97,23 @@ export default function FaceRegisterScreen({ navigation, route }: any) {
       </View>
     );
   }
+  if (!isAuthenticated) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <Text>Face ID 인증 중입니다...</Text>
+      </View>
+    );
+  }
 
   // 얼굴 등록 처리 함수
   const handleRegister = async () => {
-    // iOS Face ID 인증 부분 제거 (진입 시 이미 인증됨)
     setLoading(true); // 로딩 시작
     setError("");
     try {
       // 카메라 ref가 없으면 에러 처리
       if (!cameraRef.current) throw new Error("카메라를 찾을 수 없습니다.");
       // 사진 촬영 (base64 인코딩, 화질 0.3)
-      const photo = await cameraRef.current.takePictureAsync({
-        base64: true,
-        quality: 0.3,
-      });
+      const photo = await cameraRef.current.takePictureAsync({ base64: true, quality: 0.3 });
       const imageBase64 = photo.base64;
       // 1. 얼굴이 가이드라인 안에 있는지 체크 (서버에 이미지 전송)
       const guideRes: GuideLineCheckResponse = await FaceGuideCheck({
