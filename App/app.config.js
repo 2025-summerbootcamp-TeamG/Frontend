@@ -8,6 +8,7 @@ export default {
     orientation: "portrait",
     icon: "./assets/icon.png",
     userInterfaceStyle: "light",
+    jsEngine: "jsc",
     newArchEnabled: true,
     splash: {
       image: "./assets/splash-icon.png",
@@ -16,7 +17,7 @@ export default {
     },
     ios: {
       supportsTablet: true,
-      bundleIdentifier: "com.eunseokyoon.ticketing",
+      bundleIdentifier: "com.ticketaka.ticketing",
       infoPlist: {
         NSAppTransportSecurity: {
           NSAllowsArbitraryLoads: true, // 모든 도메인 허용 (개발용)
@@ -46,8 +47,8 @@ export default {
     extra: {
       API_BASE_URL: process.env.API_BASE_URL,
       eas: {
-        projectId: "076e8d6c-efe7-4e38-ab4f-7d8721539085"
-      }
+        projectId: "076e8d6c-efe7-4e38-ab4f-7d8721539085",
+      },
     },
   },
 };
