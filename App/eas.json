@@ -17,5 +17,25 @@
   },
   "submit": {
     "production": {}
+  },
+  "hooks": {
+    "postPublish": [
+      {
+        "file": "sentry-expo/upload-sourcemaps",
+        "config": {
+          "organization": "3f7869fd3fda",
+          "project": "react-native"
+        }
+      }
+    ],
+    "postBuild": [
+      {
+        "file": "sentry-expo/upload-sourcemaps",
+        "config": {
+          "organization": "3f7869fd3fda",
+          "project": "react-native"
+        }
+      }
+    ]
   }
 }

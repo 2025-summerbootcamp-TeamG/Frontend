@@ -10,5 +10,11 @@ module.exports = {
       },
     ],
     "@babel/plugin-transform-typescript",
+    [
+      "@babel/plugin-transform-runtime",
+      {
+        useESModules: true,
+      },
+    ],
   ],
 };

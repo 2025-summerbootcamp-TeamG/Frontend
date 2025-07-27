@@ -3,5 +3,6 @@
   "compilerOptions": {
     "strict": true,
     "types": ["react-native-svg"]
-  }
+  },
+  "include": ["**/*.ts", "**/*.tsx", "env.d.ts"]
 }

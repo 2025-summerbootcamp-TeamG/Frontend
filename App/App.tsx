@@ -1,22 +1,21 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import AppNavigator from "./navigation/AppNavigator";
-
-// sentry 에러 테스트 코드
-import * as Sentry from "sentry-expo";
-import { useEffect } from "react";
-import { Text, View } from "react-native";
+import * as Sentry from "@sentry/react-native";
+import { SENTRY_DSN } from "@env";
 
 Sentry.init({
-  dsn: "https://xxx.ingest.sentry.io/xxxxxx", // 너 프로젝트 DSN으로 교체
-  enableInExpoDevelopment: true,
+  dsn: SENTRY_DSN,
   debug: true,
+  sendDefaultPii: true,
+  replaysSessionSampleRate: __DEV__ ? 0 : 0.1,
+  replaysOnErrorSampleRate: __DEV__ ? 0 : 1,
+  integrations: [Sentry.mobileReplayIntegration()],
+  // spotlight: __DEV__, // 필요 시 주석 해제
 });
 
 export default function App() {
-  useEffect(() => {
-    throw new Error("🚨 Sentry test error 발생!");
-  }, []);
+  useEffect(() => {}, []);
 
   return (
     <NavigationContainer>

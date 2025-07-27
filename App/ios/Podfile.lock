@@ -5,7 +5,7 @@ PODS:
     - ExpoModulesCore
   - EXConstants (17.1.7):
     - ExpoModulesCore
-  - Expo (53.0.19):
+  - Expo (53.0.20):
     - DoubleConversion
     - ExpoModulesCore
     - glog
@@ -33,7 +33,7 @@ PODS:
     - Yoga
   - ExpoAsset (11.1.7):
     - ExpoModulesCore
-  - ExpoCamera (16.1.10):
+  - ExpoCamera (16.1.11):
     - ExpoModulesCore
     - ZXingObjC/OneD
     - ZXingObjC/PDF417
@@ -47,7 +47,7 @@ PODS:
     - ExpoModulesCore
   - ExpoLocalAuthentication (16.0.5):
     - ExpoModulesCore
-  - ExpoModulesCore (2.4.2):
+  - ExpoModulesCore (2.5.0):
     - DoubleConversion
     - glog
     - RCT-Folly (= 2024.11.18.00)
@@ -1328,7 +1328,7 @@ PODS:
     - React-jsiexecutor
     - React-RCTFBReactNativeSpec
     - ReactCommon/turbomodule/core
-  - react-native-safe-area-context (5.4.0):
+  - react-native-safe-area-context (5.5.2):
     - DoubleConversion
     - glog
     - RCT-Folly (= 2024.11.18.00)
@@ -1342,8 +1342,8 @@ PODS:
     - React-ImageManager
     - React-jsc
     - React-jsi
-    - react-native-safe-area-context/common (= 5.4.0)
-    - react-native-safe-area-context/fabric (= 5.4.0)
+    - react-native-safe-area-context/common (= 5.5.2)
+    - react-native-safe-area-context/fabric (= 5.5.2)
     - React-NativeModulesApple
     - React-RCTFabric
     - React-renderercss
@@ -1353,7 +1353,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - react-native-safe-area-context/common (5.4.0):
+  - react-native-safe-area-context/common (5.5.2):
     - DoubleConversion
     - glog
     - RCT-Folly (= 2024.11.18.00)
@@ -1376,7 +1376,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - react-native-safe-area-context/fabric (5.4.0):
+  - react-native-safe-area-context/fabric (5.5.2):
     - DoubleConversion
     - glog
     - RCT-Folly (= 2024.11.18.00)
@@ -1767,6 +1767,30 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
+  - RNSentry (6.18.1):
+    - DoubleConversion
+    - glog
+    - RCT-Folly (= 2024.11.18.00)
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsc
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - Sentry/HybridSDK (= 8.53.2)
+    - Yoga
   - RNSVG (15.12.0):
     - DoubleConversion
     - glog
@@ -1814,6 +1838,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
+  - Sentry/HybridSDK (8.53.2)
   - SocketRocket (0.7.1)
   - Yoga (0.0.0)
   - ZXingObjC/Core (3.6.9)
@@ -1907,11 +1932,13 @@ DEPENDENCIES:
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
   - "RNCAsyncStorage (from `../node_modules/@react-native-async-storage/async-storage`)"
   - RNScreens (from `../node_modules/react-native-screens`)
+  - "RNSentry (from `../node_modules/@sentry/react-native`)"
   - RNSVG (from `../node_modules/react-native-svg`)
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
 
 SPEC REPOS:
   trunk:
+    - Sentry
     - SocketRocket
     - ZXingObjC
 
@@ -2078,6 +2105,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@react-native-async-storage/async-storage"
   RNScreens:
     :path: "../node_modules/react-native-screens"
+  RNSentry:
+    :path: "../node_modules/@sentry/react-native"
   RNSVG:
     :path: "../node_modules/react-native-svg"
   Yoga:
@@ -2088,15 +2117,15 @@ SPEC CHECKSUMS:
   DoubleConversion: cb417026b2400c8f53ae97020b2be961b59470cb
   EXApplication: 1e06972201838375ca1ec1ba34d586a98a5dc718
   EXConstants: 98bcf0f22b820f9b28f9fee55ff2daededadd2f8
-  Expo: 3bcfab2b6b907710dd5d6582406d936dcb5b5905
+  Expo: ad449665420b9fe5e907bd97e79aec2e47f98785
   ExpoAsset: ef06e880126c375f580d4923fdd1cdf4ee6ee7d6
-  ExpoCamera: 7edf99216d92e40b991d4e7ed69eba9527c94cda
+  ExpoCamera: e1879906d41184e84b57d7643119f8509414e318
   ExpoDevice: 7082f03af1c588333ef1417d5aa8287081d94b24
   ExpoFileSystem: 7f92f7be2f5c5ed40a7c9efc8fa30821181d9d63
   ExpoFont: cf508bc2e6b70871e05386d71cab927c8524cc8e
   ExpoKeepAwake: bf0811570c8da182bfb879169437d4de298376e7
   ExpoLocalAuthentication: c35f18692dcb35775a1be0f37b2131096951a6bd
-  ExpoModulesCore: a7f0dd464f5beb388686c9b8e4f0785a5018f592
+  ExpoModulesCore: 2c1a84ec154d32afb4f6569bc558f059ebbcdb8e
   fast_float: 06eeec4fe712a76acc9376682e4808b05ce978b6
   FBLazyVector: d2a9cd223302b6c9aa4aa34c1a775e9db609eb52
   fmt: a40bb5bd0294ea969aaaba240a927bd33d878cdd
@@ -2132,7 +2161,7 @@ SPEC CHECKSUMS:
   React-logger: 85fa3509931497c72ccd2547fcc91e7299d8591e
   React-Mapbuffer: 96a2f2a176268581733be182fa6eebab1c0193be
   React-microtasksnativemodule: 11b292232f1626567a79d58136689f1b911c605f
-  react-native-safe-area-context: b0ee54c424896b916aab46212b884cb8794308d7
+  react-native-safe-area-context: 84e47900b7a67691c3224b1529e43be3424203e7
   React-NativeModulesApple: 494c38599b82392ed14b2c0118fca162425bb618
   React-oscompat: 0592889a9fcf0eacb205532028e4a364e22907dd
   React-perflogger: c584fa50e422a46f37404d083fad12eb289d5de4
@@ -2165,7 +2194,9 @@ SPEC CHECKSUMS:
   ReactCommon: 7eb76fcd5133313d8c6a138a5c7dd89f80f189d5
   RNCAsyncStorage: f4b48b7eb2ae9296be4df608ff60c1b12a469b7a
   RNScreens: dd9a329b21412c5322a5447fc2c3ae6471cf6e5a
+  RNSentry: b624a1d13f04c05bf93b26cca7bed517f0c96c1b
   RNSVG: 5412c508c07957b006f984097623abf112c3587b
+  Sentry: 59993bffde4a1ac297ba6d268dc4bbce068d7c1b
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
   Yoga: adb397651e1c00672c12e9495babca70777e411e
   ZXingObjC: 8898711ab495761b2dbbdec76d90164a6d7e14c5
