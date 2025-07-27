@@ -27,7 +27,7 @@
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>com.eunseokyoon.ticketing</string>
+          <string>com.ticketaka.ticketing</string>
         </array>
       </dict>
     </array>
@@ -45,7 +45,7 @@
     <key>NSCameraUsageDescription</key>
     <string>얼굴 인증을 위해 카메라 접근이 필요합니다.</string>
     <key>NSFaceIDUsageDescription</key>
-    <string>Allow $(PRODUCT_NAME) to use Face ID</string>
+    <string>이 앱은 본인 확인을 위해 Face ID를 사용합니다.</string>
     <key>NSMicrophoneUsageDescription</key>
     <string>Allow $(PRODUCT_NAME) to access your microphone</string>
     <key>UILaunchStoryboardName</key>

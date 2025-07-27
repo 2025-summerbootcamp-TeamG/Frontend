@@ -9,5 +9,12 @@ module.exports = {
         path: ".env",
       },
     ],
+    "@babel/plugin-transform-typescript",
+    [
+      "@babel/plugin-transform-runtime",
+      {
+        useESModules: true,
+      },
+    ],
   ],
 };
