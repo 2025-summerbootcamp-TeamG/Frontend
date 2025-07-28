@@ -32,7 +32,7 @@ const MainHeader = () => {
               lineHeight: 28,
             }}
           >
-            TeamG가 최고
+            Ticketaka
           </Text>
         </View>
       </View>
@@ -56,13 +56,13 @@ const MainHeader = () => {
           <Text
             style={{
               color: "white",
-              fontSize: 20,
-              fontFamily: "Pacifico",
+              fontSize: 25,
+              fontFamily: "SacheonUniverse",
               fontWeight: "400",
               lineHeight: 28,
             }}
           >
-            TeamG가 최고
+            Ticketaka
           </Text>
         </View>
       </SafeAreaView>
