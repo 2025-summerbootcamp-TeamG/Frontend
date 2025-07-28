@@ -9,6 +9,7 @@ module.exports = {
         path: ".env",
       },
     ],
+    "react-native-worklets/plugin",
     "@babel/plugin-transform-typescript",
     [
       "@babel/plugin-transform-runtime",

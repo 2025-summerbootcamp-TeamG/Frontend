@@ -15,6 +15,13 @@ export default {
       resizeMode: "contain",
       backgroundColor: "#ffffff",
     },
+    extra: {
+      API_BASE_URL: process.env.API_BASE_URL,
+      SENTRY_DSN: process.env.SENTRY_DSN,
+      eas: {
+        projectId: "076e8d6c-efe7-4e38-ab4f-7d8721539085",
+      },
+    },
     ios: {
       supportsTablet: true,
       bundleIdentifier: "com.ticketaka.ticketing",
@@ -44,11 +51,5 @@ export default {
         family: "Roboto",
       },
     ],
-    extra: {
-      API_BASE_URL: process.env.API_BASE_URL,
-      eas: {
-        projectId: "076e8d6c-efe7-4e38-ab4f-7d8721539085",
-      },
-    },
   },
 };
