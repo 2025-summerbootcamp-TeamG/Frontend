@@ -34,19 +34,17 @@ export default function MyPageLogin() {
   // 앱 실행 시 로그인 상태 복구
   useEffect(() => {
     const checkLoginStatus = async () => {
-      const accessToken = await AsyncStorage.getItem("accessToken");
-      if (accessToken) {
-        try {
-          const decoded = jwtDecode<{ name: string; email: string }>(
-            accessToken
-          );
-          setUser({ name: decoded.name, email: decoded.email });
-          setIsLoggedIn(true);
-        } catch (e) {
-          setIsLoggedIn(false);
-          setUser(null);
-        }
+      // 강제 로그아웃: 항상 토큰을 삭제하고 로그아웃 상태로 설정
+      try {
+        await AsyncStorage.removeItem("accessToken");
+        await AsyncStorage.removeItem("refreshToken");
+        console.log("MyPage에서 강제 로그아웃 완료");
+      } catch (error) {
+        console.error("강제 로그아웃 실패:", error);
       }
+      
+      setIsLoggedIn(false);
+      setUser(null);
     };
     checkLoginStatus();
   }, []);
@@ -108,13 +106,21 @@ export default function MyPageLogin() {
             <View style={styles.loginButtonRow}>
               <TouchableOpacity
                 style={styles.loginButton}
-                onPress={() => setLoginModalVisible(true)}
+                onPress={() => {
+                  console.log("로그인 버튼 클릭됨!");
+                  setLoginModalVisible(true);
+                }}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
                 <Text style={styles.loginButtonText}>로그인</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.signupButton}
-                onPress={() => setSignupModalVisible(true)}
+                onPress={() => {
+                  console.log("회원가입 버튼 클릭됨!");
+                  setSignupModalVisible(true);
+                }}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
                 <Text style={styles.signupButtonText}>회원가입</Text>
               </TouchableOpacity>
