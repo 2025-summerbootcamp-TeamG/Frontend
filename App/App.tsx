@@ -14,7 +14,6 @@ Sentry.init({
   replaysSessionSampleRate: __DEV__ ? 0 : 0.1,
   replaysOnErrorSampleRate: __DEV__ ? 0 : 1,
   integrations: [Sentry.mobileReplayIntegration()],
-  // spotlight: __DEV__, // 필요 시 주석 해제
 });
 
 export default function App() {
