@@ -9,7 +9,7 @@ const SENTRY_DSN = Constants.expoConfig?.extra?.SENTRY_DSN;
 
 Sentry.init({
   dsn: SENTRY_DSN,
-  debug: true,
+  debug: false,
   sendDefaultPii: true,
   replaysSessionSampleRate: __DEV__ ? 0 : 0.1,
   replaysOnErrorSampleRate: __DEV__ ? 0 : 1,
