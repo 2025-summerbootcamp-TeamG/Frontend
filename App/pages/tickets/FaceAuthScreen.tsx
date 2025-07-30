@@ -30,6 +30,7 @@ export default function FaceAuthScreen({ navigation, route }: any) {
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isCameraReady, setIsCameraReady] = useState(Platform.OS !== 'ios');
+  const [biometricPassed, setBiometricPassed] = useState(false);
 
   useEffect(() => {
     if (Platform.OS === 'ios') {
@@ -41,35 +42,34 @@ export default function FaceAuthScreen({ navigation, route }: any) {
   }, []);
 
   useEffect(() => {
-    if (Platform.OS === "android") {
-      const runBiometric = async () => {
-        setError("");
-        setLoading(true);
-        try {
-          const hasHardware = await LocalAuthentication.hasHardwareAsync();
-          const isEnrolled = await LocalAuthentication.isEnrolledAsync();
-          if (!hasHardware || !isEnrolled) {
-            setError("생체인증이 지원되지 않거나 등록되어 있지 않습니다.");
-            setLoading(false);
-            return;
-          }
-          const result = await LocalAuthentication.authenticateAsync({
-            promptMessage: "생체인증을 진행해 주세요.",
-          });
-          if (!result.success) {
-            setError("생체인증에 실패했습니다.");
-            setLoading(false);
-            return;
-          }
+    const runBiometric = async () => {
+      setError("");
+      setLoading(true);
+      try {
+        const hasHardware = await LocalAuthentication.hasHardwareAsync();
+        const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+        if (!hasHardware || !isEnrolled) {
+          setError(Platform.OS === 'ios' ? "Face ID가 지원되지 않거나 등록되어 있지 않습니다." : "생체인증이 지원되지 않거나 등록되어 있지 않습니다.");
           setLoading(false);
-        } catch (e) {
-          setError("생체인증 중 오류가 발생했습니다.");
-          setLoading(false);
+          return;
         }
-      };
-      runBiometric();
-      return;
-    }
+        const result = await LocalAuthentication.authenticateAsync({
+          promptMessage: Platform.OS === 'ios' ? "Face ID로 인증해 주세요" : "생체인증을 진행해 주세요.",
+          fallbackLabel: Platform.OS === 'ios' ? "비밀번호 입력" : undefined,
+        });
+        if (!result.success) {
+          setError(Platform.OS === 'ios' ? "Face ID 인증에 실패했습니다." : "생체인증에 실패했습니다.");
+          setLoading(false);
+          return;
+        }
+        setBiometricPassed(true);
+        setLoading(false);
+      } catch (e) {
+        setError(Platform.OS === 'ios' ? "Face ID 인증 중 오류가 발생했습니다." : "생체인증 중 오류가 발생했습니다.");
+        setLoading(false);
+      }
+    };
+    runBiometric();
   }, [route?.params]);
 
   // 사진 촬영 및 얼굴 인증 처리 함수
@@ -154,6 +154,56 @@ export default function FaceAuthScreen({ navigation, route }: any) {
           <Text>권한 요청</Text>
         </TouchableOpacity>
       </View>
+    );
+  }
+
+  if (!biometricPassed) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Text style={{ textAlign: "center", marginTop: 40, color: "gray" }}>
+          본인 확인을 위해 생체인증이 필요합니다.
+        </Text>
+        {error ? (
+          <Text style={{ color: "red", textAlign: "center", marginTop: 16 }}>
+            {error}
+          </Text>
+        ) : null}
+        <TouchableOpacity
+          style={[styles.button, { marginTop: 32 }]}
+          onPress={async () => {
+            setError("");
+            setLoading(true);
+            try {
+              const hasHardware = await LocalAuthentication.hasHardwareAsync();
+              const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+              if (!hasHardware || !isEnrolled) {
+                setError(Platform.OS === 'ios' ? "Face ID가 지원되지 않거나 등록되어 있지 않습니다." : "생체인증이 지원되지 않거나 등록되어 있지 않습니다.");
+                setLoading(false);
+                return;
+              }
+              const result = await LocalAuthentication.authenticateAsync({
+                promptMessage: Platform.OS === 'ios' ? "Face ID로 인증해 주세요" : "생체인증을 진행해 주세요.",
+                fallbackLabel: Platform.OS === 'ios' ? "비밀번호 입력" : undefined,
+              });
+              if (!result.success) {
+                setError(Platform.OS === 'ios' ? "Face ID 인증에 실패했습니다." : "생체인증에 실패했습니다.");
+                setLoading(false);
+                return;
+              }
+              setBiometricPassed(true);
+              setLoading(false);
+            } catch (e) {
+              setError(Platform.OS === 'ios' ? "Face ID 인증 중 오류가 발생했습니다." : "생체인증 중 오류가 발생했습니다.");
+              setLoading(false);
+            }
+          }}
+          disabled={loading}
+        >
+          <Text style={styles.buttonText}>
+            {loading ? "인증 중..." : Platform.OS === 'ios' ? "Face ID 인증" : "생체인증"}
+          </Text>
+        </TouchableOpacity>
+      </SafeAreaView>
     );
   }
 

@@ -263,6 +263,41 @@ export default function FaceRegisterScreen({ navigation, route }: any) {
             {error}
           </Text>
         ) : null}
+        <TouchableOpacity
+          style={[styles.button, { marginTop: 32 }]}
+          onPress={async () => {
+            setError("");
+            setLoading(true);
+            try {
+              const hasHardware = await LocalAuthentication.hasHardwareAsync();
+              const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+              if (!hasHardware || !isEnrolled) {
+                setError(Platform.OS === 'ios' ? "Face ID가 지원되지 않거나 등록되어 있지 않습니다." : "생체인증이 지원되지 않거나 등록되어 있지 않습니다.");
+                setLoading(false);
+                return;
+              }
+              const result = await LocalAuthentication.authenticateAsync({
+                promptMessage: Platform.OS === 'ios' ? "Face ID로 인증해 주세요" : "생체인증을 진행해 주세요.",
+                fallbackLabel: Platform.OS === 'ios' ? "비밀번호 입력" : undefined,
+              });
+              if (!result.success) {
+                setError(Platform.OS === 'ios' ? "Face ID 인증에 실패했습니다." : "생체인증에 실패했습니다.");
+                setLoading(false);
+                return;
+              }
+              setBiometricPassed(true);
+              setLoading(false);
+            } catch (e) {
+              setError(Platform.OS === 'ios' ? "Face ID 인증 중 오류가 발생했습니다." : "생체인증 중 오류가 발생했습니다.");
+              setLoading(false);
+            }
+          }}
+          disabled={loading}
+        >
+          <Text style={styles.buttonText}>
+            {loading ? "인증 중..." : Platform.OS === 'ios' ? "Face ID 인증" : "생체인증"}
+          </Text>
+        </TouchableOpacity>
       </SafeAreaView>
     );
   }
