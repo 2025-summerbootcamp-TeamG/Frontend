@@ -142,7 +142,7 @@ export default function PaymentScreen() {
             </View>
             <Text style={styles.depositTitle}>입금 기한</Text>
             <View style={styles.depositInfoBox}>
-              <Text style={styles.depositDeadline}>2025-07-09 23:59까지</Text>
+              <Text style={styles.depositDeadline}>2025-08-02 23:59까지</Text>
             </View>
             <View style={styles.depositNoticeBox}>
               <Text style={styles.depositNoticeTitle}>
