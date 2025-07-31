@@ -121,7 +121,7 @@ export default function CompanionRegisterScreen({ route, navigation }: any) {
         <View>
           <Text style={styles.companionInfoTitle}>동행자 등록 안내</Text>
           <Text style={styles.companionInfoDesc}>
-            모든 동행자는 24시간 이내에 얼굴 등록을 완료해야 합니다.
+            모든 동행자는 5분 이내에 얼굴 등록을 완료해야 합니다.
           </Text>
         </View>
       </View>
